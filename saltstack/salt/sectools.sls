@@ -7,6 +7,11 @@ System hardening:
       - pax-utils
       - paxtest
 
+Anti-infoleak:
+  pkg.installed:
+    - pkgs:
+      - bleachbit
+
 Sandboxing:
   pkg.installed:
     - pkgs:

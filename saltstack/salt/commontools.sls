@@ -1,3 +1,23 @@
+Text editor:
+  pkg.installed:
+    - pkgs:
+      - vim
+      - nano
+      - gedit
+      - geany
+
+IDE:
+  pkg.installed:
+    - pkgs:
+      - codeblocks
+      - intellij-idea-community-edition
+
+Development:
+  pkg.installed:
+    - pkgs:
+      - meld
+      - git
+
 Desktop environment:
   pkg.installed:
     - pkgs:
@@ -34,3 +54,61 @@ SSH:
   pkg.installed:
     - pkgs:
       - openssh
+
+Media:
+  pkg.installed:
+    - pkgs:
+      - vlc
+      - clementine
+      - ffmpeg
+
+FTP:
+  pkg.installed:
+    - pkgs:
+      - filezilla
+
+BitTorrent:
+  pkg.installed:
+    - pkgs:
+      - deluge
+
+Image:
+  pkg.installed:
+    - pkgs:
+      - feh
+
+NTP:
+  pkg.installed:
+    - pkgs:
+      - ntp
+
+System monitoring:
+  pkg.installed:
+    - pkgs:
+      - conky
+
+System info:
+  pkg.installed:
+    - pkgs:
+      - hwdetect
+      - lshw
+      - hardinfo
+
+Office:
+  pkg.installed:
+    - pkgs:
+      - libreoffice-still
+      - calligra
+      - texstudio
+      - calibre
+      - zim
+
+File backup:
+  pkg.installed:
+    - pkgs:
+      - bup
+
+Scientific:
+  pkginstalled:
+    - pkgs:
+      - r
