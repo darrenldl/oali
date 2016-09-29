@@ -24,3 +24,13 @@ Virtualisation:
     - pkgs:
       - qemu
       - virt-manager
+
+Network manager:
+  pkg.installed:
+    - pkgs:
+      - networkmanager
+
+SSH:
+  pkg.installed:
+    - pkgs:
+      - openssh

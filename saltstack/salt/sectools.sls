@@ -45,3 +45,4 @@ VPN:
   pkg.installed:
     - pkgs:
       - openvpn
+      - networkmanager-openvpn
