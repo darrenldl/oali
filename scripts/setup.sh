@@ -21,7 +21,7 @@ read
 echo "Stages:"
 echo "  choose editor"
 echo "  configure mirrorlist"
-echo "  format system partition"
+echo "  choose system partition"
 echo "  setup encryption and USB key"
 echo "  install system"
 echo "  setup GRUB"
@@ -91,10 +91,50 @@ while [[ $end == 0 ]]; do
   done
 done
 
-# Format system partition
+# choose system partition
+end=0
+while [[ $end == 0 ]]; do
+  echo "Stage : choose system partition"
+
+  echo -n "Please specify a partition to use : "
+  read SYS_PART
+
+  if [ -b $SYS_PART ]; then
+    echo "System parition picked :" $SYS_PART
+    while true; do
+      echo -n "Is this correct? y/n : "
+      read ans
+      if   [[ $ans == "y" ]]; then
+        end=1
+        break
+      elif [[ $ans == "n" ]]; then
+        end=0
+        break
+      else
+        echo -e $INVALID_ANS
+      fi
+    done
+  else
+    echo "Partition does not exist"
+  fi
+done
 
 # Setup encryption and USB key
+end=0
+while [[ $end == 0 ]]; do
+  
+done
 
 # Install base system
 
 # Setup GRUB
+
+# Copy USB key mounting/unmounting scripts into new system
+
+# Basic setup of system
+
+# Copy saltstack files
+
+# Execute salt for final setup
+
+# Restart
