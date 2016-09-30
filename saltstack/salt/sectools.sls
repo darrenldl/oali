@@ -29,6 +29,7 @@ Cryptographic:
       - ccrypt
       - gnupg
       - kdeutils-kgpg
+      - veracrypt
 
 Password management:
   pkg.installed:

@@ -21,8 +21,37 @@ Development:
 Desktop environment:
   pkg.installed:
     - pkgs:
+      - xorg
       - xfce4
       - xfce4-goodies
+      - xfce4-notifyd
+
+Archiving:
+  pkg.installed:
+    - pkgs:
+      - p7zip
+
+Mounting:
+  pkg.installed:
+    - pkgs:
+      - udevil
+
+Partitioning:
+  pkg.installed:
+    - pkgs:
+      - fdisk
+      - cfdisk
+      - gdisk
+      - cgdisk
+      - parted
+      - gparted
+
+File system tools:
+  pkg.installed:
+    - pkgs:
+      - mtools
+      - dosfstools
+      - efibootmgr
 
 Web browsers:
   pkg.installed:
@@ -45,10 +74,11 @@ Virtualisation:
       - qemu
       - virt-manager
 
-Network manager:
+Network management:
   pkg.installed:
     - pkgs:
       - networkmanager
+      - network-manager-applet
 
 SSH:
   pkg.installed:
@@ -86,6 +116,7 @@ System monitoring:
   pkg.installed:
     - pkgs:
       - conky
+      - ncdu
 
 System info:
   pkg.installed:
@@ -109,6 +140,11 @@ File backup:
       - bup
 
 Scientific:
-  pkginstalled:
+  pkg.installed:
     - pkgs:
       - r
+
+Fonts:
+  pkg.installed:
+    - pkgs:
+      - ttf-dejavu
