@@ -9,6 +9,8 @@ echo "  Please note that you need to have an external USB drive for this install
 echo "Press enter to continue"
 read
 
+clear
+
 # Show requirement
 echo "Requirements:"
 echo "  The main system partition should be setup already(no need to be formatted)"
@@ -16,6 +18,8 @@ echo ""
 echo "Please fulfill the requirements above if any is missing,"
 echo "and press enter after partitioning to continue"
 read
+
+clear
 
 # Show stages
 echo "Stages:"
@@ -35,10 +39,11 @@ echo ""
 echo "Press enter to continue"
 read
 
+clear
 
 # Choose editor
-end=0
-while [[ $end == 0 ]]; do
+end=false
+while ! $end; do
   echo "Stage : choose editor"
 
   EDITOR=""
@@ -51,10 +56,10 @@ while [[ $end == 0 ]]; do
       echo -n "Is this correct? y/n : "
       read ans
       if   [[ $ans == "y" ]]; then
-        end=1
+        end=true
         break
       elif [[ $ans == "n"  ]]; then
-        end=0
+        end=false
         break
       else
         echo -e $INVALID_ANS
@@ -65,10 +70,12 @@ while [[ $end == 0 ]]; do
   fi
 done
 
+clear
+
 # Configure mirrorlist
 mirrorlist_path="/etc/pacman.d/mirrorlist"
-end=0
-while [[ $end == 0 ]]; do
+end=false
+while ! $end; do
   echo "Stage : configure mirrorlist"
 
   echo "Press enter to continue"
@@ -80,10 +87,10 @@ while [[ $end == 0 ]]; do
     echo -n "Finished editing? y/n : "
     read ans
     if   [[ $ans == "y" ]]; then
-      end=1
+      end=true
       break
     elif [[ $ans == "n" ]]; then
-      end=0
+      end=false
       break
     else
       echo -e $INVALID_ANS
@@ -91,9 +98,11 @@ while [[ $end == 0 ]]; do
   done
 done
 
+clear
+
 # choose system partition
 end=0
-while [[ $end == 0 ]]; do
+while ! $end; do
   echo "Stage : choose system partition"
 
   echo -n "Please specify a partition to use : "
@@ -105,10 +114,10 @@ while [[ $end == 0 ]]; do
       echo -n "Is this correct? y/n : "
       read ans
       if   [[ $ans == "y" ]]; then
-        end=1
+        end=true
         break
       elif [[ $ans == "n" ]]; then
-        end=0
+        end=false
         break
       else
         echo -e $INVALID_ANS
@@ -119,13 +128,15 @@ while [[ $end == 0 ]]; do
   fi
 done
 
-# Setup encryption and USB key
-end=0
-while [[ $end == 0 ]]; do
-  echo "Stage : setup encryption and USB key"
-  echo "Warning : data on USB key will be lost"
+clear
 
-  echo -n "Please specify the USB key device"
+# Setup encryption and USB key
+echo "Stage : setup encryption and USB key"
+echo "Warning : data on USB key will be lost"
+
+end=false
+while ! $end; do
+  echo -n "Please specify the USB key device : "
   read USB_KEY
 
   if [ -b "$USB_KEY" ]; then
@@ -134,10 +145,10 @@ while [[ $end == 0 ]]; do
       echo -n "Is this correct? y/n : "
       read ans
       if   [[ $ans == "y" ]]; then
-        end=1
+        end=true
         break
       elif [[ $ans == "n" ]]; then
-        end=0
+        end=false
         break
       else
         echo -e $INVALID_ANS
@@ -148,26 +159,91 @@ while [[ $end == 0 ]]; do
   fi
 done
 
+clear
+
 ## Partition the USB key
 efi_firmware_path="/sys/firmware/efi"
 echo "Preparing USB key"
 if [ -e $efi_firmware_path ]; then
   echo "System is in UEFI mode"
-
-  echo "Creating GPT partition table"
-  parted "$USB_KEY" mklabel gpt 2>/dev/null
+  efi_mode=true
 else
   echo "System is in BIOS mode"
-
-  echo "Creating MBR partition table"
-  parted "$USB_KEY" mklabel msdos 2>/dev/null
+  efi_mode=false
 fi
+
+clear
 
 echo "Wiping paritioning info"
 dd if=/dev/zero of="$USB_KEY" bs=512 count=2
 
-echo "Creating boot partition"
-parted -a optimal "$USB_KEY" mkpart primary 0% 33%
+if efi_mode; then
+  echo "Creating GPT partition table"
+  parted "$USB_KEY" mklabel gpt 2>/dev/null
+
+  echo "Partitioning"
+  parted -a optimal "$USB_KEY" mkpart primary fat32  0%  25%
+  parted -a optimal "$USB_KEY" mkpart primary       25%  50%
+else
+  echo "Creating MBR partition table"
+  parted "$USB_KEY" mklabel msdos 2>/dev/null
+
+  echo "Partitioning"
+  parted -a optimal "$USB_KEY" mkpart primary  0%  25%
+fi
+
+clear
+
+end=false
+while ! end; do
+  echo "Do you want to overwrite partitions which will be encrypted with random bytes(/dev/urandom)? y/n : "
+  read ans
+
+  if   [[ $ans == "y" ]]; then
+    echo "You entered yes"
+    rand_wipe=true
+  elif [[ $ans = "n" ]]; then
+    echo "You entered no"
+    rand_wipe=false
+  else
+    echo -e $INVALID_ANS
+    continue
+  fi
+
+  while true; do
+    echo "Is this correct? y/n : "
+    read ans
+    if   [[ $ans == "y" ]]; then
+      end=true
+      break
+    elif [[ $ans == "n" ]]; then
+      end=false
+      break
+    else
+      echo -e $INVALID_ANS
+    fi
+  done
+done
+
+clear
+
+if rand_wipe; then
+  echo "Ovewriting partitions"
+
+  if efi_mode; then
+    ddrescue --force /dev/urandom "$USB_KEY"2 2>/dev/null
+  else
+    ddrescue --force /dev/urandom "$USB_KEY"1 2>/dev/null
+  fi
+fi
+
+clear
+
+echo "You will be required to enter passphrase for USB key in following section"
+if efi_mode; then
+  cryptsetup 
+else
+fi
 
 # Install base system
 
