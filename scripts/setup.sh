@@ -122,8 +122,52 @@ done
 # Setup encryption and USB key
 end=0
 while [[ $end == 0 ]]; do
-  
+  echo "Stage : setup encryption and USB key"
+  echo "Warning : data on USB key will be lost"
+
+  echo -n "Please specify the USB key device"
+  read USB_KEY
+
+  if [ -b "$USB_KEY" ]; then
+    echo "Device picked :" "$USB_KEY"
+    while true; do
+      echo -n "Is this correct? y/n : "
+      read ans
+      if   [[ $ans == "y" ]]; then
+        end=1
+        break
+      elif [[ $ans == "n" ]]; then
+        end=0
+        break
+      else
+        echo -e $INVALID_ANS
+      fi
+    done
+  else
+    echo "Device does not exist"
+  fi
 done
+
+## Partition the USB key
+efi_firmware_path="/sys/firmware/efi"
+echo "Preparing USB key"
+if [ -e $efi_firmware_path ]; then
+  echo "System is in UEFI mode"
+
+  echo "Creating GPT partition table"
+  parted "$USB_KEY" mklabel gpt 2>/dev/null
+else
+  echo "System is in BIOS mode"
+
+  echo "Creating MBR partition table"
+  parted "$USB_KEY" mklabel msdos 2>/dev/null
+fi
+
+echo "Wiping paritioning info"
+dd if=/dev/zero of="$USB_KEY" bs=512 count=2
+
+echo "Creating boot partition"
+parted -a optimal "$USB_KEY" mkpart primary 0% 33%
 
 # Install base system
 
