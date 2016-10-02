@@ -496,7 +496,7 @@ else
 fi
 
 echo "Generate grub configuration file"
-grub-mkconfig -o "$mount_path"/boot/grub/grub.cfg
+arch-chroot "$mount_path" grub-mkconfig -o "$mount_path"/boot/grub/grub.cfg
 
 # Prepare USB key mounting/unmounting scripts and copy into new system
 
