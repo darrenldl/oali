@@ -197,6 +197,8 @@ clear
 echo "Wiping paritioning info"
 dd if=/dev/zero of="$USB_KEY" bs=512 count=2 2>/dev/null
 
+wait_and_clear 2
+
 if $efi_mode; then
   echo "Creating GPT partition table"
   parted "$USB_KEY" mklabel gpt 2>/dev/null
@@ -291,7 +293,7 @@ key_file_path="/tmp/"$key_file_name
 echo "Generating keyfile (1 MiB in size) for system partition"
 dd if=/dev/urandom of="$key_file_path" bs=1024 count=1024
 
-wait_and_clear
+wait_and_clear 2
 
 # Encrypt main system partition
 while true; do
@@ -312,7 +314,7 @@ mapper_name_sys="crypt_sys_root"
 mapper_name_boot="crypt_boot"
 
 echo "Unlocking system partition"
-cryptsetup --key-file "$key_file_path" luksOpen SYS_PART "$mapper_name_sys"
+cryptsetup --key-file "$key_file_path" luksOpen $SYS_PART "$mapper_name_sys"
 
 echo "Formatting system partition"
 mkfs.ext4 /dev/mapper/"$mapper_name_sys"
@@ -330,7 +332,7 @@ wait_and_clear 2
 
 while true; do
   echo "Unlocking boot partition"
-  cryptsetup luksOpen USB_KEY_BOOT "$mapper_name_boot"
+  cryptsetup luksOpen $USB_KEY_BOOT "$mapper_name_boot"
   if [[ $? == 0 ]]; then
     break
   else
@@ -411,7 +413,7 @@ while true; do
 done
 
 while true; do
-  echo "Installing grsecurity kernel"
+  echo "Installing Grsecurity kernel"
   arch-chroot "$mount_path" pacman --noconfirm -S linux-grsec
   if [[ $? == 0 ]]; then
     break
@@ -471,6 +473,7 @@ cat "$mount_path"/etc/default/grub | sed "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_
 
 wait_and_clear 2
 
+# Install grub and required files
 echo "Install grub onto USB key"
 if $efi_mode; then
   echo "Reset ESP directory"
@@ -485,7 +488,6 @@ else
   arch-chroot "$mount_path" grub-install --target=i386-pc --boot-directory=/boot $USB_KEY
 fi
 
-# Install grub and required files
 echo "Generate grub configuration file"
 grub-mkconfig -o "$mount_path"/boot/grub/grub.cfg
 
