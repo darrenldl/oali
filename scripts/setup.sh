@@ -469,14 +469,14 @@ fi
 # Setup config
 echo "Updating mkinitcpio.conf"
 hooks="base udev autodetect modconf encrypt block filesystems keyboard fsck"
-cat "$mount_path"/etc/mkinitcpio.conf | sed "s/^HOOKS=.*/HOOKS=\"$hooks\"/g" > "$mount_path"/etc/mkinitcpio.conf
+sed -i "s/^HOOKS=.*/HOOKS=\"$hooks\"/g" "$mount_path"/etc/mkinitcpio.conf
 
 echo "Updating grub config"
 echo "GRUB_ENABLE_CRYPTODISK=y" >> "$mount_path"/etc/default/grub
 
 grub_cmdline_linux_default="quiet cryptdevice:/dev/disk/by-uuid/$SYS_PART_UUID:$mapper_name_sys cryptkey:/dev/disk/by-uuid/$USB_KEY_BOOT_UUID:ext4:/$key_file_name"
 
-cat "$mount_path"/etc/default/grub | sed "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"/g" > "$mount_path"/etc/default/grub
+sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"/g" "$mount_path"/etc/default/grub
 
 wait_and_clear 2
 
