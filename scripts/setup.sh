@@ -13,6 +13,8 @@ wait_and_clear() {
 INVALID_ANS="Invalid answer"
 NO_COMMAND="Command not found"
 
+clear
+
 # Notes
 echo "Notes:"
 echo "  Please note that you need to have an external USB drive for this installation"
@@ -224,7 +226,7 @@ USB_KEY_BOOT_UUID=$(blkid "$USB_KEY_BOOT" | sed -n "s/\(.*\)UUID=\"\(.*\)\" TYPE
 wait_and_clear 2
 
 end=false
-while ! end; do
+while ! $end; do
   echo "Do you want to overwrite partitions which will be encrypted with random bytes(/dev/urandom)? y/n : "
   read ans
 
@@ -362,7 +364,7 @@ clear
 
 # Setup hostname
 end=false
-while ! end; do
+while ! $end; do
   echo -n "Please enter hostname : "
   read host_name
 
