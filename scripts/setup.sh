@@ -333,7 +333,7 @@ echo "Generating fstab"
 mkdir "$mount_path"/etc
 genfstab -U "$mount_path" >> "$mount_path"/etc/fstab
 
-wait_and_clear 30
+wait_and_clear 2
 
 while true; do
   echo "Unlocking boot partition"
@@ -400,7 +400,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;
+    :
   fi
 done
 
