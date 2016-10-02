@@ -330,7 +330,11 @@ echo "Creating boot directory"
 mkdir "$mount_path"/boot
 
 echo "Generating fstab"
-genfstab -U "$mount_path" >> "$mount_path"/etc/fstab
+if [ -e "$mount_path"/etc/fstab ]; then
+  genfstab -U "$mount_path" >> "$mount_path"/etc/fstab
+else
+  genfstab -U "$mount_path" >  "$mount_path"/etc/fstab
+fi
 
 wait_and_clear 30
 
