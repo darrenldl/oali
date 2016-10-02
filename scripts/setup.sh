@@ -197,7 +197,7 @@ clear
 echo "Wiping paritioning info"
 dd if=/dev/zero of="$USB_KEY" bs=512 count=2
 
-if efi_mode; then
+if $efi_mode; then
   echo "Creating GPT partition table"
   parted "$USB_KEY" mklabel gpt 2>/dev/null
 
@@ -445,7 +445,7 @@ while true; do
   fi
 done
 
-if efi_mode; then
+if $efi_mode; then
   while true; do
     echo "Installing efibootmgr package"
     arch-chroot "$mount_path" pacman --noconfirm -S efibootmgr
@@ -472,7 +472,7 @@ cat "$mount_path"/etc/default/grub | sed "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_
 wait_and_clear 2
 
 echo "Install grub onto USB key"
-if efi_mode; then
+if $efi_mode; then
   echo "Reset ESP directory"
   rm -rf "$mount_path"/boot/efi
   mkdir "$mount_path"/boot/efi
