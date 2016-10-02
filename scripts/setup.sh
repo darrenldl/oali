@@ -265,7 +265,7 @@ if rand_wipe; then
     if [[ $? == 0 ]]; then
       break
     else
-      ;
+      # do nothing
     fi
   done
 fi
@@ -279,7 +279,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;
+    # do nothing
   fi
 done
 
@@ -300,7 +300,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;
+    # do nothing
   fi
 done
 
@@ -334,7 +334,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;
+    # do nothing
   fi
 done
 
@@ -356,7 +356,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;
+    # do nothing
   fi
 done
 
@@ -406,7 +406,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;
+    # do nothing
   fi
 done
 
@@ -416,7 +416,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;
+    # do nothing
   fi
 done
 
@@ -428,7 +428,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;
+    # do nothing
   fi
 done
 
@@ -441,7 +441,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;
+    # do nothing
   fi
 done
 
@@ -452,7 +452,7 @@ if efi_mode; then
     if [[ $? == 0 ]]; then
       break
     else
-      ;
+      # do nothing
     fi
   done
 fi
