@@ -119,7 +119,7 @@ done
 clear
 
 # choose system partition
-end=0
+end=false
 while ! $end; do
   echo "Stage : choose system partition"
 
@@ -214,7 +214,7 @@ else
   parted "$USB_KEY" mklabel msdos 2>/dev/null
 
   echo "Partitioning"
-  parted -a optimal "$USB_KEY" mkpart primary  0%  25%
+  parted -a optimal "$USB_KEY" mkpart primary  0%  25% 2>/dev/null
 
   parted "$USB_KEY" set 1 boot on 2>/dev/null
 
@@ -242,7 +242,7 @@ while ! $end; do
   fi
 
   while true; do
-    echo "Is this correct? y/n : "
+    echo -n "Is this correct? y/n : "
     read ans
     if   [[ $ans == "y" ]]; then
       end=true
@@ -265,7 +265,7 @@ if rand_wipe; then
     if [[ $? == 0 ]]; then
       break
     else
-      ;;
+      ;
     fi
   done
 fi
@@ -279,7 +279,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;;
+    ;
   fi
 done
 
@@ -300,7 +300,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;;
+    ;
   fi
 done
 
@@ -334,7 +334,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;;
+    ;
   fi
 done
 
@@ -356,7 +356,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;;
+    ;
   fi
 done
 
@@ -393,7 +393,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;;
+    ;
   fi
 done
 
@@ -406,7 +406,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;;
+    ;
   fi
 done
 
@@ -416,7 +416,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;;
+    ;
   fi
 done
 
@@ -428,7 +428,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;;
+    ;
   fi
 done
 
@@ -441,7 +441,7 @@ while true; do
   if [[ $? == 0 ]]; then
     break
   else
-    ;;
+    ;
   fi
 done
 
@@ -452,7 +452,7 @@ if efi_mode; then
     if [[ $? == 0 ]]; then
       break
     else
-      ;;
+      ;
     fi
   done
 fi
