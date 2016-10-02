@@ -471,6 +471,9 @@ echo "Updating mkinitcpio.conf"
 hooks="base udev autodetect modconf encrypt block filesystems keyboard fsck"
 sed -i "s/^HOOKS=.*/HOOKS=\"$hooks\"/g" "$mount_path"/etc/mkinitcpio.conf
 
+echo "Recreating image"
+arch-chroot "$mount_path" mkinitcpio -p linux
+
 echo "Updating grub config"
 echo "GRUB_ENABLE_CRYPTODISK=y" >> "$mount_path"/etc/default/grub
 
