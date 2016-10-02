@@ -102,6 +102,8 @@ while ! $end; do
   while true; do
     $EDITOR $mirrorlist_path
 
+    clear
+
     echo -n "Finished editing? y/n : "
     read ans
     if   [[ $ans == "y" ]]; then
@@ -152,7 +154,9 @@ clear
 
 # Setup encryption and USB key
 echo "Stage : setup encryption and USB key"
+echo ""
 echo "Warning : data on USB key will be lost"
+echo ""
 
 end=false
 while ! $end; do
@@ -328,7 +332,7 @@ mkdir "$mount_path"/boot
 echo "Generating fstab"
 genfstab -U "$mount_path" >> "$mount_path"/etc/fstab
 
-wait_and_clear 2
+wait_and_clear 30
 
 while true; do
   echo "Unlocking boot partition"
