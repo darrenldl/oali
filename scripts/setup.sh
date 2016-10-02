@@ -417,6 +417,8 @@ while true; do
   fi
 done
 
+wait_and_clear
+
 while true; do
   echo "Installing Grsecurity kernel"
   arch-chroot "$mount_path" pacman --noconfirm -S linux-grsec
@@ -474,7 +476,7 @@ echo "GRUB_ENABLE_CRYPTODISK=y" >> "$mount_path"/etc/default/grub
 
 grub_cmdline_linux_default="quiet cryptdevice:/dev/disk/by-uuid/$SYS_PART_UUID:$mapper_name_sys cryptkey:/dev/disk/by-uuid/$USB_KEY_BOOT_UUID:ext4:/$key_file_name"
 
-cat "$mount_path"/etc/default/grub | sed "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"" > "$mount_path"/etc/default/grub
+cat "$mount_path"/etc/default/grub | sed "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"/g" > "$mount_path"/etc/default/grub
 
 wait_and_clear 2
 
