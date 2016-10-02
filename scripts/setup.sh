@@ -258,7 +258,7 @@ done
 
 clear
 
-if rand_wipe; then
+if $rand_wipe; then
   while true; do
     echo "Ovewriting boot partition with random bytes"
     ddrescue --force /dev/urandom "$USB_KEY_BOOT" 2>/dev/null
@@ -296,7 +296,7 @@ wait_and_clear
 # Encrypt main system partition
 while true; do
   echo "Encrypting system partition"
-  cryptsetup --key-file "$key_file_path" luksFormat SYS_PART
+  cryptsetup --key-file "$key_file_path" luksFormat $SYS_PART
   if [[ $? == 0 ]]; then
     break
   else
