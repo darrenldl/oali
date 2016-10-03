@@ -1,3 +1,4 @@
 base:
   '*':
-    - package.sls
+    - package
+    - firewall

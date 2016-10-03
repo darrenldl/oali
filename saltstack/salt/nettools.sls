@@ -6,8 +6,3 @@ Network monitoring/debugging:
       - nmap
       - tcpdump
       - vnstat
-
-Firewall:
-  pkg.installed:
-    - pkgs:
-      - ferm

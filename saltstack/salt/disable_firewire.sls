@@ -1,5 +1,10 @@
 Disable firewire related modules:
+  file.exists:
+    - name: /etc/modprobe.d/disable_fireware.conf
   file.append:
+    - require:
+      - Disable firewire related modules:
+        - file.exists
     - name: /etc/modprobe.d/disable_firewire.conf
     - text:
       - "blacklist ohci1394"

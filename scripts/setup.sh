@@ -62,7 +62,8 @@ wait_and_clear
 # Choose editor
 end=false
 while ! $end; do
-  echo "Stage : choose editor"
+  echo "Choose editor"
+  echo ""
 
   EDITOR=""
   echo -n "Please specifiy an editor to use : "
@@ -91,14 +92,15 @@ done
 clear
 
 # Configure mirrorlist
+echo "Configure mirrorlist"
+echo ""
+
+echo "Press enter to continue"
+read
+
 mirrorlist_path="/etc/pacman.d/mirrorlist"
 end=false
 while ! $end; do
-  echo "Stage : configure mirrorlist"
-
-  echo "Press enter to continue"
-  read ans
-
   while true; do
     $EDITOR $mirrorlist_path
 
@@ -121,10 +123,11 @@ done
 clear
 
 # choose system partition
+echo "Choose system partition"
+echo ""
+
 end=false
 while ! $end; do
-  echo "Stage : choose system partition"
-
   echo -n "Please specify a partition to use : "
   read SYS_PART
 
@@ -153,7 +156,7 @@ SYS_PART_UUID=$(blkid "$SYS_PART" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\
 clear
 
 # Setup encryption and USB key
-echo "Stage : setup encryption and USB key"
+echo "Setup encryption and USB key"
 echo ""
 echo "Warning : data on USB key will be lost"
 echo ""
@@ -402,6 +405,15 @@ done
 
 echo $host_name > "$mount_path"/etc/hostname
 
+wait_and_clear 2
+
+echo "Setting locale"
+sed -i "s@#en_US.UTF-8 UTF-8@en_US.UTF-8 UTF-8@g" "$mount_path"/etc/locale.gen
+arch-chroot "$mount_path" local-gen
+echo "LANG=en_US.UTF-8" > "$mount_path"/etc/locale.conf
+
+wait_and_clear 2
+
 # Update database
 while true; do
   echo "Updating package database"
@@ -480,8 +492,12 @@ echo "Updating mkinitcpio.conf"
 hooks="base udev autodetect modconf encrypt block filesystems keyboard fsck"
 sed -i "s@^HOOKS=.*@HOOKS=\"$hooks\"@g" "$mount_path"/etc/mkinitcpio.conf
 
+wait_and_clear 2
+
 echo "Recreating image"
 arch-chroot "$mount_path" mkinitcpio -p linux-grsec
+
+clear
 
 echo "Updating grub config"
 echo "GRUB_ENABLE_CRYPTODISK=y" >> "$mount_path"/etc/default/grub
@@ -490,7 +506,7 @@ grub_cmdline_linux_default="quiet cryptdevice:/dev/disk/by-uuid/$SYS_PART_UUID:$
 
 sed -i "s@^GRUB_CMDLINE_LINUX_DEFAULT=.*@GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"@g" "$mount_path"/etc/default/grub
 
-wait_and_clear 30
+wait_and_clear 2
 
 # Install grub and required files
 echo "Install grub onto USB key"
@@ -514,8 +530,40 @@ arch-chroot "$mount_path" grub-mkconfig -o /boot/grub/grub.cfg
 
 # Basic setup of system
 
+# Install saltstack
+while true; do
+  echo "Installing saltstack"
+  arch-chroot "$mount_path" pacman -S salt-zmq
+  if [[ $? == 0 ]]; then
+    break
+  else
+    :
+  fi
+done
+
+wait_and_clear 2
+
+# Setup saltstack
+echo "Updating saltstack config"
+sed -i "s@#file_client: remote@file_client: local@g" "$mount_path"/etc/salt/minion
+
+wait_and_clear 2
+
 # Copy saltstack files
+saltstack_files_path="../saltstack"
+echo "Copying saltstack files over to system"
+cp -r "$saltstack_files_path"/salt   "$mount_path"/srv
+cp -r "$saltstack_files_path"/pillar "$mount_path"/srv
+
+wait_and_clear 2
 
 # Execute salt for final setup
+echo "Executing salt"
+arch-chroot "$mount_path" salt-call --local state.apply
+
+wait_and_clear 2
 
 # Restart
+echo "Restarting system in 30 seconds"
+sleep 30
+shutdown -r now
