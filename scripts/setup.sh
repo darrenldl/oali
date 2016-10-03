@@ -378,7 +378,6 @@ echo "Merging new fstab with configured fstab, if any"
 if [ -e "$mount_path"/etc/fstab.pacnew ]; then
   cat "$mount_path"/etc/fstab >> "$mount_path"/etc/fstab.pacnew
   mv "$mount_path"/etc/fstab.pacnew "$mount_path"/etc/fstab
-  rm "$mount_path"/etc/fstab.pacnew
 fi
 
 wait_and_clear 2
@@ -682,6 +681,8 @@ if $close_disks; then
   cryptsetup luksClose /dev/mapper/"$mapper_name_boot"
   cryptsetup luksClose /dev/mapper/"$mapper_name_sys"
 fi
+
+clear
 
 # Restart
 end=false
