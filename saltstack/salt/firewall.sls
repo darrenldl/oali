@@ -5,7 +5,7 @@ Install ferm:
 
 Copy ferm config:
   file.managed:
-    - name: [ 'firewall:ferm_path' ]
+    - name: {{ pillar['firewall:ferm_path'] }}
     - source: salt://basic_workstation_ferm
     - replace: True
     - require:
@@ -14,14 +14,14 @@ Copy ferm config:
 
 Apply ferm config:
   cmd.run:  
-    - name: ferm [ 'firewall:ferm_path' ]
+    - name: ferm {{ pillar['firewall:ferm_path'] }}
     - require:
       - Copy ferm config:
         - file.managed
 
 Save firewall rules:
   cmd.run:
-    - name: iptables-save > [ 'firewall:rules_path' ]
+    - name: iptables-save > {{ pillar['firewall:rules_path'] }}
     - require:
       - Apply ferm config:
         - cmd.run
