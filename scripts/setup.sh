@@ -217,6 +217,8 @@ if $efi_mode; then
   parted "$USB_KEY" set 1 boot on 2>/dev/null
 
   USB_KEY_ESP="$USB_KEY"1
+  USB_KEY_ESP_UUID=$(blkid "$USB_KEY_ESP" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\2@p")
+
   USB_KEY_BOOT="$USB_KEY"2
 else
   echo "Creating MBR partition table"
@@ -489,7 +491,8 @@ fi
 
 # Setup config
 echo "Updating mkinitcpio.conf"
-hooks="base udev autodetect modconf encrypt block filesystems keyboard fsck"
+modules="ext4"
+hooks="base udev autodetect modconf block encrypt filesystems keyboard fsck"
 sed -i "s@^HOOKS=.*@HOOKS=\"$hooks\"@g" "$mount_path"/etc/mkinitcpio.conf
 
 wait_and_clear 2
@@ -527,6 +530,30 @@ echo "Generate grub configuration file"
 arch-chroot "$mount_path" grub-mkconfig -o /boot/grub/grub.cfg
 
 # Prepare USB key mounting/unmounting scripts and copy into new system
+echo "Generating USB key mounting and unmounting scripts"
+mount_script_name="usb_key_mount.sh"
+mount_script_path="$mount_path"/"$mount_script_name"
+cp crypt_disk_mount_template "$mount_script_path"
+chmod u+x "$mount_script_path"
+if $efi_mode; then
+  sed -i "s@EFI_MODE_DUMMY@true@g" "$mount_script_path"
+  sed -i "s@USB_KEY_ESP_UUID_DUMMY@$USB_KEY_ESP_UUID@g" "$mount_script_path"
+else
+  sed -i "s@EFI_MODE_DUMMY@false@g" "$mount_script_path"
+fi
+sed -i "s@USB_KEY_BOOT_UUID_DUMMY@$USB_KEY_BOOT_UUID@g" "$mount_script_path"
+
+umount_script_name="usb_key_umount.sh"
+umount_script_path="$umount_path"/"$umount_script_name"
+cp crypt_disk_umount_template "$umount_script_path"
+chmod u+x "$umount_script_path"
+if $efi_mode; then
+  sed -i "s@EFI_MODE_DUMMY@true@g" "$umount_script_path"
+  sed -i "s@USB_KEY_ESP_UUID_DUMMY@$USB_KEY_ESP_UUID@g" "$umount_script_path"
+else
+  sed -i "s@EFI_MODE_DUMMY@false@g" "$umount_script_path"
+fi
+sed -i "s@USB_KEY_BOOT_UUID_DUMMY@$USB_KEY_BOOT_UUID@g" "$umount_script_path"
 
 # Basic setup of system
 

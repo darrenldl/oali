@@ -39,10 +39,6 @@ Mounting:
 Partitioning:
   pkg.installed:
     - pkgs:
-      - fdisk
-      - cfdisk
-      - gdisk
-      - cgdisk
       - parted
       - gparted
 

@@ -1,5 +1,5 @@
 Create disable firewire conf:
-  file.exists:
+  file.managed:
     - name: {{ pillar['disable_firewire']['conf_path'] }}
 
 Disable firewire related modules:

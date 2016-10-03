@@ -1,5 +1,18 @@
+#!/bin/bash
 efi_mode=EFI_MODE_DUMMY
 usb_key_esp_uuid=USB_KEY_ESP_UUID_DUMMY
 usb_key_boot_uuid=USB_KEY_BOOT_UUID_DUMMY
+mapper_name_boot=MAPPER_NAME_BOOT_DUMMY
 
+# check if boot partition is visible
+if [ ! -b /dev/disk/by-uuid/"$usb_key_boot_uuid" ]; then
+  echo "Boot partition not found"
+  exit
+fi
 
+crypt
+
+if $efi_mode; then
+  
+else
+fi
