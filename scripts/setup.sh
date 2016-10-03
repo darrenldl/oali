@@ -151,8 +151,6 @@ while ! $end; do
   fi
 done
 
-SYS_PART_UUID=$(blkid "$SYS_PART" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\2@p")
-
 clear
 
 # Setup encryption and USB key
@@ -232,8 +230,6 @@ else
   USB_KEY_BOOT="$USB_KEY"1
 fi
 
-USB_KEY_BOOT_UUID=$(blkid "$USB_KEY_BOOT" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\2@p")
-
 wait_and_clear 2
 
 end=false
@@ -294,6 +290,8 @@ while true; do
   fi
 done
 
+USB_KEY_BOOT_UUID=$(blkid "$USB_KEY_BOOT" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\2@p")
+
 clear
 
 key_file_name="sys_part_key_file"
@@ -314,6 +312,8 @@ while true; do
     :
   fi
 done
+
+SYS_PART_UUID=$(blkid "$SYS_PART" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\2@p")
 
 wait_and_clear
 
@@ -530,7 +530,7 @@ wait_and_clear 2
 echo "Updating grub config"
 echo "GRUB_ENABLE_CRYPTODISK=y" >> "$mount_path"/etc/default/grub
 
-grub_cmdline_linux_default="quiet cryptdevice:/dev/disk/by-uuid/$USB_KEY_BOOT_UUID:$mapper_name_boot cryptdevice2:/dev/disk/by-uuid/$SYS_PART_UUID:$mapper_name_sys cryptkey2:/dev/mapper/$mapper_name_boot:ext4:/$key_file_name"
+grub_cmdline_linux_default="quiet cryptdevice=UUID=$USB_KEY_BOOT_UUID:$mapper_name_boot cryptdevice2=UUID=$SYS_PART_UUID:$mapper_name_sys cryptkey2=/dev/mapper/$mapper_name_boot:ext4:/$key_file_name"
 
 sed -i "s@^GRUB_CMDLINE_LINUX_DEFAULT=.*@GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"@g" "$mount_path"/etc/default/grub
 
@@ -585,7 +585,7 @@ sed -i "s@USB_KEY_BOOT_UUID_DUMMY@$USB_KEY_BOOT_UUID@g" "$umount_script_path"
 # Install saltstack
 while true; do
   echo "Installing saltstack"
-  arch-chroot "$mount_path" pacman -S salt-zmq
+  arch-chroot "$mount_path" pacman --noconfirm -S salt-zmq
   if [[ $? == 0 ]]; then
     break
   else
@@ -645,6 +645,76 @@ if $run_salt; then
   wait_and_clear 2
 fi
 
+clear
+
+end=false
+while ! $end; do
+  echo -n "Do you want to close the disks and USB key? y/n : "
+  read ans
+  if [[ $ans == "y" ]]; then
+    close_disks=true
+    echo "You entered yes"
+  elif [[ $ans == "n" ]]; then
+    close_disks=false
+    echo "You entered no"
+  else
+    echo -e $INVALID_ANS
+    continue
+  fi
+
+  while true; do
+    echo -n "Is this correct? y/n : "
+    read ans
+    if [[ $ans == "y" ]]; then
+      end=true
+      break
+    elif [[ $ans == "n" ]]; then
+      end=false
+      break
+    else
+      echo -e $INVALID_ANS
+    fi
+  done
+done
+
+if $close_disks; then
+  umount -R /mnt
+  cryptsetup luksClose /dev/mapper/"$mapper_name_boot"
+  cryptsetup luksClose /dev/mapper/"$mapper_name_sys"
+fi
+
 # Restart
-echo "Restarting system in 1 minute"
-shutdown -t 1 -r now
+end=false
+while ! $end; do
+  echo -n "Do you want to restart? y/n : "
+  read ans
+  if [[ $ans == "y" ]]; then
+    shutdown_system=true
+    echo "You entered yes"
+  elif [[ $ans == "n" ]]; then
+    shutdown_system=false
+    echo "You entered no"
+  else
+    echo -e $INVALID_ANS
+    continue
+  fi
+
+  while true; do
+    echo -n "Is this correct? y/n : "
+    read ans
+    if [[ $ans == "y" ]]; then
+      end=true
+      break
+    elif [[ $ans == "n" ]]; then
+      end=false
+      break
+    else
+      echo -e $INVALID_ANS
+    fi
+  done
+done
+
+if $shutdown_system; then
+  echo "Restarting system in 1 minute"
+  shutdown -t 1 -r now
+fi
