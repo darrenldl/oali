@@ -481,7 +481,7 @@ grub_cmdline_linux_default="quiet cryptdevice:/dev/disk/by-uuid/$SYS_PART_UUID:$
 
 sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"/g" "$mount_path"/etc/default/grub
 
-wait_and_clear 2
+wait_and_clear 30
 
 # Install grub and required files
 echo "Install grub onto USB key"
@@ -499,7 +499,7 @@ else
 fi
 
 echo "Generate grub configuration file"
-arch-chroot "$mount_path" grub-mkconfig -o "$mount_path"/boot/grub/grub.cfg
+arch-chroot "$mount_path" grub-mkconfig -o /boot/grub/grub.cfg
 
 # Prepare USB key mounting/unmounting scripts and copy into new system
 
