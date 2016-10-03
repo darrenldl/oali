@@ -489,11 +489,32 @@ if $efi_mode; then
   done
 fi
 
+# Duplicate encrypt hook
+echo "Duplicating encrypt hook"
+install_dir="$mount_path/usr/lib/initcpio/install"
+hooks_dir="$mount_path/usr/lib/initcpio/hooks"
+echo "Duplicating encrypt hook"
+cp "$install_dir"/encrypt "$install_dir"/encrypt2
+cp "$hooks_dir"/encrypt "$hooks_dir"/encrypt2
+sed -i "s@cryptdevice@cryptdevice2@g" "$install_dir"/encrypt2
+sed -i "s@cryptkey@cryptkey2@g"       "$install_dir"/encrypt2
+sed -i "s@cryptdevice@cryptdevice2@g" "$hooks_dir"/encrypt2
+sed -i "s@cryptkey@cryptkey2@g"       "$hooks_dir"/encrypt2
+
+wait_and_clear 2
+
+# Generate keyfile for boot partition unlocking
+echo "Generating keyfile for boot partition"
+dd if=/dev/urandom of="$mount_path"/boot_part_key_file bs=1024 count=1024
+
+wait_and_clear 2
+
 # Setup config
 echo "Updating mkinitcpio.conf"
 modules="ext4"
-hooks="base udev autodetect modconf block encrypt filesystems keyboard fsck"
+hooks="base udev autodetect modconf block encrypt encrypt2 filesystems keyboard fsck"
 sed -i "s@^HOOKS=.*@HOOKS=\"$hooks\"@g" "$mount_path"/etc/mkinitcpio.conf
+files="/crypto_keyfile.bin"
 
 wait_and_clear 2
 
@@ -505,7 +526,7 @@ clear
 echo "Updating grub config"
 echo "GRUB_ENABLE_CRYPTODISK=y" >> "$mount_path"/etc/default/grub
 
-grub_cmdline_linux_default="quiet cryptdevice:/dev/disk/by-uuid/$SYS_PART_UUID:$mapper_name_sys cryptkey:/dev/disk/by-uuid/$USB_KEY_BOOT_UUID:ext4:/$key_file_name"
+grub_cmdline_linux_default="quiet cryptdevice2:/dev/disk/by-uuid/$SYS_PART_UUID:$mapper_name_sys cryptkey2:/dev/disk/by-uuid/$USB_KEY_BOOT_UUID:ext4:/$key_file_name"
 
 sed -i "s@^GRUB_CMDLINE_LINUX_DEFAULT=.*@GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"@g" "$mount_path"/etc/default/grub
 
