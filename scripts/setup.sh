@@ -148,7 +148,7 @@ while ! $end; do
   fi
 done
 
-SYS_PART_UUID=$(blkid "$SYS_PART" | sed -n "s/\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)/\2/p")
+SYS_PART_UUID=$(blkid "$SYS_PART" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\2@p")
 
 clear
 
@@ -227,7 +227,7 @@ else
   USB_KEY_BOOT="$USB_KEY"1
 fi
 
-USB_KEY_BOOT_UUID=$(blkid "$USB_KEY_BOOT" | sed -n "s/\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)/\2/p")
+USB_KEY_BOOT_UUID=$(blkid "$USB_KEY_BOOT" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\2@p")
 
 wait_and_clear 2
 
@@ -369,6 +369,15 @@ done
 
 clear
 
+echo "Merging new fstab with configured fstab, if any"
+if [ -e "$mount_path"/etc/fstab.pacnew ]; then
+  cat "$mount_path"/etc/fstab >> "$mount_path"/etc/fstab.pacnew
+  mv "$mount_path"/etc/fstab.pacnew "$mount_path"/etc/fstab
+  rm "$mount_path"/etc/fstab.pacnew
+fi
+
+wait_and_clear 2
+
 # Setup hostname
 end=false
 while ! $end; do
@@ -469,17 +478,17 @@ fi
 # Setup config
 echo "Updating mkinitcpio.conf"
 hooks="base udev autodetect modconf encrypt block filesystems keyboard fsck"
-sed -i "s/^HOOKS=.*/HOOKS=\"$hooks\"/g" "$mount_path"/etc/mkinitcpio.conf
+sed -i "s@^HOOKS=.*@HOOKS=\"$hooks\"@g" "$mount_path"/etc/mkinitcpio.conf
 
 echo "Recreating image"
-arch-chroot "$mount_path" mkinitcpio -p linux
+arch-chroot "$mount_path" mkinitcpio -p linux-grsec
 
 echo "Updating grub config"
 echo "GRUB_ENABLE_CRYPTODISK=y" >> "$mount_path"/etc/default/grub
 
 grub_cmdline_linux_default="quiet cryptdevice:/dev/disk/by-uuid/$SYS_PART_UUID:$mapper_name_sys cryptkey:/dev/disk/by-uuid/$USB_KEY_BOOT_UUID:ext4:/$key_file_name"
 
-sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"/g" "$mount_path"/etc/default/grub
+sed -i "s@^GRUB_CMDLINE_LINUX_DEFAULT=.*@GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"@g" "$mount_path"/etc/default/grub
 
 wait_and_clear 30
 
