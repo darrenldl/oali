@@ -60,16 +60,16 @@ timedatectl set-ntp true
 wait_and_clear
 
 # Choose editor
+echo "Choose editor"
+echo ""
+
 end=false
 while ! $end; do
-  echo "Choose editor"
-  echo ""
-
   EDITOR=""
   echo -n "Please specifiy an editor to use : "
   read EDITOR
 
-  if hash $EDITOR 2>/dev/null; then
+  if hash $EDITOR &>/dev/null; then
     echo "Editor selected :" $EDITOR
     while true; do
       echo -n "Is this correct? y/n : "
@@ -202,19 +202,19 @@ fi
 clear
 
 echo "Wiping paritioning info"
-dd if=/dev/zero of="$USB_KEY" bs=512 count=2 2>/dev/null
+dd if=/dev/zero of="$USB_KEY" bs=512 count=2 &>/dev/null
 
 wait_and_clear 2
 
 if $efi_mode; then
   echo "Creating GPT partition table"
-  parted "$USB_KEY" mklabel gpt 2>/dev/null
+  parted "$USB_KEY" mklabel gpt &>/dev/null
 
   echo "Partitioning"
-  parted -a optimal "$USB_KEY" mkpart primary fat32  0%  25% 2>/dev/null
-  parted -a optimal "$USB_KEY" mkpart primary       25%  50% 2>/dev/null
+  parted -a optimal "$USB_KEY" mkpart primary fat32  0%  25% &>/dev/null
+  parted -a optimal "$USB_KEY" mkpart primary       25%  50% &>/dev/null
 
-  parted "$USB_KEY" set 1 boot on 2>/dev/null
+  parted "$USB_KEY" set 1 boot on &>/dev/null
 
   USB_KEY_ESP="$USB_KEY"1
   USB_KEY_ESP_UUID=$(blkid "$USB_KEY_ESP" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\2@p")
@@ -222,12 +222,12 @@ if $efi_mode; then
   USB_KEY_BOOT="$USB_KEY"2
 else
   echo "Creating MBR partition table"
-  parted "$USB_KEY" mklabel msdos 2>/dev/null
+  parted "$USB_KEY" mklabel msdos &>/dev/null
 
   echo "Partitioning"
-  parted -a optimal "$USB_KEY" mkpart primary  0%  25% 2>/dev/null
+  parted -a optimal "$USB_KEY" mkpart primary  0%  25% &>/dev/null
 
-  parted "$USB_KEY" set 1 boot on 2>/dev/null
+  parted "$USB_KEY" set 1 boot on &>/dev/null
 
   USB_KEY_BOOT="$USB_KEY"1
 fi
@@ -272,7 +272,7 @@ clear
 if $rand_wipe; then
   while true; do
     echo "Ovewriting boot partition with random bytes"
-    ddrescue --force /dev/urandom "$USB_KEY_BOOT" 2>/dev/null
+    ddrescue --force /dev/urandom "$USB_KEY_BOOT" &>/dev/null
     if [[ $? == 0 ]]; then
       break
     else
@@ -489,44 +489,48 @@ if $efi_mode; then
   done
 fi
 
-# Duplicate encrypt hook
-echo "Duplicating encrypt hook"
 install_dir="$mount_path/usr/lib/initcpio/install"
 hooks_dir="$mount_path/usr/lib/initcpio/hooks"
+
+# Duplicate encrypt hook
+echo "Duplicating encrypt hook"
 echo "Duplicating encrypt hook"
 cp "$install_dir"/encrypt "$install_dir"/encrypt2
-cp "$hooks_dir"/encrypt "$hooks_dir"/encrypt2
+cp "$hooks_dir"/encrypt   "$hooks_dir"/encrypt2
 sed -i "s@cryptdevice@cryptdevice2@g" "$install_dir"/encrypt2
 sed -i "s@cryptkey@cryptkey2@g"       "$install_dir"/encrypt2
 sed -i "s@cryptdevice@cryptdevice2@g" "$hooks_dir"/encrypt2
 sed -i "s@cryptkey@cryptkey2@g"       "$hooks_dir"/encrypt2
 
-wait_and_clear 2
+# Add custom hook to close boot partition
+custom_install_hooks_dir="hooks_install"
+custom_runtime_hooks_dir="hooks_runtime"
+custom_hook_name="closeboot"
 
-# Generate keyfile for boot partition unlocking
-echo "Generating keyfile for boot partition"
-dd if=/dev/urandom of="$mount_path"/boot_part_key_file bs=1024 count=1024
+echo "Installing custom hook to close boot partition opened by cryptsetup"
+cp "$custom_install_hooks_dir"/"$custom_hook_name"    "$install_dir"
+cp "$custom_runtime_hooks_dir"/"$custom_hook_name"    "$hooks_dir"
+sed -i "s@MAPPER_NAME_BOOT_DUMMY@$mapper_name_boot@g" "$hooks_dir"/"$custom_hook_name"
 
 wait_and_clear 2
 
 # Setup config
 echo "Updating mkinitcpio.conf"
 modules="ext4"
-hooks="base udev autodetect modconf block encrypt encrypt2 filesystems keyboard fsck"
+hooks="base udev autodetect modconf block encrypt encrypt2 closeboot filesystems keyboard fsck"
 sed -i "s@^HOOKS=.*@HOOKS=\"$hooks\"@g" "$mount_path"/etc/mkinitcpio.conf
-files="/crypto_keyfile.bin"
 
 wait_and_clear 2
 
 echo "Recreating image"
 arch-chroot "$mount_path" mkinitcpio -p linux-grsec
 
-clear
+wait_and_clear 2
 
 echo "Updating grub config"
 echo "GRUB_ENABLE_CRYPTODISK=y" >> "$mount_path"/etc/default/grub
 
-grub_cmdline_linux_default="quiet cryptdevice2:/dev/disk/by-uuid/$SYS_PART_UUID:$mapper_name_sys cryptkey2:/dev/disk/by-uuid/$USB_KEY_BOOT_UUID:ext4:/$key_file_name"
+grub_cmdline_linux_default="quiet cryptdevice:/dev/disk/by-uuid/$USB_KEY_BOOT_UUID:$mapper_name_boot cryptdevice2:/dev/disk/by-uuid/$SYS_PART_UUID:$mapper_name_sys cryptkey2:/dev/mapper/$mapper_name_boot:ext4:/$key_file_name"
 
 sed -i "s@^GRUB_CMDLINE_LINUX_DEFAULT=.*@GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"@g" "$mount_path"/etc/default/grub
 
@@ -604,13 +608,43 @@ cp -r "$saltstack_files_path"/*   "$mount_path"/srv
 
 wait_and_clear 2
 
-# Execute salt for final setup
-echo "Executing salt"
-arch-chroot "$mount_path" salt-call --local state.apply
+end=false
+while ! $end; do
+  echo -n "Do you want to execute saltstack right now? y/n : "
+  read ans
+  if [[ $ans == "y" ]]; then
+    run_salt=true
+    echo "You entered yes"
+  elif [[ $ans == "n" ]]; then
+    run_salt=false
+    echo "You entered no"
+  else
+    echo -e $INVALID_ANS
+    continue
+  fi
 
-wait_and_clear 2
+  while true; do
+    echo -n "Is this correct? y/n : "
+    read ans
+    if [[ $ans == "y" ]]; then
+      end=true
+      break
+    elif [[ $ans == "n" ]]; then
+      end=false
+      break
+    else
+      echo -e $INVALID_ANS
+    fi
+  done
+done
+
+if $run_salt; then
+  echo "Executing salt for final setup"
+  arch-chroot "$mount_path" salt-call --local state.apply
+
+  wait_and_clear 2
+fi
 
 # Restart
-echo "Restarting system in 30 seconds"
-sleep 30
-shutdown -r now
+echo "Restarting system in 1 minute"
+shutdown -t 1 -r now
