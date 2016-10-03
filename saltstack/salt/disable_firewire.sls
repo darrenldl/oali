@@ -1,11 +1,12 @@
-Disable firewire related modules:
+Create disable firewire conf:
   file.exists:
-    - name: /etc/modprobe.d/disable_fireware.conf
+    - name: {{ pillar['disable_firewire']['conf_path'] }}
+
+Disable firewire related modules:
   file.append:
     - require:
-      - Disable firewire related modules:
-        - file.exists
-    - name: /etc/modprobe.d/disable_firewire.conf
+      - Create disable firewire conf
+    - name: {{ pillar['disable_firewire']['conf_path'] }}
     - text:
       - "blacklist ohci1394"
       - "blacklist sbp2"

@@ -9,23 +9,24 @@ Copy ferm config:
     - source: salt://basic_workstation_ferm
     - replace: True
     - require:
-      - Install ferm:
-        - pkg.installed
+      - Install ferm
+    - order:
+      - 100
 
 Apply ferm config:
   cmd.run:  
     - name: ferm {{ pillar['firewall']['ferm_path'] }}
-    - require:
-      - Copy ferm config:
-        - file.managed
+    - order:
+      - 101
 
 Save firewall rules:
   cmd.run:
     - name: iptables-save > {{ pillar['firewall']['rules_path'] }}
-    - require:
-      - Apply ferm config:
-        - cmd.run
+    - order:
+      - 102
 
 Enable firewall service:
   cmd.run:
     - name: systemctl enable iptables
+    - order:
+      - 103

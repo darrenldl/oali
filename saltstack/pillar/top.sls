@@ -2,3 +2,4 @@ base:
   '*':
     - package
     - firewall
+    - harden
