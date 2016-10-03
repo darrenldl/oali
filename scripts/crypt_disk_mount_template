@@ -1,0 +1,5 @@
+efi_mode=EFI_MODE_DUMMY
+usb_key_esp_uuid=USB_KEY_ESP_UUID_DUMMY
+usb_key_boot_uuid=USB_KEY_BOOT_UUID_DUMMY
+
+

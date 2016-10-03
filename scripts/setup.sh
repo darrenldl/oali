@@ -552,8 +552,7 @@ wait_and_clear 2
 # Copy saltstack files
 saltstack_files_path="../saltstack"
 echo "Copying saltstack files over to system"
-cp -r "$saltstack_files_path"/salt   "$mount_path"/srv
-cp -r "$saltstack_files_path"/pillar "$mount_path"/srv
+cp -r "$saltstack_files_path"/*   "$mount_path"/srv
 
 wait_and_clear 2
 
