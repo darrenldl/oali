@@ -1,0 +1,30 @@
+# Config based off example script on ferm website
+#
+# Source of original script:
+#   Ferm example script
+#   Firewall configuration for a workstation which accepts remote ssh login
+#   Author: Max Kellermann <max@duempel.org>
+
+table filter {
+    chain INPUT {
+        policy DROP;
+
+        # connection tracking
+        mod state state INVALID DROP;
+        mod state state (ESTABLISHED RELATED) ACCEPT;
+
+        # allow local connections
+        interface lo ACCEPT;
+
+        # respond to ping
+        proto icmp icmp-type echo-request ACCEPT;
+
+        # drop everything else
+    }
+
+    # no limits on outgoing connections
+    chain OUTPUT policy ACCEPT;
+
+    # no forwarding
+    chain FORWARD policy DROP;
+}
