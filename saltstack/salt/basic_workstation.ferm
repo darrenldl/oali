@@ -4,6 +4,9 @@
 #   Ferm example script
 #   Firewall configuration for a workstation which accepts remote ssh login
 #   Author: Max Kellermann <max@duempel.org>
+#
+#   URL: ferm.foo-projects.org/download/examples/workstation.ferm
+#   Retrieved @ 2016-10-04 14:32
 
 table filter {
     chain INPUT {
