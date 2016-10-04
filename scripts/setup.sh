@@ -209,8 +209,8 @@ if $efi_mode; then
   parted "$USB_KEY" mklabel gpt &>/dev/null
 
   echo "Partitioning"
-  parted -a optimal "$USB_KEY" mkpart primary  0%  25% &>/dev/null
-  parted -a optimal "$USB_KEY" mkpart primary 25%  50% &>/dev/null
+  parted -a optimal "$USB_KEY" mkpart primary fat32  0%  25% &>/dev/null
+  parted -a optimal "$USB_KEY" mkpart primary       25%  50% &>/dev/null
 
   parted "$USB_KEY" set 1 boot on &>/dev/null
 
