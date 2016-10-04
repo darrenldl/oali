@@ -353,6 +353,8 @@ done
 echo "Formatting boot partition"
 mkfs.ext4 /dev/mapper/"$mapper_name_boot"
 
+wait_and_clear 2
+
 echo "Mounting boot partition"
 mount /dev/mapper/"$mapper_name_boot" "$mount_path"/boot
 
