@@ -410,8 +410,8 @@ wait_and_clear 2
 
 echo "Setting locale"
 sed -i "s@#en_US.UTF-8 UTF-8@en_US.UTF-8 UTF-8@g" "$mount_path"/etc/locale.gen
-arch-chroot "$mount_path" local-gen
 echo "LANG=en_US.UTF-8" > "$mount_path"/etc/locale.conf
+arch-chroot "$mount_path" locale-gen
 
 wait_and_clear 2
 

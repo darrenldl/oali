@@ -1,11 +1,11 @@
 #!/bin/ash
 
 build() {
-  :
+    add_runscript
 }
 
 help() {
-  cat <<HELPEOF
+    cat <<HELPEOF
 This hook is a custom hook installed by Linux_Laptop_Salt_Hard setup script for closing boot device after being opened by the encrypt hook.
 
 See https://github.com/darrenldl/Linux_Laptop_Salt_Hard .
