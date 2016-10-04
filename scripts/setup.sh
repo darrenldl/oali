@@ -209,12 +209,16 @@ if $efi_mode; then
   parted "$USB_KEY" mklabel gpt &>/dev/null
 
   echo "Partitioning"
-  parted -a optimal "$USB_KEY" mkpart primary fat32  0%  25% &>/dev/null
-  parted -a optimal "$USB_KEY" mkpart primary       25%  50% &>/dev/null
+  parted -a optimal "$USB_KEY" mkpart primary  0%  25% &>/dev/null
+  parted -a optimal "$USB_KEY" mkpart primary 25%  50% &>/dev/null
 
   parted "$USB_KEY" set 1 boot on &>/dev/null
 
   USB_KEY_ESP="$USB_KEY"1
+
+  echo "Formatting ESP partition"
+  mkfs.fat -F32 "$USB_KEY_ESP"
+
   USB_KEY_ESP_UUID=$(blkid "$USB_KEY_ESP" | sed -n "s@\(.*\)UUID=\"\(.*\)\" TYPE\(.*\)@\2@p")
 
   USB_KEY_BOOT="$USB_KEY"2
@@ -489,6 +493,8 @@ if $efi_mode; then
     fi
   done
 fi
+
+clear
 
 install_dir="$mount_path/usr/lib/initcpio/install"
 hooks_dir="$mount_path/usr/lib/initcpio/hooks"
