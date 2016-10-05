@@ -7,6 +7,12 @@ System hardening:
       - pax-utils
       - paxtest
 
+Secure chat:
+  pkg.installed:
+    - pkgs:
+      # Tox chat
+      - qtox
+
 Anti-infoleak:
   pkg.installed:
     - pkgs:

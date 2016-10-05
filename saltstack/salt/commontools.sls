@@ -26,6 +26,13 @@ Desktop environment:
       - xfce4-goodies
       - xfce4-notifyd
 
+Audio server:
+  pkg.installed:
+    - pkgs:
+      - pulseaudio
+      - paprefs
+      - pavucontrol
+
 Archiving:
   pkg.installed:
     - pkgs:
@@ -53,6 +60,11 @@ Web browsers:
   pkg.installed:
     - pkgs:
       - firefox
+
+Voice/video chat clients:
+  pkg.installed:
+    - pkgs:
+      - skype
 
 Mail clients:
   pkg.installed:
