@@ -4,15 +4,54 @@ usb_key_esp_uuid=USB_KEY_ESP_UUID_DUMMY
 usb_key_boot_uuid=USB_KEY_BOOT_UUID_DUMMY
 mapper_name_boot=MAPPER_NAME_BOOT_DUMMY
 
-# check if boot partition is visible
-if [ ! -b /dev/disk/by-uuid/"$usb_key_boot_uuid" ]; then
-  echo "Boot partition not found"
-  exit
-fi
+while true; do
+  echo "Looking for encrypted boot"
 
-crypt
+  if [ -b /dev/disk/by-uuid/"$usb_key_boot_uuid" ]; then
+    echo "Unlocking boot partition"
+    cryptsetup luksOpen /dev/disk/by-uuid/"$usb_key_boot_uuid" "$mapper_name_boot"
+    if [[ $? == 0 ]]; then
+      break
+    else
+      :
+    fi
+  else
+    echo "Boot partition not found"
+  fi
+
+  echo -n "Do you want to exit the script? y/N : "
+  read ans
+  if [[ $ans == "y" ]]; then
+    exit
+  else
+    :
+  fi
+done
+
+echo "Mounting boot partition"
+mount /dev/mapper/"$mapper_name_boot" /boot
 
 if $efi_mode; then
-  
-else
+  while true; do
+    echo "Looking for ESP partition"
+
+    if [ -b /dev/disk/by-uuid/"$usb_key_esp_uuid" ]; then
+      break
+    else
+      echo "ESP partition not found"
+    fi
+
+    echo -n "Do you want to exit the script? y/N : "
+    read ans
+    if [[ $ans == "y" ]]; then
+      exit
+    else
+      :
+    fi
+  done
+
+  echo "Mounting EFI partition"
+  mount /dev/disk/by-uuid/"$usb_key_esp_uuid" /boot/efi
 fi
+
+echo "USB key mounted successfully"

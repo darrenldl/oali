@@ -566,7 +566,7 @@ echo "Generating USB key mounting and unmounting scripts"
 mount_script_name="usb_key_mount.sh"
 mount_script_path="$mount_path"/"$mount_script_name"
 cp crypt_disk_mount_template "$mount_script_path"
-chmod u+x "$mount_script_path"
+chown root:root "$mount_script_path"
 if $efi_mode; then
   sed -i "s@EFI_MODE_DUMMY@true@g" "$mount_script_path"
   sed -i "s@USB_KEY_ESP_UUID_DUMMY@$USB_KEY_ESP_UUID@g" "$mount_script_path"
@@ -574,11 +574,15 @@ else
   sed -i "s@EFI_MODE_DUMMY@false@g" "$mount_script_path"
 fi
 sed -i "s@USB_KEY_BOOT_UUID_DUMMY@$USB_KEY_BOOT_UUID@g" "$mount_script_path"
+sed -i "s@MAPPER_NAME_BOOT_DUMMY@$mapper_name_boot@g" "$mount_script_path"
+chmod u=rx "$mount_script_path"
+chmod g=rx "$mount_script_path"
+chmod o=   "$mount_script_path"
 
 umount_script_name="usb_key_umount.sh"
 umount_script_path="$umount_path"/"$umount_script_name"
 cp crypt_disk_umount_template "$umount_script_path"
-chmod u+x "$umount_script_path"
+chown root:root "$umount_script_path"
 if $efi_mode; then
   sed -i "s@EFI_MODE_DUMMY@true@g" "$umount_script_path"
   sed -i "s@USB_KEY_ESP_UUID_DUMMY@$USB_KEY_ESP_UUID@g" "$umount_script_path"
@@ -586,6 +590,10 @@ else
   sed -i "s@EFI_MODE_DUMMY@false@g" "$umount_script_path"
 fi
 sed -i "s@USB_KEY_BOOT_UUID_DUMMY@$USB_KEY_BOOT_UUID@g" "$umount_script_path"
+sed -i "s@MAPPER_NAME_BOOT_DUMMY@$mapper_name_boot@g" "$umount_script_path"
+chmod u=rx "$umount_script_path"
+chmod g=rx "$umount_script_path"
+chmod o=   "$umount_script_path"
 
 # Basic setup of system
 
