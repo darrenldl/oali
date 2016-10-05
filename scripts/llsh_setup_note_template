@@ -1,0 +1,18 @@
+# This file is from Linux_Laptop_Salt_Hard setup
+# See https://github.com/darrenldl/Linux_Laptop_Salt_Hard for details .
+
+The following scripts should be present in /root directory
+    SALT_STACK_EXEC_SCRIPT_DUMMY
+        Apply installed local salt states
+            Setup should have installed the appropriate salt states
+            in your system already
+
+    USB_KEY_MOUNT_SCRIPT_DUMMY
+        Mounts USB key to system
+            Plug in your USB key and execute this before system update
+            or any maintenance
+
+    USB_KEY_UMOUNT_SCRIPT_DUMMY
+        Unmounts USB key
+            Execute this and remove your USB key after update
+            or any maintenance

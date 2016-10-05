@@ -558,13 +558,15 @@ else
   arch-chroot "$mount_path" grub-install --target=i386-pc --boot-directory=/boot $USB_KEY
 fi
 
-echo "Generate grub configuration file"
+echo "Generating grub configuration file"
 arch-chroot "$mount_path" grub-mkconfig -o /boot/grub/grub.cfg
+
+wait_and_clear 2
 
 # Prepare USB key mounting/unmounting scripts and copy into new system
 echo "Generating USB key mounting and unmounting scripts"
 mount_script_name="usb_key_mount.sh"
-mount_script_path="$mount_path"/"$mount_script_name"
+mount_script_path="$mount_path"/root/"$mount_script_name"
 cp crypt_disk_mount_template "$mount_script_path"
 chown root:root "$mount_script_path"
 if $efi_mode; then
@@ -580,7 +582,7 @@ chmod g=rx "$mount_script_path"
 chmod o=   "$mount_script_path"
 
 umount_script_name="usb_key_umount.sh"
-umount_script_path="$umount_path"/"$umount_script_name"
+umount_script_path="$mount_path"/root/"$umount_script_name"
 cp crypt_disk_umount_template "$umount_script_path"
 chown root:root "$umount_script_path"
 if $efi_mode; then
@@ -595,7 +597,34 @@ chmod u=rx "$umount_script_path"
 chmod g=rx "$umount_script_path"
 chmod o=   "$umount_script_path"
 
-# Basic setup of system
+wait_and_clear 2
+
+# Generate saltstack execution script
+echo "Generating saltstack execution script"
+salt_exec_script_name="salt_exec.sh"
+salt_exec_script_path="$mount_path"/root/"$salt_exec_script_name"
+cp salt_stack_execute_template "$salt_exec_script_path"
+chown root:root "$salt_exec_script_path"
+chmod u=rx "$salt_exec_script_path"
+chmod g=rx "$salt_exec_script_path"
+chmod o=   "$salt_exec_script_path"
+
+wait_and_clear 2
+
+# Copy note over
+echo "Generating setup note"
+llsh_setup_note_name="llsh_setup_note"
+llsh_setup_note_path="$mount_path"/root/"$llsh_setup_note_name"
+cp llsh_setup_note_template "$llsh_setup_note_path"
+chown root:root "$llsh_setup_note_path"
+sed -i "s@SALT_STACK_EXEC_SCRIPT_DUMMY@$salt_exec_script_name@g" "$llsh_setup_note_path"
+sed -i "s@USB_KEY_MOUNT_SCRIPT_DUMMY@$mount_script_name@g" "$llsh_setup_note_path"
+sed -i "s@USB_KEY_UMOUNT_SCRIPT_DUMMY@$umount_script_name@g" "$llsh_setup_note_path"
+chmod u=rx "$llsh_setup_note_path"
+chmod g=rx "$llsh_setup_note_path"
+chmod o=   "$llsh_setup_note_path"
+
+wait_and_clear 2
 
 # Install saltstack
 while true; do
