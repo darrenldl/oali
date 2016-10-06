@@ -3,9 +3,25 @@
 ### Description
 This currently setups up an Archlinux installation with full disk encryption, requiring a USB key to boot and unlock.
 
-Main system partition is encrypted using a keyfile, which is stored in the encrypted boot partition on USB key.
+The script builds your USB key depending on whether the liveCD is running in UEFI mode or BIOS mode. After installation, the USB key needs to be booted from the mode your were on during installation.
 
-Boot partition is protected by a passphrase.
+### Encryption specifics
+Main system partition on computer drive is protected by a keyfile generated from /dev/urandom (1MiB in size).
+
+The keyfile is stored in the encrypted boot partition on USB key.
+
+The encrypted boot partition on USB key is passphrase protected.
+
+LUKS setup is used for all encrypted partitions.
+
+If in UEFI mode, the ESP partition will be present but is not(and cannot be) encrypted.
+
+### Notes
+Note that this setup aims to move the weak point from the laptop drive to your USB key, that is, the laptop drive is better protected than your USB key in terms of encryption.
+
+The implication then is that you should keep your USB key better protected physically(e.g. carried with you) than the laptop drive.
+
+Also, you need to enter the passphrase of the boot partition twice during booting.
 
 ### Prerequisites
   - Working internet connection
