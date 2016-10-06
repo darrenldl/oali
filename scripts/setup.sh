@@ -52,9 +52,14 @@ read
 clear
 
 # Show requirement
-echo "Requirements:"
-echo "  The main system partition should be setup already(no need to be formatted)"
-echo ""
+cat <<REQUIREEOF
+Requirements:
+    The main system partition should be setup already (no need to be formatted)
+    USB key with you (data will be lost)
+    Working internet connection
+
+REQUIREEOF
+
 echo "Please fulfill the requirements above if any is missing,"
 echo "and press enter after partitioning to continue"
 read
@@ -62,20 +67,34 @@ read
 clear
 
 # Show stages
-echo "Stages:"
-echo "  choose editor"
-echo "  configure mirrorlist"
-echo "  choose system partition"
-echo "  setup encryption and USB key"
-echo "  install system"
-echo "  setup GRUB"
-echo "  copy USB key mounting/unmounting scripts into new system"
-echo "  basic setup of system"
-echo "  copy saltstack files"
-echo "  execute salt for final setup"
-echo "  restart"
-echo "  "
-echo ""
+cat <<STAGEEOF
+Stages:
+    update time
+    choose editor
+    configure mirrorlist
+    choose system partition
+    choose USB key
+    setup encryption and USB key
+    set hostname
+    set locale
+    update package database
+    install system
+    setup GRUB
+    setup hooks
+    setup mkinitcpio config
+    setup GRUB config
+    install GRUB onto USB key
+    generate USB key mounting/unmounting scripts
+    generate saltstack execution script
+    generate setup note
+    install saltstack
+    copy saltstack files
+    execute salt for final setup  (optional)
+    close all disks               (optional)
+    restart                       (optional)
+
+STAGEEOF
+
 echo "Press enter to continue"
 read
 
@@ -476,7 +495,7 @@ done
 wait_and_clear
 
 while true; do
-  echo "Installing Grsecurity kernel"
+  echo "Installing GrSecurity kernel"
   arch-chroot "$mount_path" pacman --noconfirm -S linux-grsec
   if [[ $? == 0 ]]; then
     break
