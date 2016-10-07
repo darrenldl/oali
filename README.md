@@ -28,6 +28,12 @@ Also, you need to enter the passphrase of the boot partition twice during bootin
   - Partitioning done for system partition
   - USB key (data will be lost)
 
+### Space requirement
+  - USB key
+    - 1 GiB USB drive will be very sufficient
+  - System drive
+    - Current salt states download/install around 10 GiB of data
+
 ### Instructions
 #### Get the setup files
 #### With Git
