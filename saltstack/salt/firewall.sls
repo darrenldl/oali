@@ -17,7 +17,8 @@ Apply ferm config:
   cmd.run:
     - name: ferm {{ pillar['firewall']['ferm_path'] }}
     - require:
-      - Make sure firewall is running
+      - Make sure IPv4 firewall is running
+      - Make sure IPv6 firewall is running
     - order:
       - 101
 
