@@ -733,7 +733,7 @@ clear
 
 if $run_salt; then
   echo "Please note that you will need to reapply firewall state to generate firewall rules properly"
-  echo "You can execute $salt_exec_script_path on next boot to reapply all states"
+  echo "You can execute /root/$salt_exec_script_name on next boot to reapply all states"
   echo "Press enter to continue"
   read
 
