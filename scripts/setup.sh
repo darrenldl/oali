@@ -784,7 +784,7 @@ clear
 # Restart
 end=false
 while ! $end; do
-  echo -n "Do you want to restart? y/n : "
+  echo -n "Do you want to restart now? y/n : "
   read ans
   if [[ $ans == "y" ]]; then
     shutdown_system=true
@@ -813,6 +813,5 @@ while ! $end; do
 done
 
 if $shutdown_system; then
-  echo "Restarting system in 1 minute"
-  shutdown -t 1 -r now
+  shutdown -r now
 fi
