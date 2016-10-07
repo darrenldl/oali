@@ -729,14 +729,14 @@ while ! $end; do
   done
 done
 
+clear
+
 if $run_salt; then
   echo "Executing salt for final setup"
   arch-chroot "$mount_path" salt-call --local state.apply
 
   wait_and_clear 2
 fi
-
-clear
 
 end=false
 while ! $end; do
