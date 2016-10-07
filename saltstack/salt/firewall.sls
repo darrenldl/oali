@@ -26,7 +26,5 @@ Save firewall rules:
       - 102
 
 Enable firewall service:
-  cmd.run:
-    - name: systemctl enable iptables
-    - order:
-      - 103
+  service.enabled:
+    - name: iptables
