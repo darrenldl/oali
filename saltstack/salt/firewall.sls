@@ -21,16 +21,30 @@ Apply ferm config:
     - order:
       - 101
 
-Save firewall rules:
+Save IPv4 firewall rules:
   cmd.run:
     - name: iptables-save > {{ pillar['firewall']['rules_path'] }}
     - order:
       - 102
 
-Enable firewall service:
+Save IPv6 firewall rules:
+  cmd.run:
+    - name: ip6tables-save > {{ pillar['firewall']['rules6_path'] }}
+    - order:
+      - 102
+
+Enable IPv4 firewall service:
   service.enabled:
     - name: iptables
 
-Make sure firewall is running:
+Enable IPv6 firewall service:
+  service.enabled:
+    - name: ip6tables
+
+Make sure IPv4 firewall is running:
   service.running:
     - name: iptables
+
+Make sure IPv6 firewall is running:
+  service.running:
+    - name: ip6tables

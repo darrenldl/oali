@@ -8,7 +8,13 @@
 #   URL: ferm.foo-projects.org/download/examples/workstation.ferm
 #   Retrieved @ 2016-10-04 14:32
 
-table filter {
+domain (ip ip6) table filter {
+    chain FLOOD_DRAIN {
+        mod limit limit 20/second ACCEPT;
+
+        DROP;
+    }
+
     chain INPUT {
         policy DROP;
 
@@ -19,8 +25,8 @@ table filter {
         # allow local connections
         interface lo ACCEPT;
 
-        # respond to ping
-        proto icmp icmp-type echo-request ACCEPT;
+        # respond to ping, with rate limiting
+        proto icmp icmp-type echo-request jump FLOOD_DRAIN;
 
         # drop everything else
     }
