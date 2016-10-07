@@ -61,11 +61,6 @@ Web browsers:
     - pkgs:
       - firefox
 
-Voice/video chat clients:
-  pkg.installed:
-    - pkgs:
-      - skype
-
 Mail clients:
   pkg.installed:
     - pkgs:
