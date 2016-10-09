@@ -514,7 +514,7 @@ done
 if $use_grsec; then
   end=false
   while ! $end; do
-    echo -n "Do you want to remove vanilla kernel? y/n : "
+    echo "Do you want to remove vanilla kernel? y/n : "
     read ans
     if [[ $ans == "y" ]]; then
       remove_vanilla=true
@@ -645,13 +645,13 @@ sed -i "s@^HOOKS=.*@HOOKS=\"$hooks\"@g" "$mount_path"/etc/mkinitcpio.conf
 wait_and_clear 2
 
 echo "Recreating image"
+echo ""
 if ! $remove_vanilla; then
+  echo "Recreating vanilla kernel image"
   arch-chroot "$mount_path" mkinitcpio -p linux
 fi
-
-clear
-
 if $use_grsec; then
+  echo "Recreating GrSecurity kernel image"
   arch-chroot "$mount_path" mkinitcpio -p linux-grsec
 fi
 
@@ -850,6 +850,8 @@ if $use_salt; then
     wait_and_clear 2
   fi
 fi
+
+clear
 
 end=false
 while ! $end; do
