@@ -646,18 +646,6 @@ chmod o=   "$umount_script_path"
 
 wait_and_clear 2
 
-# Generate saltstack execution script
-echo "Generating saltstack execution script"
-salt_exec_script_name="salt_exec.sh"
-salt_exec_script_path="$mount_path"/root/"$salt_exec_script_name"
-cp salt_stack_execute_template "$salt_exec_script_path"
-chown root:root "$salt_exec_script_path"
-chmod u=rx "$salt_exec_script_path"
-chmod g=rx "$salt_exec_script_path"
-chmod o=   "$salt_exec_script_path"
-
-wait_and_clear 2
-
 # Copy note over
 echo "Generating setup note"
 llsh_setup_note_name="llsh_setup_note"
@@ -673,41 +661,15 @@ chmod o=   "$llsh_setup_note_path"
 
 wait_and_clear 2
 
-# Install saltstack
-while true; do
-  echo "Installing saltstack"
-  arch-chroot "$mount_path" pacman --noconfirm -S salt-zmq
-  if [[ $? == 0 ]]; then
-    break
-  else
-    :
-  fi
-done
-
-wait_and_clear 2
-
-# Setup saltstack
-echo "Updating saltstack config"
-sed -i "s@#file_client: remote@file_client: local@g" "$mount_path"/etc/salt/minion
-
-wait_and_clear 2
-
-# Copy saltstack files
-saltstack_files_path="../saltstack"
-echo "Copying saltstack files over to system"
-cp -r "$saltstack_files_path"/*   "$mount_path"/srv
-
-wait_and_clear 2
-
 end=false
 while ! $end; do
-  echo -n "Do you want to execute saltstack right now? y/n : "
+  echo -n "Do you want to use saltstack for further installation? y/n : "
   read ans
   if [[ $ans == "y" ]]; then
-    run_salt=true
+    use_salt=true
     echo "You entered yes"
   elif [[ $ans == "n" ]]; then
-    run_salt=false
+    use_salt=false
     echo "You entered no"
   else
     echo -e $INVALID_ANS
@@ -729,18 +691,88 @@ while ! $end; do
   done
 done
 
-clear
-
-if $run_salt; then
-  echo "Please note that you will need to reapply firewall state to generate firewall rules properly"
-  echo "You can execute /root/$salt_exec_script_name on next boot to reapply all states"
-  echo "Press enter to continue"
-  read
-
-  echo "Executing salt for final setup"
-  arch-chroot "$mount_path" salt-call --local state.apply
+if $use_salt; then
+  # Generate saltstack execution script
+  echo "Generating saltstack execution script"
+  salt_exec_script_name="salt_exec.sh"
+  salt_exec_script_path="$mount_path"/root/"$salt_exec_script_name"
+  cp salt_stack_execute_template "$salt_exec_script_path"
+  chown root:root "$salt_exec_script_path"
+  chmod u=rx "$salt_exec_script_path"
+  chmod g=rx "$salt_exec_script_path"
+  chmod o=   "$salt_exec_script_path"
 
   wait_and_clear 2
+
+  # Install saltstack
+  while true; do
+    echo "Installing saltstack"
+    arch-chroot "$mount_path" pacman --noconfirm -S salt-zmq
+    if [[ $? == 0 ]]; then
+      break
+    else
+      :
+    fi
+  done
+
+  wait_and_clear 2
+
+  # Setup saltstack
+  echo "Updating saltstack config"
+  sed -i "s@#file_client: remote@file_client: local@g" "$mount_path"/etc/salt/minion
+
+  wait_and_clear 2
+
+  # Copy saltstack files
+  saltstack_files_path="../saltstack"
+  echo "Copying saltstack files over to system"
+  cp -r "$saltstack_files_path"/*   "$mount_path"/srv
+
+  wait_and_clear 2
+
+  end=false
+  while ! $end; do
+    echo -n "Do you want to execute saltstack right now? y/n : "
+    read ans
+    if   [[ $ans == "y" ]]; then
+      run_salt=true
+      echo "You entered yes"
+    elif [[ $ans == "n" ]]; then
+      run_salt=false
+      echo "You entered no"
+    else
+      echo -e $INVALID_ANS
+      continue
+    fi
+
+    while true; do
+      echo -n "Is this correct? y/n : "
+      read ans
+      if [[ $ans == "y" ]]; then
+        end=true
+        break
+      elif [[ $ans == "n" ]]; then
+        end=false
+        break
+      else
+        echo -e $INVALID_ANS
+      fi
+    done
+  done
+
+  clear
+
+  if $run_salt; then
+    echo "Please note that you will need to reapply firewall state to generate firewall rules properly"
+    echo "You can execute /root/$salt_exec_script_name on next boot to reapply all states"
+    echo "Press enter to continue"
+    read
+
+    echo "Executing salt for final setup"
+    arch-chroot "$mount_path" salt-call --local state.apply
+
+    wait_and_clear 2
+  fi
 fi
 
 end=false
@@ -781,37 +813,42 @@ fi
 
 clear
 
-# Restart
-end=false
-while ! $end; do
-  echo -n "Do you want to restart now? y/n : "
-  read ans
-  if [[ $ans == "y" ]]; then
-    shutdown_system=true
-    echo "You entered yes"
-  elif [[ $ans == "n" ]]; then
-    shutdown_system=false
-    echo "You entered no"
-  else
-    echo -e $INVALID_ANS
-    continue
-  fi
-
-  while true; do
-    echo -n "Is this correct? y/n : "
+if $close_disks; then
+  # Restart
+  end=false
+  while ! $end; do
+    echo -n "Do you want to restart now? y/n : "
     read ans
     if [[ $ans == "y" ]]; then
-      end=true
-      break
+      shutdown_system=true
+      echo "You entered yes"
     elif [[ $ans == "n" ]]; then
-      end=false
-      break
+      shutdown_system=false
+      echo "You entered no"
     else
       echo -e $INVALID_ANS
+      continue
     fi
-  done
-done
 
-if $shutdown_system; then
-  shutdown -r now
+    while true; do
+      echo -n "Is this correct? y/n : "
+      read ans
+      if [[ $ans == "y" ]]; then
+        end=true
+        break
+      elif [[ $ans == "n" ]]; then
+        end=false
+        break
+      else
+        echo -e $INVALID_ANS
+      fi
+    done
+  done
+
+  if $shutdown_system; then
+    shutdown -r now
+  fi
+else
+  echo "No rebooting will be done by the script since the disks are not closed"
+  echo "End of execution"
 fi
