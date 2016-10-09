@@ -481,28 +481,96 @@ done
 
 clear
 
-# Install grsecutiy and remove vanilla kernel
-while true; do
-  echo "Removing vanilla kernel"
-  arch-chroot "$mount_path" pacman --noconfirm -R linux
-  if [[ $? == 0 ]]; then
-    break
+end=false
+while ! $end; do
+  echo "Do you want to install GrSecurity kernel? y/n : "
+  read ans
+  if   [[ $ans == "y" ]]; then
+    use_grsec=true
+    echo "You entered yes"
+  elif [[ $ans == "n" ]]; then
+    use_grsec=false
+    echo "You entered no"
   else
-    :
+    echo -e $INVALID_ANS
+    continue
   fi
+
+  while true; do
+    echo -n "Is this correct? y/n : "
+    read ans
+    if [[ $ans == "y" ]]; then
+      end=true
+      break
+    elif [[ $ans == "n" ]]; then
+      end=false
+      break
+    else
+      echo -e $INVALID_ANS
+    fi
+  done
 done
 
-wait_and_clear
+if $use_grsec; then
+  end=false
+  while ! $end; do
+    echo -n "Do you want to remove vanilla kernel? y/n : "
+    read ans
+    if [[ $ans == "y" ]]; then
+      remove_vanilla=true
+      echo "You entered yes"
+    elif [[ $ans == "n" ]]; then
+      remove_vanilla=false
+      echo "You entered no"
+    else
+      echo -e $INVALID_ANS
+      continue
+    fi
 
-while true; do
-  echo "Installing GrSecurity kernel"
-  arch-chroot "$mount_path" pacman --noconfirm -S linux-grsec
-  if [[ $? == 0 ]]; then
-    break
-  else
-    :
+    while true; do
+      echo -n "Is this correct? y/n : "
+      read ans
+      if [[ $ans == "y" ]]; then
+        end=true
+        break
+      elif [[ $ans == "n" ]]; then
+        end=false
+        break
+      else
+        echo -e $INVALID_ANS
+      fi
+    done
+  done
+
+  clear
+
+  if $remove_vanilla; then
+    # Remove vanilla kernel
+    while true; do
+      echo "Removing vanilla kernel"
+      arch-chroot "$mount_path" pacman --noconfirm -R linux
+      if [[ $? == 0 ]]; then
+        break
+      else
+        :
+      fi
+    done
   fi
-done
+
+  wait_and_clear
+
+  while true; do
+    echo "Installing GrSecurity kernel"
+    arch-chroot "$mount_path" pacman --noconfirm -S linux-grsec
+    if [[ $? == 0 ]]; then
+      break
+    else
+      :
+    fi
+  done
+
+  wait_and_clear
+fi
 
 clear
 
@@ -577,7 +645,15 @@ sed -i "s@^HOOKS=.*@HOOKS=\"$hooks\"@g" "$mount_path"/etc/mkinitcpio.conf
 wait_and_clear 2
 
 echo "Recreating image"
-arch-chroot "$mount_path" mkinitcpio -p linux-grsec
+if ! $remove_vanilla; then
+  arch-chroot "$mount_path" mkinitcpio -p linux
+fi
+
+clear
+
+if $use_grsec; then
+  arch-chroot "$mount_path" mkinitcpio -p linux-grsec
+fi
 
 wait_and_clear 2
 
