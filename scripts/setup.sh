@@ -570,6 +570,8 @@ if $use_grsec; then
   done
 
   wait_and_clear
+else
+  remove_vanilla=false
 fi
 
 clear
