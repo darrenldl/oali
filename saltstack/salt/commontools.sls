@@ -17,6 +17,10 @@ Development:
     - pkgs:
       - meld
       - git
+      - racket
+      - racket-docs
+      - rust
+      - cargo
 
 Desktop environment:
   pkg.installed:
