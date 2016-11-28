@@ -79,6 +79,7 @@ Virtualisation:
   pkg.installed:
     - pkgs:
       - qemu
+      - virtualbox
       - virt-manager
 
 Network management:
