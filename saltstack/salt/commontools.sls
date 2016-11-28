@@ -132,6 +132,7 @@ File backup:
     - pkgs:
       - bup
       - rsync
+      - par2cmdline
 
 Disk/partition image backup:
   pkg.installed:
