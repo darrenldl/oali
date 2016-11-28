@@ -34,7 +34,7 @@ Cryptographic:
     - pkgs:
       - ccrypt
       - gnupg
-      - kdeutils-kgpg
+      - gpa
       - veracrypt
 
 Password management:

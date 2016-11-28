@@ -6,22 +6,6 @@ Text editor:
       - gedit
       - geany
 
-IDE:
-  pkg.installed:
-    - pkgs:
-      - codeblocks
-      - intellij-idea-community-edition
-
-Development:
-  pkg.installed:
-    - pkgs:
-      - meld
-      - git
-      - racket
-      - racket-docs
-      - rust
-      - cargo
-
 Desktop environment:
   pkg.installed:
     - pkgs:
@@ -59,6 +43,7 @@ File system tools:
       - mtools
       - dosfstools
       - efibootmgr
+      - ntfs-3g
 
 Web browsers:
   pkg.installed:
@@ -146,11 +131,12 @@ File backup:
   pkg.installed:
     - pkgs:
       - bup
+      - rsync
 
-Scientific:
+Disk/partition image backup:
   pkg.installed:
     - pkgs:
-      - r
+      - partclone
 
 Fonts:
   pkg.installed:
