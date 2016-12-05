@@ -642,7 +642,7 @@ if $efi_mode; then
 
   arch-chroot "$mount_path" grub-install --removable --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=grub
 else
-  arch-chroot "$mount_path" grub-install --target=i386-pc --boot-directory=/boot $USB_KEY
+  arch-chroot "$mount_path" grub-install --removable --target=i386-pc --boot-directory=/boot $USB_KEY
 fi
 
 echo "Generating grub configuration file"
