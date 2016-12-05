@@ -28,6 +28,53 @@
 #
 # For more information, please refer to <http://unlicense.org/>
 
+INVALID_ANS="Invalid answer"
+NO_COMMAND="Command not found"
+
+ask_yn() {
+  if   [[ $# <= 1 ]]; then
+    echo "Too few parameters"
+    exit
+  elif [[ $# >= 2 ]]; then
+    ret_var=$1
+    message=$2
+  fi
+
+  while true; do
+    echo -n "$message"" y/n : "
+    read ans
+    if [[ $ans == "y" ]]; then
+      eval "$ret_var=true"
+      break
+    elif [[ $ans == "n" ]]; then
+      eval "$ret_var=false"
+      break
+    else
+      echo -e $INVALID_ANS
+    fi
+  done
+}
+
+ask_if_correct() {
+  ask_yn $1 "Is this correct?"
+}
+
+comple() {
+  if $1; then
+    eval "$2=false"
+  else
+    eval "$2=true"
+  fi
+}
+
+flip_ans() {
+  if $1; then
+    eval "$1=false"
+  else
+    eval "$1=true"
+  fi
+}
+
 default_wait=1
 wait_and_clear() {
   if [[ $# == 0 ]]; then
@@ -38,8 +85,48 @@ wait_and_clear() {
   clear
 }
 
-INVALID_ANS="Invalid answer"
-NO_COMMAND="Command not found"
+default_retries=5
+install_with_retries() {
+  if   [[ $# == 0 ]]; then
+    echo "Too few parameters"
+    exit
+  elif [[ $# == 1 ]]; then
+    package_name=$1
+    retries=$default_retries
+    retries_left=$default_retries
+  elif [[ $# >= 2 ]]; then
+    package_name=$1
+    retries=$2
+    retries_left=$2
+  fi
+
+  while true; do
+    echo "Installing ""$package_name"" package"
+    arch-chroot "$mount_path" pacman --noconfirm -S $package_name
+    if [[ $? == 0 ]]; then
+      break
+    else
+      retries_left=$[$retries_left-1]
+    fi
+
+    if [[ $retries_left == 0 ]]; then
+      echo "Package install failed ""$retries"" times"
+      ask_yn change_name "Do you want to change package name before continuing retry?"
+
+      if $change_name; then
+        ask_new_name_end=false
+        while ! $ask_new_name_end; do
+          echo "Please enter new package name : "
+          read package_name
+
+          ask_if_correct ask_new_name_end
+        done
+      fi
+
+      retries_left=$retries
+    fi
+  done
+}
 
 clear
 
@@ -118,19 +205,7 @@ while ! $end; do
 
   if hash $EDITOR &>/dev/null; then
     echo "Editor selected :" $EDITOR
-    while true; do
-      echo -n "Is this correct? y/n : "
-      read ans
-      if   [[ $ans == "y" ]]; then
-        end=true
-        break
-      elif [[ $ans == "n"  ]]; then
-        end=false
-        break
-      else
-        echo -e $INVALID_ANS
-      fi
-    done
+    ask_if_correct end
   else 
     echo -e $NO_COMMAND
   fi
@@ -148,23 +223,11 @@ read
 mirrorlist_path="/etc/pacman.d/mirrorlist"
 end=false
 while ! $end; do
-  while true; do
-    $EDITOR $mirrorlist_path
+  $EDITOR $mirrorlist_path
 
-    clear
+  clear
 
-    echo -n "Finished editing? y/n : "
-    read ans
-    if   [[ $ans == "y" ]]; then
-      end=true
-      break
-    elif [[ $ans == "n" ]]; then
-      end=false
-      break
-    else
-      echo -e $INVALID_ANS
-    fi
-  done
+  ask_yn end "Finished editing?"
 done
 
 clear
@@ -180,19 +243,7 @@ while ! $end; do
 
   if [ -b $SYS_PART ]; then
     echo "System parition picked :" $SYS_PART
-    while true; do
-      echo -n "Is this correct? y/n : "
-      read ans
-      if   [[ $ans == "y" ]]; then
-        end=true
-        break
-      elif [[ $ans == "n" ]]; then
-        end=false
-        break
-      else
-        echo -e $INVALID_ANS
-      fi
-    done
+    ask_if_correct end
   else
     echo "Partition does not exist"
   fi
@@ -213,19 +264,7 @@ while ! $end; do
 
   if [ -b "$USB_KEY" ]; then
     echo "Device picked :" "$USB_KEY"
-    while true; do
-      echo -n "Is this correct? y/n : "
-      read ans
-      if   [[ $ans == "y" ]]; then
-        end=true
-        break
-      elif [[ $ans == "n" ]]; then
-        end=false
-        break
-      else
-        echo -e $INVALID_ANS
-      fi
-    done
+    ask_if_correct end
   else
     echo "Device does not exist"
   fi
@@ -285,45 +324,28 @@ wait_and_clear 2
 
 end=false
 while ! $end; do
-  echo "Do you want to overwrite partitions which will be encrypted with random bytes(/dev/urandom)? y/n : "
-  read ans
+  ask_yn rand_wipe "Do you want to overwrite partitions which will be encrypted with random bytes(/dev/urandom)?"
 
-  if   [[ $ans == "y" ]]; then
-    echo "You entered yes"
-    rand_wipe=true
-  elif [[ $ans = "n" ]]; then
-    echo "You entered no"
-    rand_wipe=false
-  else
-    echo -e $INVALID_ANS
-    continue
-  fi
-
-  while true; do
-    echo -n "Is this correct? y/n : "
-    read ans
-    if   [[ $ans == "y" ]]; then
-      end=true
-      break
-    elif [[ $ans == "n" ]]; then
-      end=false
-      break
-    else
-      echo -e $INVALID_ANS
-    fi
-  done
+  ask_if_correct end
 done
 
 clear
 
 if $rand_wipe; then
-  while true; do
+  end=false
+  while ! $end; do
     echo "Ovewriting boot partition with random bytes"
     ddrescue --force /dev/urandom "$USB_KEY_BOOT" &>/dev/null
     if [[ $? == 0 ]]; then
       break
     else
-      :
+      ask_end=false
+      while ! $ask_end; do
+        ask_yn repeat "ddrescue reported failure (may just be due to out of space). Do you want to repeat overwriting?"
+        comple repeat end
+
+        ask_if_correct ask_end
+      done
     fi
   done
 fi
@@ -441,20 +463,8 @@ while ! $end; do
   echo -n "Please enter hostname : "
   read host_name
 
-  while true; do
-    echo "You entered :" $host_name
-    echo -n "Is this correct? y/n : "
-    read ans
-    if   [[ $ans == "y" ]]; then
-      end=true
-      break
-    elif [[ $ans == "n" ]]; then
-      end=false
-      break
-    else
-      echo -e $INVALID_ANS
-    fi
-  done
+  echo "You entered :" $host_name
+  ask_if_correct end
 done
 
 echo $host_name > "$mount_path"/etc/hostname
@@ -483,63 +493,17 @@ clear
 
 end=false
 while ! $end; do
-  echo "Do you want to install GrSecurity kernel? y/n : "
-  read ans
-  if   [[ $ans == "y" ]]; then
-    use_grsec=true
-    echo "You entered yes"
-  elif [[ $ans == "n" ]]; then
-    use_grsec=false
-    echo "You entered no"
-  else
-    echo -e $INVALID_ANS
-    continue
-  fi
+  ask_yn use_grsec "Do you want to install GrSecurity kernel?"
 
-  while true; do
-    echo -n "Is this correct? y/n : "
-    read ans
-    if [[ $ans == "y" ]]; then
-      end=true
-      break
-    elif [[ $ans == "n" ]]; then
-      end=false
-      break
-    else
-      echo -e $INVALID_ANS
-    fi
-  done
+  ask_if_correct end
 done
 
 if $use_grsec; then
   end=false
   while ! $end; do
-    echo "Do you want to remove vanilla kernel? y/n : "
-    read ans
-    if [[ $ans == "y" ]]; then
-      remove_vanilla=true
-      echo "You entered yes"
-    elif [[ $ans == "n" ]]; then
-      remove_vanilla=false
-      echo "You entered no"
-    else
-      echo -e $INVALID_ANS
-      continue
-    fi
+    ask_yn remove_vanilla "Do you want to remove vanilla kernel?"
 
-    while true; do
-      echo -n "Is this correct? y/n : "
-      read ans
-      if [[ $ans == "y" ]]; then
-        end=true
-        break
-      elif [[ $ans == "n" ]]; then
-        end=false
-        break
-      else
-        echo -e $INVALID_ANS
-      fi
-    done
+    ask_if_correct end
   done
 
   clear
@@ -559,15 +523,7 @@ if $use_grsec; then
 
   wait_and_clear
 
-  while true; do
-    echo "Installing GrSecurity kernel"
-    arch-chroot "$mount_path" pacman --noconfirm -S linux-grsec
-    if [[ $? == 0 ]]; then
-      break
-    else
-      :
-    fi
-  done
+  install_with_retries linux-grsec
 
   wait_and_clear
 else
@@ -589,26 +545,11 @@ done
 clear
 
 # Setup GRUB
-while true; do
-  echo "Installing grub package"
-  arch-chroot "$mount_path" pacman --noconfirm -S grub
-  if [[ $? == 0 ]]; then
-    break
-  else
-    :
-  fi
-done
+install_with_retries "grub"
 
 if $efi_mode; then
-  while true; do
-    echo "Installing efibootmgr package"
-    arch-chroot "$mount_path" pacman --noconfirm -S efibootmgr
-    if [[ $? == 0 ]]; then
-      break
-    else
-      :
-    fi
-  done
+  install_with_retries "efibootmgr"
+  install_with_retries "efitools"
 fi
 
 clear
@@ -617,7 +558,6 @@ install_dir="$mount_path/usr/lib/initcpio/install"
 hooks_dir="$mount_path/usr/lib/initcpio/hooks"
 
 # Duplicate encrypt hook
-echo "Duplicating encrypt hook"
 echo "Duplicating encrypt hook"
 cp "$install_dir"/encrypt "$install_dir"/encrypt2
 cp "$hooks_dir"/encrypt   "$hooks_dir"/encrypt2
@@ -741,32 +681,9 @@ wait_and_clear 2
 
 end=false
 while ! $end; do
-  echo -n "Do you want to use saltstack for further installation? y/n : "
-  read ans
-  if [[ $ans == "y" ]]; then
-    use_salt=true
-    echo "You entered yes"
-  elif [[ $ans == "n" ]]; then
-    use_salt=false
-    echo "You entered no"
-  else
-    echo -e $INVALID_ANS
-    continue
-  fi
+  ask_yn use_salt "Do you want to use saltstack for further installation?"
 
-  while true; do
-    echo -n "Is this correct? y/n : "
-    read ans
-    if [[ $ans == "y" ]]; then
-      end=true
-      break
-    elif [[ $ans == "n" ]]; then
-      end=false
-      break
-    else
-      echo -e $INVALID_ANS
-    fi
-  done
+  ask_if_correct end
 done
 
 if $use_salt; then
@@ -783,15 +700,7 @@ if $use_salt; then
   wait_and_clear 2
 
   # Install saltstack
-  while true; do
-    echo "Installing saltstack"
-    arch-chroot "$mount_path" pacman --noconfirm -S salt
-    if [[ $? == 0 ]]; then
-      break
-    else
-      :
-    fi
-  done
+  install_with_retries "salt"
 
   wait_and_clear 2
 
@@ -810,32 +719,9 @@ if $use_salt; then
 
   end=false
   while ! $end; do
-    echo -n "Do you want to execute saltstack right now? y/n : "
-    read ans
-    if   [[ $ans == "y" ]]; then
-      run_salt=true
-      echo "You entered yes"
-    elif [[ $ans == "n" ]]; then
-      run_salt=false
-      echo "You entered no"
-    else
-      echo -e $INVALID_ANS
-      continue
-    fi
+    ask_yn run_salt "Do you want to execute saltstack right now?"
 
-    while true; do
-      echo -n "Is this correct? y/n : "
-      read ans
-      if [[ $ans == "y" ]]; then
-        end=true
-        break
-      elif [[ $ans == "n" ]]; then
-        end=false
-        break
-      else
-        echo -e $INVALID_ANS
-      fi
-    done
+    ask_if_correct end
   done
 
   clear
@@ -857,32 +743,9 @@ clear
 
 end=false
 while ! $end; do
-  echo -n "Do you want to close the disks and USB key? y/n : "
-  read ans
-  if [[ $ans == "y" ]]; then
-    close_disks=true
-    echo "You entered yes"
-  elif [[ $ans == "n" ]]; then
-    close_disks=false
-    echo "You entered no"
-  else
-    echo -e $INVALID_ANS
-    continue
-  fi
+  ask_yn close_disks "Do you want to close the disks and USB key?"
 
-  while true; do
-    echo -n "Is this correct? y/n : "
-    read ans
-    if [[ $ans == "y" ]]; then
-      end=true
-      break
-    elif [[ $ans == "n" ]]; then
-      end=false
-      break
-    else
-      echo -e $INVALID_ANS
-    fi
-  done
+  ask_if_correct end
 done
 
 if $close_disks; then
@@ -897,32 +760,9 @@ if $close_disks; then
   # Restart
   end=false
   while ! $end; do
-    echo -n "Do you want to restart now? y/n : "
-    read ans
-    if [[ $ans == "y" ]]; then
-      shutdown_system=true
-      echo "You entered yes"
-    elif [[ $ans == "n" ]]; then
-      shutdown_system=false
-      echo "You entered no"
-    else
-      echo -e $INVALID_ANS
-      continue
-    fi
+    ask_yn shutdown_system "Do you want to restart now?"
 
-    while true; do
-      echo -n "Is this correct? y/n : "
-      read ans
-      if [[ $ans == "y" ]]; then
-        end=true
-        break
-      elif [[ $ans == "n" ]]; then
-        end=false
-        break
-      else
-        echo -e $INVALID_ANS
-      fi
-    done
+    ask_if_correct end
   done
 
   if $shutdown_system; then
