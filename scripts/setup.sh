@@ -191,7 +191,11 @@ clear
 echo "Updating time"
 timedatectl set-ntp true
 
-wait_and_clear
+echo ""
+echo -n "Current time : "
+date
+
+wait_and_clear 5
 
 # Choose editor
 echo "Choose editor"
