@@ -692,7 +692,6 @@ llsh_setup_note_name="llsh_setup_note"
 llsh_setup_note_path="$mount_path"/root/"$llsh_setup_note_name"
 cp llsh_setup_note_template "$llsh_setup_note_path"
 chown root:root "$llsh_setup_note_path"
-sed -i "s@SALT_STACK_EXEC_SCRIPT_DUMMY@$salt_exec_script_name@g" "$llsh_setup_note_path"
 sed -i "s@USB_KEY_MOUNT_SCRIPT_DUMMY@$mount_script_name@g" "$llsh_setup_note_path"
 sed -i "s@USB_KEY_UMOUNT_SCRIPT_DUMMY@$umount_script_name@g" "$llsh_setup_note_path"
 chmod u=rx "$llsh_setup_note_path"
@@ -718,6 +717,9 @@ if $use_salt; then
   chmod u=rx "$salt_exec_script_path"
   chmod g=rx "$salt_exec_script_path"
   chmod o=   "$salt_exec_script_path"
+
+  # Mark script name in setup note
+  sed -i "s@SALT_STACK_EXEC_SCRIPT_DUMMY@$salt_exec_script_name@g" "$llsh_setup_note_path"
 
   wait_and_clear 2
 
@@ -759,6 +761,9 @@ if $use_salt; then
 
     wait_and_clear 2
   fi
+else
+  # Mark script not present in setup note
+  sed -i "s@SALT_STACK_EXEC_SCRIPT_DUMMY@SaltSatck execution script not installed@g" "$llsh_setup_note_path"
 fi
 
 clear

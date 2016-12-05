@@ -13,6 +13,11 @@ Secure chat:
       # Tox chat
       - qtox
 
+Intrusion detection:
+  pkg.installed:
+    - pkgs:
+      - aide
+
 Anti-infoleak:
   pkg.installed:
     - pkgs:
@@ -23,7 +28,7 @@ Sandboxing:
     - pkgs:
       - firejail
 
-File hashing:
+Hashing:
   pkg.installed:
     - pkgs:
       - rhash
@@ -34,7 +39,7 @@ Cryptographic:
     - pkgs:
       - ccrypt
       - gnupg
-      - kdeutils-kgpg
+      - gpa
       - veracrypt
 
 Password management:
