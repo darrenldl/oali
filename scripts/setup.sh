@@ -640,7 +640,7 @@ if $efi_mode; then
   echo "Mounting ESP partition"
   mount "$USB_KEY_ESP" "$mount_path"/boot/efi
 
-  arch-chroot "$mount_path" grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=grub
+  arch-chroot "$mount_path" grub-install --removable --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=grub
 else
   arch-chroot "$mount_path" grub-install --target=i386-pc --boot-directory=/boot $USB_KEY
 fi
