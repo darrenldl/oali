@@ -785,7 +785,7 @@ if $use_salt; then
   # Install saltstack
   while true; do
     echo "Installing saltstack"
-    arch-chroot "$mount_path" pacman --noconfirm -S salt-zmq
+    arch-chroot "$mount_path" pacman --noconfirm -S salt
     if [[ $? == 0 ]]; then
       break
     else
