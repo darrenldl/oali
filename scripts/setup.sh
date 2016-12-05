@@ -290,13 +290,31 @@ dd if=/dev/zero of="$USB_KEY" bs=512 count=2 &>/dev/null
 
 wait_and_clear 2
 
+usb_key_size_bytes=$(fdisk -l $USB_KEY | head -n 1 | sed "s|.*, \(.*\) bytes.*|\1|")
+usb_key_size_KiB=$[usb_key_size_bytes/1024]
+usb_key_size_MiB=$[usb_key_size_KiB/1024]
+usb_key_size_GiB=$[usb_key_size_MiB/1024]
+
 if $efi_mode; then
   echo "Creating GPT partition table"
   parted "$USB_KEY" mklabel gpt &>/dev/null
 
+  echo "Calculating partition sizes"
+  # use MiB for rough estimation
+  # calculate % of 200 MiB size
+  esp_part_size=200
+  esp_part_perc=$[(esp_part_size * 100) / usb_key_size_MiB]
+  esp_part_beg_perc=0
+  esp_part_end_perc=$esp_part_perc
+
+  boot_part_beg_perc=$esp_part_end_perc
+  boot_part_end_perc=$[$boot_part_beg_perc + 25]
+
   echo "Partitioning"
-  parted -a optimal "$USB_KEY" mkpart primary fat32  0%  25% &>/dev/null
-  parted -a optimal "$USB_KEY" mkpart primary       25%  50% &>/dev/null
+  parted -a optimal "$USB_KEY" mkpart primary fat32 \
+    "$esp_part_beg_perc%"  "$esp_part_end_perc%"  &>/dev/null
+  parted -a optimal "$USB_KEY" mkpart primary       \
+    "$boot_part_beg_perc%" "$boot_part_end_perc%" &>/dev/null
 
   parted "$USB_KEY" set 1 boot on &>/dev/null
 
