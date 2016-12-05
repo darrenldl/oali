@@ -12,6 +12,8 @@ Office:
       - libreoffice-still
       - calligra
       - texstudio
+      - texlive-most
+      - texlive-lang
       - calibre
       - zim
 

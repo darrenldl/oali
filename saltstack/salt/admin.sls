@@ -11,12 +11,28 @@ System info:
       - lshw
       - hardinfo
 
+Disk management:
+  pkg.installed:
+    - pkgs:
+      - smartmontools
+
 File system tools:
   pkg.installed:
     - pkgs:
       - mtools
       - dosfstools
       - efibootmgr
+      - nfs-utils
+
+Secure boot (EFI):
+  pkg.installed:
+    - pkgs:
+      - efitools
+
+Task management:
+  pkg.installed:
+    - pkgs:
+      - lsof
 
 Mounting:
   pkg.installed:
