@@ -31,6 +31,23 @@
 INVALID_ANS="Invalid answer"
 NO_COMMAND="Command not found"
 
+ask_ans() {
+  if   [[ $# <= 1 ]]; then
+    echo "Too few parameters"
+    exit
+  elif [[ $# >= 2 ]]; then
+    ret_var=$1
+    message=$2
+  fi
+
+  while true; do
+    echo -n "$message"" : "
+    read ans
+
+    eval "$ret_var=$ans"
+  done
+}
+
 ask_yn() {
   if   [[ $# <= 1 ]]; then
     echo "Too few parameters"
@@ -182,9 +199,10 @@ Stages:
     generate USB key mounting/unmounting scripts
     generate saltstack execution script
     generate setup note
-    install saltstack
-    copy saltstack files
-    execute salt for final setup  (optional)
+    add user
+    install saltstack             (optional)
+      |-> copy saltstack files          (optional)
+      |-> execute salt for final setup  (optional)
     close all disks               (optional)
     restart                       (optional)
 
@@ -271,8 +289,7 @@ echo ""
 
 end=false
 while ! $end; do
-  echo -n "Please specify the USB key device : "
-  read USB_KEY
+  ask_ans USB_KEY "Please specify the USB key device"
 
   if [ -b "$USB_KEY" ]; then
     echo "Device picked :" "$USB_KEY"
@@ -295,7 +312,7 @@ else
   efi_mode=false
 fi
 
-clear
+wait_and_clear 1
 
 echo "Wiping paritioning info"
 dd if=/dev/zero of="$USB_KEY" bs=512 count=2 &>/dev/null
@@ -429,8 +446,7 @@ if $use_default_keyfile; then
 else
   end=false
   while ! $end; do
-    echo -n "Please specify the location of keyfile : "
-    read USER_KEYFILE_PATH
+    ask_ans USER_KEYFILE_PATH "Please specify the location of keyfile : "
 
     if [ -f USER_KEYFILE_PATH ]; then
       echo "Keyfile picked : " $USER_KEYFILE_PATH
@@ -438,6 +454,7 @@ else
 
       if $end; then
         echo "Copying keyfile over to /tmp directory"
+
         cp "$USER_KEYFILE_PATH" "$key_file_path"
         if [[ $? != 0 ]]; then
           echo "Failed to copy keyfile over"
@@ -541,10 +558,9 @@ wait_and_clear 2
 # Setup hostname
 end=false
 while ! $end; do
-  echo -n "Please enter hostname : "
-  read host_name
+  ask_ans host_name "Please enter hostname"
 
-  echo "You entered :" $host_name
+  echo "You entered : " $host_name
   ask_if_correct end
 done
 
@@ -759,6 +775,45 @@ chmod o=   "$llsh_setup_note_path"
 
 wait_and_clear 2
 
+echo "User setup"
+echo ""
+
+end=false
+while ! $end; do
+  ask_end=false
+  while ! $ask_end; do
+    ask_ans user_name "Please enter the user name"
+    echo "You entered : " $user_name
+    ask_if_correct ask_end
+  done
+
+  echo "Adding user"
+  user -m "$user_name"
+  if [[ $? != 0 ]]; then
+    echo "Failed to add user"
+    echo "Please check whether the user name is correctly specified and if acceptable by the system"
+
+    tell_press_enter
+  fi
+done
+
+end=false
+while ! $end; do
+  echo "Setting password for user : " $user_name
+
+  passwd "$user_name"
+  if [[ $? != 0 ]]; then
+    echo "Failed to set password"
+    echo "Please repeat the procedure"
+
+    tell_press_enter
+  fi
+done
+
+echo "User : " $user_name " added"
+
+wait_and_clear 2
+
 end=false
 while ! $end; do
   ask_yn use_salt "Do you want to use saltstack for further installation?"
@@ -856,5 +911,8 @@ if $close_disks; then
   fi
 else
   echo "No rebooting will be done by the script since the disks are not closed"
-  echo "End of execution"
+
+  wait_and_clear 2
 fi
+
+echo "End of execution"
