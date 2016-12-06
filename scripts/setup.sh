@@ -716,7 +716,6 @@ else
   fi
 fi
 
-
 grub_cmdline_linux_default="quiet cryptdevice=UUID=$USB_KEY_BOOT_UUID:$mapper_name_boot cryptdevice2=UUID=$SYS_PART_UUID:$mapper_name_sys cryptkey2=/dev/mapper/$mapper_name_boot:ext4:/$key_file_name"
 
 sed -i "s@^GRUB_CMDLINE_LINUX_DEFAULT=.*@GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"@g" "$mount_path"/etc/default/grub
