@@ -697,7 +697,25 @@ fi
 wait_and_clear 2
 
 echo "Updating grub config"
-echo "GRUB_ENABLE_CRYPTODISK=y" >> "$mount_path"/etc/default/grub
+etc_default_grub_path="$mount_path"/etc/default/grub
+
+# Check if GRUB_ENABLE_CRYPTODISK is specified in grub file first
+res=$(grep "GRUB_ENABLE_CRYPTODISK" $etc_default_grub_path)
+
+if [[ $res == "" ]]; then
+  # Not specified in file at all
+  echo "GRUB_ENABLE_CRYPTODISK=y" >> $etc_default_grub_path
+else
+  # Check if specified as comment or as a configured option
+  res=$(grep "^GRUB_ENABLE_CRYPTODISK" $etc_default_grub_path)
+
+  if [[ $res == "" ]]; then     # not configured
+    sed -i "s@#GRUB_ENABLE_CRYPTODISK.*@GRUB_ENABLE_CRYPTODISK=y@g" $etc_default_grub_path
+  else                          # configured to whatever
+    sed -i "s@GRUB_ENABLE_CRYPTODISK.*@GRUB_ENABLE_CRYPTODISK=y@g" $etc_default_grub_path
+  fi
+fi
+
 
 grub_cmdline_linux_default="quiet cryptdevice=UUID=$USB_KEY_BOOT_UUID:$mapper_name_boot cryptdevice2=UUID=$SYS_PART_UUID:$mapper_name_sys cryptkey2=/dev/mapper/$mapper_name_boot:ext4:/$key_file_name"
 
@@ -855,7 +873,7 @@ if $use_salt; then
 
   wait_and_clear 2
 
-  # Customize saltstack files
+  # Customise saltstack files
   echo "Configuring salt files to target user : " $user_name
   sed -i "s@USER_NAME_DUMMY@$user_name@g" "$mount_path"/srv/pillar/user.sls
 
