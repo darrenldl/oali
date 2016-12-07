@@ -2,6 +2,7 @@ Web browsers:
   pkg.installed:
     - pkgs:
       - firefox
+      - chromium
 
 Mail clients:
   pkg.installed:

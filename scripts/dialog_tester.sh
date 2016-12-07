@@ -4,10 +4,10 @@ INVALID_ANS="Invalid answer"
 NO_COMMAND="Command not found"
 
 ask_ans() {
-  if   [[ $# <= 1 ]]; then
+  if   (( $# <= 1 )); then
     echo "Too few parameters"
     exit
-  elif [[ $# >= 2 ]]; then
+  elif (( $# >= 2 )); then
     ret_var=$1
     message=$2
   fi
@@ -21,10 +21,10 @@ ask_ans() {
 }
 
 ask_yn() {
-  if   [[ $# <= 1 ]]; then
+  if   (( $# <= 1 )); then
     echo "Too few parameters"
     exit
-  elif [[ $# >= 2 ]]; then
+  elif (( $# >= 2 )); then
     ret_var=$1
     message=$2
   fi
@@ -32,7 +32,7 @@ ask_yn() {
   while true; do
     echo -n "$message"" y/n : "
     read ans
-    if [[ $ans == "y" ]]; then
+    if   [[ $ans == "y" ]]; then
       eval "$ret_var=true"
       break
     elif [[ $ans == "n" ]]; then
@@ -49,7 +49,7 @@ ask_if_correct() {
 }
 
 comple() {
-  if $1; then
+  if $(eval echo '$'$1); then
     eval "$2=false"
   else
     eval "$2=true"
@@ -57,7 +57,7 @@ comple() {
 }
 
 flip_ans() {
-  if $1; then
+  if $(eval echo '$'$1); then
     eval "$1=false"
   else
     eval "$1=true"
@@ -83,7 +83,7 @@ install_with_retries() {
     package_name=$1
     retries=$default_retries
     retries_left=$default_retries
-  elif [[ $# >= 2 ]]; then
+  elif (( $# >= 2 )); then
     package_name=$1
     retries=$2
     retries_left=$2
@@ -135,4 +135,21 @@ tell_read_note() {
   tell_press_enter
 }
 
+# ask_yn end "Testing yes or no"
+ask_if_correct end
 
+if $end; then
+  echo "Recorded yes"
+else
+  echo "Recorded no"
+fi
+
+flip_ans end
+
+if $end; then
+  echo "Now recorded as yes"
+else
+  echo "Now recorded as no"
+fi
+
+comple
