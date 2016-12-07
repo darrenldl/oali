@@ -63,4 +63,5 @@ VPN:
   pkg.installed:
     - pkgs:
       - openvpn
-      - networkmanager-openvpn
+      # GUI for VPN
+      - kvpnc

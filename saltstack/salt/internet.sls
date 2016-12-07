@@ -16,8 +16,7 @@ FTP:
 Network management:
   pkg.installed:
     - pkgs:
-      - networkmanager
-      - network-manager-applet
+      - wifi-menu
 
 SSH:
   pkg.installed:

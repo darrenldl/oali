@@ -10,4 +10,7 @@ Image:
     - pkgs:
       - feh
 
-
+Flash:
+  pkg.installed:
+    - pkgs:
+      - flashplugin
