@@ -22,7 +22,7 @@ while true; do
   echo -n "Do you want to exit the script? y/N : "
   read ans
   if [[ $ans == "y" ]]; then
-    exit
+    exit 1
   else
     :
   fi

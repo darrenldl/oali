@@ -1,0 +1,50 @@
+#!/bin/bash
+
+mount_script_name=UMOUNT_SCRIPT_NAME_DUMMY
+
+# Look for pattern "linux" and/or "linux-grsec" when probing the upgrade list
+pacman -Syuw --noconfirm | grep " linux-\| linux-grsec"
+if [[ $? == 0 ]]; then
+  echo "Upgrade involves linux kernel upgrade"
+
+  echo "Looking for USB mounting script"
+  if [ -f $mount_script_name ]; then
+    echo "USB key mounting script found"
+    echo "Please plug in your usb key now"
+    echo "And press enter to continue"
+    read
+
+    echo "Executing USB key mounting script"
+
+    clear
+
+    ./$mount_script_name
+
+    sleep 2
+
+    clear
+
+    if [[ $? == 0 ]]; then
+      echo "Installing upgrade"
+
+      pacman -Su --noconfirm
+      if [[ $? == 0 ]]; then
+        exit
+      else
+        echo "Upgrade failed"
+        echo "Please continue with upgrade manually"
+        echo "And unmount the USB key afterwards"
+      fi
+    else
+    fi
+  else
+    echo "USB key mounting script not found"
+    echo "Please mount manually then upgrade"
+  fi
+else
+  echo "Upgrade does not involve upgrading of kernel"
+
+  echo "Installing upgrades directly"
+
+  pacman -Su --noconfirm
+fi
