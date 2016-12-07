@@ -16,7 +16,7 @@ FTP:
 Network management:
   pkg.installed:
     - pkgs:
-      - wifi-menu
+      - connman
 
 SSH:
   pkg.installed:

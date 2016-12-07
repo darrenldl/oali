@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo "This is the main USB key resetting script"
+echo "Please make sure you are executing this in a live CD environment"

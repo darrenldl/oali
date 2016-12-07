@@ -16,3 +16,28 @@ The following scripts should be present in /root directory
         Unmounts USB key
             Execute this and remove your USB key after update
             or any maintenance
+
+The following scripts should be present in the encrypted boot partition
+    Use the following scripts in Archlinux live CD environment
+    when you suspect the unencrypted portion of your USB key
+    has been compromised/tampered with
+
+    The unencrypted portion refers to :
+    MBR code section, in BIOS mode
+    UEFI boot loader, in EFI mode
+
+    USB_KEY_RESET_SCRIPT_LOADER_DUMMY
+        Script to kickstart the resetting process
+            This script loads main script and USB key unloading
+            scripts over to liveCD environment
+
+    USB_KEY_UNLOADER_DUMMY
+        Script to close and unmount USB key
+            This script handles closing of USB key
+            
+    MAIN_USB_KEY_RESET_SCRIPT_DUMMY
+        Resets the USB key
+            Best to be executed via loader script :
+                USB_KEY_RESET_SCRIPT_LOADER_DUMMY
+            but can be executed directly
+            (you will have to close the USB key yourself)

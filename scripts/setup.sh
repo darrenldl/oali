@@ -150,6 +150,14 @@ tell_press_enter() {
   read
 }
 
+tell_read_note() {
+  echo "===== IMPORTANT ====="
+  echo "Please read over the setup note that this setup script has generated for you"
+  echo "The setup note is stored as "$llsh_setup_note_path" in your system"
+  echo ""
+  echo "The setup note contains important information of the other helper scripts that have been generated for you"
+}
+
 clear
 
 # Notes

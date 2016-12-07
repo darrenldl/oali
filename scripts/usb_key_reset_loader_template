@@ -1,0 +1,36 @@
+#!/bin/bash
+
+echo "This is the loader script for the main USB key resetting script"
+
+echo "Looking for main USB key resetting script over to live CD environment"
+
+main_script_name=usb_key_reset.sh
+main_script_path=$main_script_name
+
+target_path="/root"
+
+usb_key_unloader_name=usb_key_unload.sh
+usb_key_unloader_path=$usb_key_unloader_name
+
+if [ -f main_script_path ]; then
+  echo "Main script found"
+  echo "Copying over to "$target_path
+
+  cp $main_script_path $target_path
+
+  echo "Looking for USB key unloading script"
+  if [ -f usb_key_unloader_path ]; then
+    echo "Unloader script found"
+    echo "Copying unloader script over to "$target_path
+
+    cp $usb_key_unloader_path $target_path
+  else
+    echo "Unloader script not found"
+    echo "Please close and unmount the encrypted boot partition manually"
+    echo "then execute the main USB key resetting script stored at "$target_path
+  fi
+else
+  echo "Main script not found"
+  echo "Exiting loader script"
+  exit
+fi
