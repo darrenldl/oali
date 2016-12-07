@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# This script is for one time use only
+
+boot_efi_mounted=BOOT_EFI_MOUNTED_DUMMY
+boot_efi=BOOT_EFI_DUMMY
+
+boot_crypt_mounted=BOOT_CRYPT_MOUNTED_DUMMY
+boot_crypt=BOOT_CRYPT_DUMMY
+
+sys_crypt_mounted=SYS_CRYPT_MOUNTED_DUMMY
+sys_crypt=SYS_CRYPT_DUMMY
+
+echo "Unmounting and closing all mounted USB key partitions"
+echo "and system partition, if mounted"
+
+if $boot_efi_mounted; then
+  
+fi
+
+if $boot_crypt_mounted; then
+  
+fi
