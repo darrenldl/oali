@@ -7,6 +7,7 @@ base:
     - generaltools
     - harden
     - internet
+    - laptop
     - misc
     - multimedia
     - nettools
