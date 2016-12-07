@@ -14,8 +14,11 @@ Java:
   pkg.installed:
     - pkgs:
       - intellij-idea-community-edition
+<<<<<<< HEAD
       - jdk8-openjdk
       - jre8-openjdk
+=======
+>>>>>>> d599fbec30d5a8b999d82d033cff353afde9597c
 
 Rust:
   pkg.installed:
@@ -40,6 +43,7 @@ R:
     - pkgs:
       - r
 
+<<<<<<< HEAD
 Virtualisation:
   pkg.installed:
     - pkgs:
@@ -47,6 +51,8 @@ Virtualisation:
       - virt-manager
       - virtualbox
 
+=======
+>>>>>>> d599fbec30d5a8b999d82d033cff353afde9597c
 SQL:
   pkg.installed:
     - pkgs:
