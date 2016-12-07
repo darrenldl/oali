@@ -151,11 +151,16 @@ tell_press_enter() {
 }
 
 tell_read_note() {
+  echo ""
   echo "===== IMPORTANT ====="
   echo "Please read over the setup note that this setup script has generated for you"
   echo "The setup note is stored as "$llsh_setup_note_path" in your system"
   echo ""
   echo "The setup note contains important information of the other helper scripts that have been generated for you"
+  echo "====================="
+  echo ""
+
+  tell_press_enter
 }
 
 clear
@@ -937,11 +942,15 @@ if $close_disks; then
     ask_if_correct end
   done
 
+  tell_read_note
+
   if $shutdown_system; then
     shutdown -r now
   fi
 else
   echo "No rebooting will be done by the script since the disks are not closed"
+
+  tell_read_note
 
   wait_and_clear 2
 fi
