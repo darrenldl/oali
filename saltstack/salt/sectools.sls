@@ -48,6 +48,11 @@ Password management:
     - pkgs:
       - keepassx2
 
+Keyring:
+  pkg.installed:
+    - pkgs:
+      - gnome-keyring
+
 Anti-malware:
   pkg.installed:
     - pkgs:
@@ -63,5 +68,3 @@ VPN:
   pkg.installed:
     - pkgs:
       - openvpn
-      # GUI for VPN
-      - kvpnc

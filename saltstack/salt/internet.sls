@@ -16,7 +16,8 @@ FTP:
 Network management:
   pkg.installed:
     - pkgs:
-      - connman
+      - networkmanager
+      - networkmanager-openvpn
 
 SSH:
   pkg.installed:
