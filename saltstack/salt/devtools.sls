@@ -40,13 +40,6 @@ R:
     - pkgs:
       - r
 
-Virtualisation:
-  pkg.installed:
-    - pkgs:
-      - qemu
-      - virt-manager
-      - virtualbox
-
 SQL:
   pkg.installed:
     - pkgs:

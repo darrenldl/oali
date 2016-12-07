@@ -12,3 +12,4 @@ base:
     - nettools
     - sectools
     - services
+    - virtualisation
