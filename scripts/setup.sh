@@ -794,6 +794,19 @@ chmod o=   "$umount_script_path"
 
 wait_and_clear 2
 
+# Prepare safe upgrade script
+echo "Generating safe upgrade script"
+safe_upgrade_script_name="safe_upgrade.sh"
+safe_upgrade_script_path="$mount_path"/root/"$safe_upgrade_script_name"
+cp safe_upgrade_template "$safe_upgrade_script_path"
+chown root:root "$safe_upgrade_script_path"
+sed -i "s@UMOUNT_SCRIPT_NAME_DUMMY@$mount_script_name@g" "$safe_upgrade_script_path"
+chmod u=rx "$umount_script_path"
+chmod g=rx "$umount_script_path"
+chmod o=   "$umount_script_path"
+
+wait_and_clear 2
+
 # Copy note over
 echo "Generating setup note"
 llsh_setup_note_name="llsh_setup_note"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mount_script_name=UMOUNT_SCRIPT_NAME_DUMMY
+mount_script_name=MOUNT_SCRIPT_NAME_DUMMY
 
 # Look for pattern "linux" and/or "linux-grsec" when probing the upgrade list
 pacman -Syuw --noconfirm | grep " linux-\| linux-grsec"
