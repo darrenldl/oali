@@ -18,6 +18,7 @@ The following scripts should be present in /root directory
             or any maintenance
 
 The following scripts should be present in the encrypted boot partition
+in the directory : LLSH_USB_KEY_RESET_DIR_DUMMY
     Use the following scripts in Archlinux live CD environment
     when you suspect the unencrypted portion of your USB key
     has been compromised/tampered with

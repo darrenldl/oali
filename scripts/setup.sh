@@ -807,6 +807,35 @@ chmod o=   "$safe_upgrade_script_path"
 
 wait_and_clear 2
 
+# Make directory in encrypted boot partition for USB key resetting scripts
+llsh_usb_key_reset_nonlive_dir=/boot/llsh_usb_key_reset
+llsh_usb_key_reset_live_dir="$mount_path"$llsh_usb_key_reset_nonlive_dir
+echo "Initilising directory for USB key resetting scripts in encrypted boot partition"
+echo ""
+mkdir           $llsh_usb_key_reset_live_dir
+chown root:root $llsh_usb_key_reset_live_dir
+chmod u=rwx     $llsh_usb_key_reset_live_dir
+chmod g=rwx     $llsh_usb_key_reset_live_dir
+chmod o=        $llsh_usb_key_reset_live_dir
+
+# Copy usb key reset main script over to encrypted boot partition
+llsh_usb_key_reset_main_name="usb_key_reset_main.sh"
+llsh_usb_key_reset_main_path="$llsh_usb_key_reset_live_dir"/"$llsh_usb_key_reset_main_name"
+echo "Generating main script to be stored in "$llsh_usb_key_reset_nonlive_dir" of actual system (not live)"
+echo ""
+cp usb_key_reset_main_template "$llsh_usb_key_reset_live_dir"
+sed -i "s@@@g"
+
+# Copy usb key reset script loader script to encrypted boot partition
+llsh_usb_key_reset_loader_name="usb_key_reset_loader.sh"
+llsh_usb_key_reset_loader_path="$llsh_usb_key_reset_live_dir"/"$llsh_usb_key_reset_loader_name"
+echo "Generating loader script to be stored in "$llsh_usb_key_reset_nonlive_dir" of actual system (not live)"
+echo ""
+cp usb_key_reset_loader_template "$llsh_usb_key_reset_loader_path"
+sed -i "s@LLSH_USB_KEY_RESET_MAIN_DUMMY@@g"
+
+wait_and_clear 2
+
 # Copy note over
 echo "Generating setup note"
 llsh_setup_note_name="llsh_setup_note"
@@ -815,9 +844,13 @@ cp llsh_setup_note_template "$llsh_setup_note_path"
 chown root:root "$llsh_setup_note_path"
 sed -i "s@USB_KEY_MOUNT_SCRIPT_DUMMY@$mount_script_name@g" "$llsh_setup_note_path"
 sed -i "s@USB_KEY_UMOUNT_SCRIPT_DUMMY@$umount_script_name@g" "$llsh_setup_note_path"
+sed -i "s@LLSH_USB_KEY_RESET_DIR_DUMMY@$llsh_usb_key_reset_dir@g" "$llsh_setup_note_path"
 chmod u=rx "$llsh_setup_note_path"
 chmod g=rx "$llsh_setup_note_path"
 chmod o=   "$llsh_setup_note_path"
+
+# Leave a copy in the encrytped boot partition as well
+cp "$llsh_setup_note_path" /boot
 
 wait_and_clear 2
 
