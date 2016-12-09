@@ -11,6 +11,7 @@ base:
     - misc
     - multimedia
     - nettools
+    - pulseaudio
     - sectools
     - services
     - virtualisation
