@@ -11,6 +11,7 @@ base:
     - misc
     - multimedia
     - nettools
+    - office
     - pulseaudio
     - sectools
     - services

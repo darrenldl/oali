@@ -6,17 +6,6 @@ Text editor:
       - gedit
       - geany
 
-Office:
-  pkg.installed:
-    - pkgs:
-      - libreoffice-still
-      - calligra
-      - texstudio
-      - texlive-most
-      - texlive-lang
-      - calibre
-      - zim
-
 Archiving:
   pkg.installed:
     - pkgs:
