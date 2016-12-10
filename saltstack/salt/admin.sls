@@ -2,6 +2,10 @@ System monitoring:
   pkg.installed:
     - pkgs:
       - conky
+
+Disk usage monitoring:
+  pkg.installed:
+    - pkgs:
       - ncdu
 
 System info:
@@ -33,6 +37,7 @@ Task management:
   pkg.installed:
     - pkgs:
       - lsof
+      - htop
 
 Mounting:
   pkg.installed:
