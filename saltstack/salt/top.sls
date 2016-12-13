@@ -11,6 +11,7 @@ base:
     - misc
     - multimedia
     - nettools
+    - networkmanager
     - office
     - pulseaudio
     - sectools

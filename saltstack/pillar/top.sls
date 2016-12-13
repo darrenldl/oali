@@ -1,6 +1,7 @@
 base:
   '*':
     - user
+    - networkmanager
     - package
     - pulseaudio
     - firewall
