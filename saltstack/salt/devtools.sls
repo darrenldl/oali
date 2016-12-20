@@ -21,6 +21,7 @@ Rust:
   pkg.installed:
     - pkgs:
       - rust
+      - rust-docs
       - cargo
 
 Racket:

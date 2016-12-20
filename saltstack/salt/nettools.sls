@@ -30,3 +30,8 @@ Fingerprinting/network scanning:
       - p0f
       - nmap
       - arp-scan
+
+Tunnelling:
+  pkg.installed:
+    - pkgs:
+      - socat
