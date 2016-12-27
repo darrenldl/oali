@@ -16,4 +16,5 @@ base:
     - pulseaudio
     - sectools
     - services
+    - usergroups
     - virtualisation
