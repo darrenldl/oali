@@ -59,3 +59,8 @@ Partitioning:
     - pkgs:
       - parted
       - gparted
+
+Screen sessions:
+  pkg.installed:
+    - pkgs:
+      - screen

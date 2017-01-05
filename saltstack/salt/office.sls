@@ -31,3 +31,4 @@ OCR:
     - pkgs:
       - ocrfeeder
       - tesseract
+      - tesseract-data
