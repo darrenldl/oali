@@ -762,7 +762,7 @@ wait_and_clear 2
 echo "Generating USB key mounting and unmounting scripts"
 mount_script_name="usb_key_mount.sh"
 mount_script_path="$mount_path"/root/"$mount_script_name"
-cp crypt_disk_mount_template "$mount_script_path"
+cp usb_key_access_mount_template "$mount_script_path"
 chown root:root "$mount_script_path"
 if $efi_mode; then
   sed -i "s@EFI_MODE_DUMMY@true@g" "$mount_script_path"
@@ -778,7 +778,7 @@ chmod o=   "$mount_script_path"
 
 umount_script_name="usb_key_umount.sh"
 umount_script_path="$mount_path"/root/"$umount_script_name"
-cp crypt_disk_umount_template "$umount_script_path"
+cp usb_key_access_umount_template "$umount_script_path"
 chown root:root "$umount_script_path"
 if $efi_mode; then
   sed -i "s@EFI_MODE_DUMMY@true@g" "$umount_script_path"
