@@ -5,7 +5,7 @@ Tex:
       - texlive-most
       - texlive-lang
 
-General:
+General Office Software:
   pkg.installed:
     - pkgs:
       - libreoffice-still

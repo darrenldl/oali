@@ -1,4 +1,4 @@
-General:
+General Development Tools:
   pkg.installed:
     - pkgs:
       - meld
