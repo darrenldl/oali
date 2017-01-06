@@ -1,3 +1,4 @@
+#!/usr/bin/racket
 #lang racket
 
 (module+ main

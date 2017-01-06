@@ -10,6 +10,6 @@ Enable echo/noise-cancellation:
 
 Disable Mic boost:
   cmd.run:
-    - name: racket pulseaudio-disable-boost.rkt {{ pillar['pulseaudio_alsa']['config_dir'] }}
+    - name: ./pulseaudio-disable-boost.rkt {{ pillar['pulseaudio_alsa']['config_dir'] }}
     - require:
       - Racket
