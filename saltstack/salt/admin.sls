@@ -19,6 +19,7 @@ Disk management:
   pkg.installed:
     - pkgs:
       - smartmontools
+      - hddtemp
 
 File system tools:
   pkg.installed:
