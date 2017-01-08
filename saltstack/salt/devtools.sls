@@ -45,3 +45,8 @@ SQL:
   pkg.installed:
     - pkgs:
       - sqlitebrowser
+
+Haxe:
+  pkg.installed:
+    - pkgs:
+      - haxe
