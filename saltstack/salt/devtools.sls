@@ -34,6 +34,7 @@ Python:
   pkg.installed:
     - pkgs:
       - python
+      - python-pip
       - python2
 
 R:
