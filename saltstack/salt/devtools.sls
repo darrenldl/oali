@@ -51,3 +51,8 @@ Haxe:
   pkg.installed:
     - pkgs:
       - haxe
+
+JSON:
+  pkg.installed:
+    - pkgs:
+      - jq
