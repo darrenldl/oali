@@ -6,6 +6,11 @@ Text editor:
       - gedit
       - geany
 
+Indexing:
+  pkg.installed:
+    - pkgs:
+      - recoll
+
 Archiving:
   pkg.installed:
     - pkgs:
