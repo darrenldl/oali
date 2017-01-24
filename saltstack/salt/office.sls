@@ -24,7 +24,7 @@ PDF:
 Note taking:
   pkg.installed:
     - pkgs:
-      - zim
+      - cherrytree
 
 OCR:
   pkg.installed:
