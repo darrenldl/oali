@@ -53,7 +53,7 @@ NTP:
 File backup:
   pkg.installed:
     - pkgs:
-      - bup
+      - borg
 
 Partitioning:
   pkg.installed:
