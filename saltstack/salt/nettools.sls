@@ -35,3 +35,8 @@ Tunnelling:
   pkg.installed:
     - pkgs:
       - socat
+
+General tunneling/traffic redirection:
+  pkg.installed:
+    - pkgs:
+      - openbsd-netcat
