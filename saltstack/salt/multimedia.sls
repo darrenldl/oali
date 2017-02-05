@@ -5,10 +5,15 @@ Media:
       - clementine
       - ffmpeg
 
-Image:
+Image viewing:
   pkg.installed:
     - pkgs:
       - feh
+
+Image management:
+  pkg.installed:
+    - pkgs:
+      - digikam
 
 Flash:
   pkg.installed:
