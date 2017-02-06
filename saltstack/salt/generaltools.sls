@@ -15,6 +15,8 @@ Archiving:
   pkg.installed:
     - pkgs:
       - p7zip
+      - engrampa
+      - unrar
 
 Encoding conversion:
   pkg.installed:
