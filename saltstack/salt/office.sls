@@ -20,6 +20,7 @@ PDF:
   pkg.installed:
     - pkgs:
       - apvlv
+      - atril
 
 Note taking:
   pkg.installed:
