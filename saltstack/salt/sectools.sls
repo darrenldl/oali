@@ -18,10 +18,11 @@ Intrusion detection:
     - pkgs:
       - aide
 
-Anti-infoleak:
+Anti-infoleak/privacy:
   pkg.installed:
     - pkgs:
       - bleachbit
+      - perl-image-exiftool
 
 Sandboxing:
   pkg.installed:
