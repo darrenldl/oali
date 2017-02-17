@@ -19,3 +19,8 @@ Flash:
   pkg.installed:
     - pkgs:
       - flashplugin
+
+CD/DVD burning:
+  pkg.installed:
+    - pkgs:
+      - brasero
