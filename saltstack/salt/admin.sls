@@ -7,6 +7,7 @@ Disk usage monitoring:
   pkg.installed:
     - pkgs:
       - ncdu
+      - filelight
 
 System info:
   pkg.installed:
