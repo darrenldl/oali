@@ -47,7 +47,8 @@ Cryptographic:
 Password management:
   pkg.installed:
     - pkgs:
-      - keepassx2
+      # - keepassx2
+      - keepass
 
 Keyring:
   pkg.installed:
