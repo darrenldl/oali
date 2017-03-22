@@ -4,10 +4,19 @@ General Development Tools:
       - meld
       - git
 
+IDE:
+  pkg.installed:
+    - eric          # for Python and Ruby
+    - codeblocks    # for C/C++
+
+GUI Framework/Libraries:
+  pkg.installed:
+    - pkgs:
+      - qt5
+
 C/C++:
   pkg.installed:
     - pkgs:
-      - codeblocks
       - gdb
 
 Java:
