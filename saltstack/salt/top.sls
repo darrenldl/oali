@@ -14,6 +14,7 @@ base:
     - networkmanager
     - office
     - pulseaudio
+    - recovery
     - sectools
     - services
     - usergroups
