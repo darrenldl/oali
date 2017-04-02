@@ -24,6 +24,7 @@ SSH:
   pkg.installed:
     - pkgs:
       - openssh
+      - putty
 
 BitTorrent:
   pkg.installed:
