@@ -24,3 +24,8 @@ CD/DVD burning:
   pkg.installed:
     - pkgs:
       - brasero
+
+USB image burning:
+  pkg.installed:
+    - pkgs:
+      - unetbootin
