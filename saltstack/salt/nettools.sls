@@ -18,6 +18,8 @@ Network sniffing:
     - pkgs:
       - wireshark-qt
       - tcpdump
+      - ettercap
+      - ettercap-gtk
 
 Wireless tools:
   pkg.installed:
