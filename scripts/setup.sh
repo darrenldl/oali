@@ -510,7 +510,10 @@ mapper_name_sys="crypt_sys_root"
 mapper_name_boot="crypt_boot"
 
 echo "Unlocking system partition"
-cryptsetup --key-file "$key_file_path" luksOpen $SYS_PART "$mapper_name_sys"
+cryptsetup open --type luks                 \
+                --key-file "$key_file_path" \
+                $SYS_PART                   \
+                "$mapper_name_sys"
 
 echo "Formatting system partition"
 mkfs.ext4 /dev/mapper/"$mapper_name_sys"
