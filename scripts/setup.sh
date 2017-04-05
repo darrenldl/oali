@@ -795,44 +795,44 @@ chmod o=   "$umount_script_path"
 wait_and_clear 2
 
 # Prepare safe upgrade script
-echo "Generating safe upgrade script"
-safe_upgrade_script_name="safe_upgrade.sh"
-safe_upgrade_script_path="$mount_path"/root/"$safe_upgrade_script_name"
-cp safe_upgrade_template "$safe_upgrade_script_path"
-chown root:root "$safe_upgrade_script_path"
-sed -i "s@UMOUNT_SCRIPT_NAME_DUMMY@$mount_script_name@g" "$safe_upgrade_script_path"
-chmod u=rx "$safe_upgrade_script_path"
-chmod g=rx "$safe_upgrade_script_path"
-chmod o=   "$safe_upgrade_script_path"
+# echo "Generating safe upgrade script"
+# safe_upgrade_script_name="safe_upgrade.sh"
+# safe_upgrade_script_path="$mount_path"/root/"$safe_upgrade_script_name"
+# cp safe_upgrade_template "$safe_upgrade_script_path"
+# chown root:root "$safe_upgrade_script_path"
+# sed -i "s@UMOUNT_SCRIPT_NAME_DUMMY@$mount_script_name@g" "$safe_upgrade_script_path"
+# chmod u=rx "$safe_upgrade_script_path"
+# chmod g=rx "$safe_upgrade_script_path"
+# chmod o=   "$safe_upgrade_script_path"
 
-wait_and_clear 2
+# wait_and_clear 2
 
 # Make directory in encrypted boot partition for USB key resetting scripts
-llsh_usb_key_reset_nonlive_dir=/boot/llsh_usb_key_reset
-llsh_usb_key_reset_live_dir="$mount_path"$llsh_usb_key_reset_nonlive_dir
-echo "Initilising directory for USB key resetting scripts in encrypted boot partition"
-echo ""
-mkdir           $llsh_usb_key_reset_live_dir
-chown root:root $llsh_usb_key_reset_live_dir
-chmod u=rwx     $llsh_usb_key_reset_live_dir
-chmod g=rwx     $llsh_usb_key_reset_live_dir
-chmod o=        $llsh_usb_key_reset_live_dir
+# llsh_usb_key_reset_nonlive_dir=/boot/llsh_usb_key_reset
+# llsh_usb_key_reset_live_dir="$mount_path"$llsh_usb_key_reset_nonlive_dir
+# echo "Initilising directory for USB key resetting scripts in encrypted boot partition"
+# echo ""
+# mkdir           $llsh_usb_key_reset_live_dir
+# chown root:root $llsh_usb_key_reset_live_dir
+# chmod u=rwx     $llsh_usb_key_reset_live_dir
+# chmod g=rwx     $llsh_usb_key_reset_live_dir
+# chmod o=        $llsh_usb_key_reset_live_dir
 
 # Copy usb key reset main script over to encrypted boot partition
-llsh_usb_key_reset_main_name="usb_key_reset_main.sh"
-llsh_usb_key_reset_main_path="$llsh_usb_key_reset_live_dir"/"$llsh_usb_key_reset_main_name"
-echo "Generating main script to be stored in "$llsh_usb_key_reset_nonlive_dir" of actual system (not live)"
-echo ""
-cp usb_key_reset_main_template "$llsh_usb_key_reset_live_dir"
-sed -i "s@@@g"
+# llsh_usb_key_reset_main_name="usb_key_reset_main.sh"
+# llsh_usb_key_reset_main_path="$llsh_usb_key_reset_live_dir"/"$llsh_usb_key_reset_main_name"
+# echo "Generating main script to be stored in "$llsh_usb_key_reset_nonlive_dir" of actual system (not live)"
+# echo ""
+# cp usb_key_reset_main_template "$llsh_usb_key_reset_live_dir"
+# sed -i "s@@@g"
 
 # Copy usb key reset script loader script to encrypted boot partition
-llsh_usb_key_reset_loader_name="usb_key_reset_loader.sh"
-llsh_usb_key_reset_loader_path="$llsh_usb_key_reset_live_dir"/"$llsh_usb_key_reset_loader_name"
-echo "Generating loader script to be stored in "$llsh_usb_key_reset_nonlive_dir" of actual system (not live)"
-echo ""
-cp usb_key_reset_loader_template "$llsh_usb_key_reset_loader_path"
-sed -i "s@LLSH_USB_KEY_RESET_MAIN_DUMMY@@g"
+# llsh_usb_key_reset_loader_name="usb_key_reset_loader.sh"
+# llsh_usb_key_reset_loader_path="$llsh_usb_key_reset_live_dir"/"$llsh_usb_key_reset_loader_name"
+# echo "Generating loader script to be stored in "$llsh_usb_key_reset_nonlive_dir" of actual system (not live)"
+# echo ""
+# cp usb_key_reset_loader_template "$llsh_usb_key_reset_loader_path"
+# sed -i "s@LLSH_USB_KEY_RESET_MAIN_DUMMY@@g"
 
 wait_and_clear 2
 
