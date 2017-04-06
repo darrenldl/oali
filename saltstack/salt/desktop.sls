@@ -5,6 +5,7 @@ Desktop environment:
       # - xfce4
       # - xfce4-goodies
       # - xfce4-notifyd
+      - wayland
       - lxqt
       - sddm
       - kwin
