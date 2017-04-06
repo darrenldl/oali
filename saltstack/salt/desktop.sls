@@ -7,6 +7,8 @@ Desktop environment:
       # - xfce4-notifyd
       - lxqt
       - sddm
+      - kwin
+      - systemsettings
 
 Audio server:
   pkg.installed:
