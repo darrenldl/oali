@@ -19,5 +19,5 @@ Screensaver:
   pkg.installed:
     - pkgs:
       - i3lock
-      - xscreensaver
+      # - xscreensaver
 
