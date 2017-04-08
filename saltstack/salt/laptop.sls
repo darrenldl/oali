@@ -3,3 +3,8 @@ Ignore lid close:
     - name: /etc/systemd/logind.conf
     - text:
       - HandleLidSwitch=ignore
+
+Battery monitor:
+  pkg.installed:
+    - pkgs:
+      - ibam
