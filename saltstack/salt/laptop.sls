@@ -8,3 +8,4 @@ Battery monitor:
   pkg.installed:
     - pkgs:
       - ibam
+      - ibamtray
