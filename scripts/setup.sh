@@ -870,7 +870,7 @@ while ! $end; do
   done
 
   echo "Adding user"
-  user -m "$user_name" -G wheel, rfkill
+  useradd -m "$user_name" -G users, wheel, rfkill
   if [[ $? != 0 ]]; then
     echo "Failed to add user"
     echo "Please check whether the user name is correctly specified and if acceptable by the system"
