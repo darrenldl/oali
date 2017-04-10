@@ -6,8 +6,9 @@ General Development Tools:
 
 IDE:
   pkg.installed:
-    - eric          # for Python and Ruby
-    - codeblocks    # for C/C++
+    - pkgs:
+      - eric          # for Python and Ruby
+      - codeblocks    # for C/C++
 
 GUI Framework/Libraries:
   pkg.installed:

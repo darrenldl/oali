@@ -24,7 +24,7 @@ Add user to nm-openvpn group:
   group.present:
     - name: nm-openvpn
     - addusers:
-      - {{ pillar['user']['user_name'] }}
+      - {{ pillar['user_info']['user_name'] }}
     - require:
       - Network management
 
