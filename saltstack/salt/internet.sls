@@ -20,6 +20,14 @@ Network management:
       - networkmanager
       - networkmanager-openvpn
 
+Add user to nm-openvpn group:
+  group.present:
+    - name: nm-openvpn
+    - addusers:
+      - {{ pillar['user']['user_name'] }}
+    - require:
+      - Network management
+
 SSH:
   pkg.installed:
     - pkgs:
