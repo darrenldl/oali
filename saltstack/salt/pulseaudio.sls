@@ -12,4 +12,4 @@ Disable Mic boost:
   cmd.run:
     - name: /srv/salt/pulseaudio-disable-boost.rkt {{ pillar['pulseaudio_alsa']['config_dir'] }}
     - require:
-      - devtools: Racket
+      - pkg: Racket
