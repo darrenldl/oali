@@ -18,7 +18,7 @@ Network sniffing:
     - pkgs:
       - wireshark-qt
       - tcpdump
-      - ettercap
+      # - ettercap
       - ettercap-gtk
 
 Add user to wireshark group:
