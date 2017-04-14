@@ -882,8 +882,7 @@ wait_and_clear 2
 echo "User setup"
 echo ""
 
-end=false
-while ! $end; do
+while true; do
   ask_end=false
   while ! $ask_end; do
     ask_ans user_name "Please enter the user name"
@@ -893,7 +892,9 @@ while ! $end; do
 
   echo "Adding user"
   useradd -m "$user_name" -G users,wheel,rfkill
-  if [[ $? != 0 ]]; then
+  if [[ $? == 0 ]]; then
+    break
+  else
     echo "Failed to add user"
     echo "Please check whether the user name is correctly specified and if acceptable by the system"
 
@@ -901,12 +902,13 @@ while ! $end; do
   fi
 done
 
-end=false
-while ! $end; do
+while true; do
   echo "Setting password for user : " $user_name
 
   passwd "$user_name"
-  if [[ $? != 0 ]]; then
+  if [[ $? == 0 ]]; then
+    break
+  else
     echo "Failed to set password"
     echo "Please repeat the procedure"
 
