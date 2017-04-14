@@ -10,8 +10,8 @@ Make sure NetworkManager is enabled:
     - require:
       - pkg: Network management
 
-Make sure ssdm is enabled:
+Make sure sddm is enabled:
   service.enabled:
-    - name: ssdm
+    - name: sddm
     - require:
-      - pkg: Desktop environment
+      - pkg: Login manager

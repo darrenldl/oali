@@ -11,6 +11,11 @@ Desktop environment:
       - kwin
       - systemsettings
 
+Login manager:
+  pkg.installed:
+    - pkgs:
+      - sddm
+
 Audio server:
   pkg.installed:
     - pkgs:
