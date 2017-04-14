@@ -40,12 +40,10 @@ ask_ans() {
     message=$2
   fi
 
-  while true; do
-    echo -n "$message"" : "
-    read ans
+  echo -n "$message"" : "
+  read ans
 
-    eval "$ret_var=$ans"
-  done
+  eval "$ret_var=$ans"
 }
 
 ask_yn() {
@@ -462,7 +460,7 @@ if $use_default_keyfile; then
 else
   end=false
   while ! $end; do
-    ask_ans USER_KEYFILE_PATH "Please specify the location of keyfile : "
+    ask_ans USER_KEYFILE_PATH "Please specify the location of keyfile"
 
     if [ -f USER_KEYFILE_PATH ]; then
       echo "Keyfile picked : " $USER_KEYFILE_PATH
