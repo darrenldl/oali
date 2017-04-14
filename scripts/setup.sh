@@ -153,7 +153,7 @@ cat <<READNOTEEOF
 
 ===== IMPORTANT =====
 Please read over the setup note that this setup script has generated for you
-The setup note is stored as "$llsh_setup_note_path" in your system
+The setup note is stored as "/root/$llsh_setup_note_name" in your system
 
 The setup note contains important information of the other helper scripts that have been generated for you
 =====================
