@@ -513,6 +513,8 @@ cryptsetup open --type luks                 \
                 $SYS_PART                   \
                 "$mapper_name_sys"
 
+wait_and_clear
+
 echo "Formatting system partition"
 mkfs.ext4 /dev/mapper/"$mapper_name_sys"
 
