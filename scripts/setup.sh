@@ -891,7 +891,7 @@ while true; do
   done
 
   echo "Adding user"
-  useradd -m "$user_name" -G users,wheel,rfkill
+  arch-chroot "$mount_path" useradd -m "$user_name" -G users,wheel,rfkill
   if [[ $? == 0 ]]; then
     break
   else
@@ -905,7 +905,7 @@ done
 while true; do
   echo "Setting password for user : " $user_name
 
-  passwd "$user_name"
+  arch-chroot "$mount_path" passwd "$user_name"
   if [[ $? == 0 ]]; then
     break
   else
