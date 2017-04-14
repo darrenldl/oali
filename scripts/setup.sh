@@ -962,7 +962,7 @@ if $use_salt; then
   wait_and_clear 2
 
   # Customise saltstack files
-  echo "Configuring salt files to target user : " $user_name
+  echo "Configuring salt files to target user : "$user_name
   sed -i "s@USER_NAME_DUMMY@$user_name@g" "$mount_path"/srv/pillar/user.sls
 
   wait_and_clear 2
