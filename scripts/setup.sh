@@ -859,7 +859,7 @@ wait_and_clear 2
 # cp usb_key_reset_loader_template "$llsh_usb_key_reset_loader_path"
 # sed -i "s@LLSH_USB_KEY_RESET_MAIN_DUMMY@@g"
 
-wait_and_clear 2
+# wait_and_clear 2
 
 # Copy note over
 echo "Generating setup note"
