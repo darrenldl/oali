@@ -552,7 +552,9 @@ wait_and_clear 2
 
 while true; do
   echo "Unlocking boot partition"
-  cryptsetup open --type luks $USB_KEY_BOOT "$mapper_name_boot"
+  cryptsetup open --type luks         \
+                  $USB_KEY_BOOT       \
+                  "$mapper_name_boot"
   if [[ $? == 0 ]]; then
     break
   else
