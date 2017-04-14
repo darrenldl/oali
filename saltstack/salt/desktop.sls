@@ -1,7 +1,7 @@
 Desktop environment:
   pkg.installed:
     - pkgs:
-      # - xorg
+      - xorg
       # - xfce4
       # - xfce4-goodies
       # - xfce4-notifyd
