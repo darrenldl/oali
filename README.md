@@ -47,4 +47,4 @@ Also, you need to enter the passphrase of the boot partition twice during bootin
   - `cd Linux_Laptop_Salt_Hard/scripts; chmod u+x setup.sh; ./setup.sh`
 
 ### License
-Unlicense - http://unlicense.org/
+Unlicense - https://unlicense.org/
