@@ -411,17 +411,19 @@ fi
 
 wait_and_clear
 
-boot_key_cipher=aes-xts-plain64
-boot_key_iter_time_millisec=5000
-boot_key_hash=sha512
+boot_key_luks_cipher=aes-xts-plain64
+boot_key_luks_key_size=512
+boot_key_luks_iter_time_millisec=5000
+boot_key_luks_hash=sha512
 
 # Encrypt USB key boot partition
 while true; do
   echo "Encrypting boot partition"
-  cryptsetup luksFormat -y                                       \
-                        --cipher    $boot_key_cipher             \
-                        --iter-time $boot_key_iter_time_millisec \
-                        --hash      $boot_key_hash               \
+  cryptsetup luksFormat -y                                            \
+                        --cipher    $boot_key_luks_cipher             \
+                        --key-size  $boot_key_luks_key_size           \
+                        --iter-time $boot_key_luks_iter_time_millisec \
+                        --hash      $boot_key_luks_hash               \
                         "$USB_KEY_BOOT"
   if [[ $? == 0 ]]; then
     break
@@ -495,17 +497,19 @@ else
   done
 fi
 
-sys_part_cipher=aes-xts-plain64
-sys_part_iter_time_millisec=2000
-sys_part_hash=sha512
+sys_part_luks_cipher=aes-xts-plain64
+sys_part_luks_key_size=512
+sys_part_luks_iter_time_millisec=2000
+sys_part_luks_hash=sha512
 
 # Encrypt main system partition
 while true; do
   echo "Encrypting system partition"
-  cryptsetup luksFormat --key-file "$key_file_path"              \
-                        --cipher    $sys_part_cipher             \
-                        --iter-time $sys_part_iter_time_millisec \
-                        --hash      $sys_part_hash               \
+  cryptsetup luksFormat --key-file  "$key_file_path"                  \
+                        --cipher    $sys_part_luks_cipher             \
+                        --key-size  $sys_part_luks_key_size           \
+                        --iter-time $sys_part_luks_iter_time_millisec \
+                        --hash      $sys_part_luks_hash               \
                         $SYS_PART
   if [[ $? == 0 ]]; then
     break
