@@ -283,8 +283,8 @@ while ! $end; do
   echo -n "Please specify a partition to use : "
   read SYS_PART
 
-  if [ -b $SYS_PART ]; then
-    echo "System parition picked :" $SYS_PART
+  if [ -b "$SYS_PART" ]; then
+    echo "System parition picked :" "$SYS_PART"
     ask_if_correct end
   else
     echo "Partition does not exist"
@@ -411,10 +411,18 @@ fi
 
 wait_and_clear
 
+boot_key_cipher=aes-xts-plain64
+boot_key_iter_time_millisec=5000
+boot_key_hash=sha512
+
 # Encrypt USB key boot partition
 while true; do
   echo "Encrypting boot partition"
-  cryptsetup -y luksFormat "$USB_KEY_BOOT"
+  cryptsetup luksFormat -y                                       \
+                        --cipher    $boot_key_cipher             \
+                        --iter-time $boot_key_iter_time_millisec \
+                        --hash      $boot_key_hash               \
+                        "$USB_KEY_BOOT"
   if [[ $? == 0 ]]; then
     break
   else
@@ -487,10 +495,18 @@ else
   done
 fi
 
+sys_part_cipher=aes-xts-plain64
+sys_part_iter_time_millisec=2000
+sys_part_hash=sha512
+
 # Encrypt main system partition
 while true; do
   echo "Encrypting system partition"
-  cryptsetup --key-file "$key_file_path" luksFormat $SYS_PART
+  cryptsetup luksFormat --key-file "$key_file_path"              \
+                        --cipher    $sys_part_cipher             \
+                        --iter-time $sys_part_iter_time_millisec \
+                        --hash      $sys_part_hash               \
+                        $SYS_PART
   if [[ $? == 0 ]]; then
     break
   else
