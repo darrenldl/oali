@@ -3,10 +3,10 @@ Qemu:
     - pkgs:
       - qemu
 
-Virtualbox:
-  pkg.installed:
-    - pkgs:
-      - virtualbox
+# Virtualbox:
+#   pkg.installed:
+#     - pkgs:
+#       - virtualbox
 
 Virt manager:
   pkg.installed:
