@@ -11,6 +11,11 @@ Desktop environment:
       - kwin
       - systemsettings
 
+File manager:
+  pkg.installed:
+    - pkgs:
+      - ranger
+
 Login manager:
   pkg.installed:
     - pkgs:
