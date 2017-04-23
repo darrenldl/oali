@@ -40,7 +40,7 @@ ask_ans() {
     message=$2
   fi
 
-  echo -n "$message"" : "
+  echo -ne "$message"" : "
   read ans
 
   eval "$ret_var=$ans"
@@ -56,7 +56,7 @@ ask_yn() {
   fi
 
   while true; do
-    echo -n "$message"" y/n : "
+    echo -ne "$message"" y/n : "
     read ans
     if   [[ $ans == "y" ]]; then
       eval "$ret_var=true"
@@ -383,7 +383,7 @@ wait_and_clear 2
 
 end=false
 while ! $end; do
-  ask_yn rand_wipe "Do you want to overwrite partitions which will be encrypted with random bytes(/dev/urandom)? Note that this may NOT be effective on USB keys, and may DECREASE lifespan of your USB key."
+  ask_yn rand_wipe "Do you want to overwrite partitions which will be encrypted with random bytes(/dev/urandom)?\nNote that this may NOT be effective on USB keys, and may DECREASE lifespan of your USB key."
 
   ask_if_correct end
 done
