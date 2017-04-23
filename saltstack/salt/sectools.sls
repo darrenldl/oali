@@ -28,7 +28,6 @@ Sandboxing:
   pkg.installed:
     - pkgs:
       - firejail
-      - playpen
 
 Hashing:
   pkg.installed:
