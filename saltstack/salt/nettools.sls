@@ -21,6 +21,11 @@ Network sniffing:
       # - ettercap
       - ettercap-gtk
 
+Network analysis:
+  pkg.installed:
+    - pkgs:
+      - etherape
+
 Add user to wireshark group:
   group.present:
     - name: wireshark
