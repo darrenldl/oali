@@ -56,6 +56,11 @@ File backup:
     - pkgs:
       - borg
 
+File synchronisation:
+  pkg.installed:
+    - pkgs:
+      - unison
+
 Partitioning:
   pkg.installed:
     - pkgs:
