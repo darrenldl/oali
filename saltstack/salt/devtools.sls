@@ -27,6 +27,13 @@ Java:
       - jdk8-openjdk
       - jre8-openjdk
 
+OCaml:
+  pkg.installed:
+    - pkgs:
+    - ocaml
+    - opam
+    - ocamlbuild
+
 Python:
   pkg.installed:
     - pkgs:
