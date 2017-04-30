@@ -27,6 +27,13 @@ Java:
       - jdk8-openjdk
       - jre8-openjdk
 
+Python:
+  pkg.installed:
+    - pkgs:
+      - python
+      - python-pip
+      - python2
+
 Rust:
   pkg.installed:
     - pkgs:
@@ -39,13 +46,6 @@ Racket:
     - pkgs:
       - racket
       - racket-docs
-
-Python:
-  pkg.installed:
-    - pkgs:
-      - python
-      - python-pip
-      - python2
 
 R:
   pkg.installed:
