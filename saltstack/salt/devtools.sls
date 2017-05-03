@@ -30,9 +30,9 @@ Java:
 OCaml:
   pkg.installed:
     - pkgs:
-    - ocaml
-    - opam
-    - ocamlbuild
+      - ocaml
+      - opam
+      - ocamlbuild
 
 Python:
   pkg.installed:
