@@ -5,6 +5,7 @@ base:
     - devtools
     - firewall
     - generaltools
+    - graphics
     - harden
     - internet
     - laptop
