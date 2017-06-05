@@ -588,12 +588,6 @@ echo "Generating fstab"
 mkdir "$mount_path"/etc
 genfstab -U "$mount_path" >> "$mount_path"/etc/fstab
 
-# echo "Merging new fstab with configured fstab, if any"
-# if [ -e "$mount_path"/etc/fstab.pacnew ]; then
-#   cat "$mount_path"/etc/fstab >> "$mount_path"/etc/fstab.pacnew
-#   mv "$mount_path"/etc/fstab.pacnew "$mount_path"/etc/fstab
-# fi
-
 wait_and_clear 2
 
 # Setup hostname
