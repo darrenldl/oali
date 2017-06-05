@@ -11,6 +11,11 @@ Desktop environment:
       - kwin
       - systemsettings
 
+Screenshot:
+  pkg.installed:
+    - pkgs:
+      - xfce4-screenshooter
+
 File manager:
   pkg.installed:
     - pkgs:
