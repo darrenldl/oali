@@ -14,7 +14,7 @@ Desktop environment:
 Screenshot:
   pkg.installed:
     - pkgs:
-      - xfce4-screenshooter
+      - spectacle
 
 File manager:
   pkg.installed:
