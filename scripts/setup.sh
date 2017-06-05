@@ -631,12 +631,12 @@ clear
 
 end=false
 while ! $end; do
-  ask_yn use_grsec "Do you want to install GrSecurity kernel?"
+  ask_yn use_hardened "Do you want to install hardened kernel?"
 
   ask_if_correct end
 done
 
-if $use_grsec; then
+if $use_hardened; then
   end=false
   while ! $end; do
     ask_yn remove_vanilla "Do you want to remove vanilla kernel?"
@@ -661,7 +661,7 @@ if $use_grsec; then
 
   wait_and_clear
 
-  install_with_retries linux-grsec
+  install_with_retries linux-hardened
 
   wait_and_clear
 else
@@ -730,9 +730,9 @@ if ! $remove_vanilla; then
   echo "Recreating vanilla kernel image"
   arch-chroot "$mount_path" mkinitcpio -p linux
 fi
-if $use_grsec; then
-  echo "Recreating GrSecurity kernel image"
-  arch-chroot "$mount_path" mkinitcpio -p linux-grsec
+if $use_hardened; then
+  echo "Recreating hardened kernel image"
+  arch-chroot "$mount_path" mkinitcpio -p linux-hardened
 fi
 
 wait_and_clear 2
