@@ -4,6 +4,11 @@ General Development Tools:
       - meld
       - git
 
+Hex editor:
+  pkg.installed:
+    - pkgs:
+      - okteta
+
 IDE:
   pkg.installed:
     - pkgs:
