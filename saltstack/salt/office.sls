@@ -21,6 +21,7 @@ PDF:
     - pkgs:
       - apvlv
       - atril
+      - okular
 
 Note taking:
   pkg.installed:
