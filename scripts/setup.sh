@@ -472,7 +472,7 @@ else
   while ! $end; do
     ask_ans USER_KEYFILE_PATH "Please specify the location of keyfile"
 
-    if [ -f USER_KEYFILE_PATH ]; then
+    if [ -f $USER_KEYFILE_PATH ]; then
       echo "Keyfile picked : " $USER_KEYFILE_PATH
       ask_if_correct end
 
