@@ -28,9 +28,9 @@ Note taking:
     - pkgs:
       - cherrytree
 
-OCR:
-  pkg.installed:
-    - pkgs:
-      - ocrfeeder
-      - tesseract
-      - tesseract-data
+# OCR:
+#   pkg.installed:
+#     - pkgs:
+#       - ocrfeeder
+#       - tesseract
+#       - tesseract-data
