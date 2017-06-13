@@ -584,11 +584,21 @@ done
 
 clear
 
+echo "Temporarily unmounting boot partition for fstab generation"
+umount "$mount_path"/boot
+
+wait_and_clear
+
 echo "Generating fstab"
 mkdir "$mount_path"/etc
 genfstab -U "$mount_path" >> "$mount_path"/etc/fstab
 
 wait_and_clear 2
+
+echo "Remounting boot partition"
+mount /dev/mapper/"$mapper_name_boot" "$mount_path"/boot
+
+wait_and_clear
 
 # Setup hostname
 end=false
