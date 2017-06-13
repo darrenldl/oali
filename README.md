@@ -6,7 +6,9 @@ This currently setups up an Arch Linux installation with full disk encryption, r
 The script builds your USB key depending on whether the liveCD is running in UEFI mode or BIOS mode. After installation, the USB key needs to be booted from the mode your were on during installation.
 
 ### Encryption specifics
-Main system partition on computer drive is protected by a keyfile generated from /dev/urandom (1MiB in size).
+Main system partition on computer drive is protected by a keyfile provided by user or generated from /dev/urandom (1MiB in size) by setup.sh.
+
+**It is recommended that the user generates the keyfile on a trusted system with high level of entropy available prior to the installation.**
 
 The keyfile is stored in the encrypted boot partition on USB key.
 
