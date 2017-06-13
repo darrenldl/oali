@@ -1004,10 +1004,10 @@ fi
 clear
 
 if $close_disks; then
-  # Restart
+  # Shut down
   end=false
   while ! $end; do
-    ask_yn shutdown_system "Do you want to restart now?"
+    ask_yn shutdown_system "Do you want to shut down now?"
 
     ask_if_correct end
   done
@@ -1015,10 +1015,10 @@ if $close_disks; then
   tell_read_note
 
   if $shutdown_system; then
-    shutdown -r now
+    poweroff
   fi
 else
-  echo "No rebooting will be done by the script since the disks are not closed"
+  echo "No shutting down will be done by the script since the disks are not closed"
 
   tell_read_note
 
