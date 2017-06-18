@@ -23,6 +23,8 @@ GUI Framework/Libraries:
 C/C++:
   pkg.installed:
     - pkgs:
+      - clang
+      - gcc
       - gdb
 
 Java:
