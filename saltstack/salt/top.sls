@@ -19,5 +19,6 @@ base:
     - recovery
     - sectools
     - services
+    - system
     - usergroups
     - virtualisation

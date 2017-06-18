@@ -1,7 +1,6 @@
 System hardening:
   pkg.installed:
     - pkgs:
-      - linux-hardened
       # - paxd
       - checksec
       - pax-utils
