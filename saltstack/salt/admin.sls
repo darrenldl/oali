@@ -21,6 +21,8 @@ Disk management:
     - pkgs:
       - smartmontools
       - hddtemp
+      - hdparm
+      - sdparm
 
 File system tools:
   pkg.installed:
