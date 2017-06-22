@@ -68,6 +68,11 @@ File synchronisation:
     - pkgs:
       - unison
 
+Cloud file access:
+  pkg.installed:
+    - pkgs:
+      - rclone
+
 Partitioning:
   pkg.installed:
     - pkgs:
