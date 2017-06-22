@@ -16,6 +16,7 @@ Archiving:
     - pkgs:
       - p7zip
       - engrampa
+      - ark
       - unrar
 
 Encoding conversion:
