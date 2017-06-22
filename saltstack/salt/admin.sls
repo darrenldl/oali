@@ -3,6 +3,11 @@ System monitoring:
     - pkgs:
       - conky
 
+Cron:
+  pkg.installed:
+    - pkgs:
+      - fcron
+
 Disk usage monitoring:
   pkg.installed:
     - pkgs:
