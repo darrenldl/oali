@@ -1,7 +1,7 @@
-System monitoring:
-  pkg.installed:
-    - pkgs:
-      - conky
+#System monitoring:
+#  pkg.installed:
+#    - pkgs:
+#      - conky
 
 Cron:
   pkg.installed:
