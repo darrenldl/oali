@@ -9,3 +9,9 @@ Vanilla kernel:
     - pkgs:
       - linux
       - linux-headers
+
+LTS kernel:
+  pkg.installed:
+    - pkgs:
+      - linux-lts
+      - linux-lts-headers
