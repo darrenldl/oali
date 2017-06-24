@@ -21,6 +21,11 @@ System info:
       - lshw
       - hardinfo
 
+Log cleaning:
+  pkg.installed:
+    - pkgs:
+      - logrotate # should already be installed since it is in base group, but leaving it here anyway
+
 Disk management:
   pkg.installed:
     - pkgs:
