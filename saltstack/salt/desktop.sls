@@ -11,6 +11,11 @@ Desktop environment:
       - kwin
       - systemsettings
 
+Window manager related:
+  pkg.installed:
+    - pkgs:
+      - wmctrl
+
 Screenshot:
   pkg.installed:
     - pkgs:
