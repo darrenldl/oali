@@ -4,6 +4,9 @@
 The following scripts should be present in /root directory
     SALT_STACK_EXEC_SCRIPT_DUMMY
         Apply installed local salt states
+            NOTE :
+              Please mount the USB key first (using USB_KEY_MOUNT_SCRIPT_DUMMY)
+              before using
             Setup should have installed the appropriate salt states
             in your system already
 
