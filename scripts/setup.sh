@@ -870,6 +870,9 @@ echo "Copying useradd helper"
 useradd_helper_name="useradd_helper.sh"
 useradd_helper_path="$mount_path"/root/"$useradd_helper_name"
 cp useradd_helper.sh "$useradd_helper_path"
+chmod u=rx "$useradd_helper_path"
+chmod g=rx "$useradd_helper_path"
+chmod o=   "$useradd_helper_path"
 
 # Copy note over
 echo "Generating setup note"
