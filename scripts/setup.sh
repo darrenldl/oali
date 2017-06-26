@@ -787,10 +787,16 @@ arch-chroot "$mount_path" grub-mkconfig -o /boot/grub/grub.cfg
 
 wait_and_clear 2
 
+# Setup files in /root directory
+echo "Setting up files in /root directory"
+llsh_files_dir_name="llsh_pack"
+llsh_files_dir_path="$mount_path"/root/"$llsh_files_dir_name"
+mkdir "$llsh_files_dir_path"
+
 # Prepare USB key mounting/unmounting scripts and copy into new system
 echo "Generating USB key mounting and unmounting scripts"
 mount_script_name="usb_key_access_mount.sh"
-mount_script_path="$mount_path"/root/"$mount_script_name"
+mount_script_path="$llsh_files_dir_path"/"$mount_script_name"
 cp usb_key_access_mount_template "$mount_script_path"
 chown root:root "$mount_script_path"
 if $efi_mode; then
@@ -806,7 +812,7 @@ chmod g=rx "$mount_script_path"
 chmod o=   "$mount_script_path"
 
 umount_script_name="usb_key_access_umount.sh"
-umount_script_path="$mount_path"/root/"$umount_script_name"
+umount_script_path="$llsh_files_dir_path"/"$umount_script_name"
 cp usb_key_access_umount_template "$umount_script_path"
 chown root:root "$umount_script_path"
 if $efi_mode; then
@@ -868,7 +874,7 @@ wait_and_clear 2
 # Copy user add helper over
 echo "Copying useradd helper"
 useradd_helper_name="useradd_helper.sh"
-useradd_helper_path="$mount_path"/root/"$useradd_helper_name"
+useradd_helper_path="$llsh_files_dir_path"/"$useradd_helper_name"
 cp useradd_helper.sh "$useradd_helper_path"
 chmod u=rx "$useradd_helper_path"
 chmod g=rx "$useradd_helper_path"
@@ -877,7 +883,7 @@ chmod o=   "$useradd_helper_path"
 # Copy note over
 echo "Generating setup note"
 llsh_setup_note_name="llsh_setup_note"
-llsh_setup_note_path="$mount_path"/root/"$llsh_setup_note_name"
+llsh_setup_note_path="$llsh_files_dir_path"/"$llsh_setup_note_name"
 cp llsh_setup_note_template "$llsh_setup_note_path"
 chown root:root "$llsh_setup_note_path"
 sed -i "s@USB_KEY_MOUNT_SCRIPT_DUMMY@$mount_script_name@g"        "$llsh_setup_note_path"
