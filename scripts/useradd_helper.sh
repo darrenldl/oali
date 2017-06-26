@@ -28,7 +28,7 @@ done
 while true; do
   echo "Setting password for user : " $user_name
 
-  arch-chroot "$mount_path" passwd "$user_name"
+  passwd "$user_name"
   if [[ $? == 0 ]]; then
     break
   else
