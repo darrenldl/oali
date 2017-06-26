@@ -1,6 +1,83 @@
-#!/bib/bash
+#!/bin/bash
 # The following section is copied from setup.sh with slight modification
 # It was last copied over from setup.sh on 2017-06-26
+
+INVALID_ANS="Invalid answer"
+NO_COMMAND="Command not found"
+
+ask_ans() {
+  if   (( $# <= 1 )); then
+    echo "Too few parameters"
+    exit
+  elif (( $# >= 2 )); then
+    ret_var=$1
+    message=$2
+  fi
+
+  echo -ne "$message"" : "
+  read ans
+
+  eval "$ret_var=$ans"
+}
+
+ask_yn() {
+  if   (( $# <= 1 )); then
+    echo "Too few parameters"
+    exit
+  elif (( $# >= 2 )); then
+    ret_var=$1
+    message=$2
+  fi
+
+  while true; do
+    echo -ne "$message"" y/n : "
+    read ans
+    if   [[ $ans == "y" ]]; then
+      eval "$ret_var=true"
+      break
+    elif [[ $ans == "n" ]]; then
+      eval "$ret_var=false"
+      break
+    else
+      echo -e $INVALID_ANS
+    fi
+  done
+}
+
+ask_if_correct() {
+  ask_yn $1 "Is this correct?"
+}
+
+comple() {
+  if $(eval echo '$'$1); then
+    eval "$2=false"
+  else
+    eval "$2=true"
+  fi
+}
+
+flip_ans() {
+  if $(eval echo '$'$1); then
+    eval "$1=false"
+  else
+    eval "$1=true"
+  fi
+}
+
+default_wait=1
+wait_and_clear() {
+  if [[ $# == 0 ]]; then
+    sleep $default_wait
+  else
+    sleep $1
+  fi
+  clear
+}
+
+tell_press_enter() {
+  echo "Press enter to continue"
+  read
+}
 
 echo "User setup"
 echo ""
