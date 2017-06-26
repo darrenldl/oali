@@ -100,6 +100,11 @@ wait_and_clear() {
   clear
 }
 
+tell_press_enter() {
+  echo "Press enter to continue"
+  read
+}
+
 default_retries=5
 install_with_retries() {
   if   [[ $# == 0 ]]; then
@@ -141,11 +146,6 @@ install_with_retries() {
       retries_left=$retries
     fi
   done
-}
-
-tell_press_enter() {
-  echo "Press enter to continue"
-  read
 }
 
 tell_read_note() {
