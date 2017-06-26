@@ -19,3 +19,7 @@ The following scripts should be present in /root directory
         Unmounts USB key
             Execute this and remove your USB key after update
             or any maintenance
+
+    USERADD_HELPER_DUMMY
+        Helper script for using useradd
+            Add user in same manner as used by setup.sh
