@@ -865,6 +865,12 @@ wait_and_clear 2
 
 # wait_and_clear 2
 
+# Copy user add helper over
+echo "Copying useradd helper"
+useradd_helper_name="useradd_helper.sh"
+useradd_helper_path="$mount_path"/root/"$useradd_helper_name"
+cp useradd_helper.sh "$useradd_helper_path"
+
 # Copy note over
 echo "Generating setup note"
 llsh_setup_note_name="llsh_setup_note"
