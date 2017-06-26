@@ -21,3 +21,9 @@ Make sure fcron is enabled:
     - name: fcron
     - require:
       - Cron
+
+Make sure vnStat is enabled:
+  service.enabled:
+    - name : vnstat
+    - require:
+      - Network statistics
