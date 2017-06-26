@@ -12,6 +12,11 @@ Secure chat:
       # Tox chat
       - qtox
 
+Vulnerability scan/management:
+  pkg.installed:
+    - pkgs:
+      - openvas
+
 Intrusion detection:
   pkg.installed:
     - pkgs:
