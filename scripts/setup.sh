@@ -226,6 +226,11 @@ read
 
 clear
 
+# Grab path to self
+pushd `dirname $0` > /dev/null
+path_to_self=$(pwd -P)
+popd > /dev/null
+
 # Update time
 echo "Updating time"
 timedatectl set-ntp true
@@ -797,7 +802,7 @@ mkdir "$llsh_files_dir_path"
 echo "Generating USB key mounting and unmounting scripts"
 mount_script_name="usb_key_access_mount.sh"
 mount_script_path="$llsh_files_dir_path"/"$mount_script_name"
-cp usb_key_access_mount_template "$mount_script_path"
+cp "$path_to_self"/usb_key_access_mount_template "$mount_script_path"
 chown root:root "$mount_script_path"
 if $efi_mode; then
   sed -i "s@EFI_MODE_DUMMY@true@g" "$mount_script_path"
@@ -813,7 +818,7 @@ chmod o=   "$mount_script_path"
 
 umount_script_name="usb_key_access_umount.sh"
 umount_script_path="$llsh_files_dir_path"/"$umount_script_name"
-cp usb_key_access_umount_template "$umount_script_path"
+cp "$path_to_self"/usb_key_access_umount_template "$umount_script_path"
 chown root:root "$umount_script_path"
 if $efi_mode; then
   sed -i "s@EFI_MODE_DUMMY@true@g" "$umount_script_path"
@@ -875,7 +880,7 @@ wait_and_clear 2
 echo "Copying useradd helper"
 useradd_helper_name="useradd_helper.sh"
 useradd_helper_path="$llsh_files_dir_path"/"$useradd_helper_name"
-cp useradd_helper.sh "$useradd_helper_path"
+cp "$path_to_self"/useradd_helper.sh "$useradd_helper_path"
 chmod u=rx "$useradd_helper_path"
 chmod g=rx "$useradd_helper_path"
 chmod o=   "$useradd_helper_path"
@@ -884,7 +889,7 @@ chmod o=   "$useradd_helper_path"
 echo "Generating setup note"
 llsh_setup_note_name="llsh_setup_note"
 llsh_setup_note_path="$llsh_files_dir_path"/"$llsh_setup_note_name"
-cp llsh_setup_note_template "$llsh_setup_note_path"
+cp "$path_to_self"/llsh_setup_note_template "$llsh_setup_note_path"
 chown root:root "$llsh_setup_note_path"
 sed -i "s@USB_KEY_MOUNT_SCRIPT_DUMMY@$mount_script_name@g"        "$llsh_setup_note_path"
 sed -i "s@USB_KEY_UMOUNT_SCRIPT_DUMMY@$umount_script_name@g"      "$llsh_setup_note_path"
