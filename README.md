@@ -25,6 +25,18 @@ The implication then is that you should keep your USB key better protected physi
 
 Also, you need to enter the passphrase of the boot partition twice during booting.
 
+This setup does not store the keyfile in the kernel ram image, which may or may not be a benefit depending on your threat model.
+
+It is **HIGHLY RECOMMENDED** that you leave salt execution to post-install phase using script provided (see below)
+
+### Post-install notes
+After installation, several files will be present in "/root/llsh_pack" (all of the files are to be accessed/executed by root)
+  - llsh_setup_note contains description of the files
+  - salt_exec.sh allows you start the saltstack setup
+  - usb_access_mount.sh allows you to mount your USB key easily and reliably
+  - usb_access_umount.sh allows you to unmount your USB key easily and reliably
+  - useradd_helper.sh allows you to add more users in the same manner as used by setup.sh
+
 ### Prerequisites
   - Working internet connection
   - Partitioning done for system partition
