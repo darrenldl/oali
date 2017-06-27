@@ -1,9 +1,14 @@
 # Linux_Laptop_Salt_Hard
 
 ### Description
-This currently setups up an Arch Linux installation with full disk encryption, requiring a USB key to boot and unlock.
+This currently setup an optionally hardened Arch Linux installation with full disk encryption, requiring a USB key to boot and unlock.
 
 The script builds your USB key depending on whether the liveCD is running in UEFI mode or BIOS mode. After installation, the USB key needs to be booted from the mode your were on during installation.
+
+### Hardening specifics
+Outside of strict firewall that is suitable for normal user machine
+
+setup.sh allows optional installation of linux-hardened package for Arch Linux
 
 ### Encryption specifics
 Main system partition on computer drive is protected by a keyfile provided by user or generated from /dev/urandom (1MiB in size) by setup.sh.
@@ -36,6 +41,10 @@ After installation, several files will be present in "/root/llsh_pack" (all of t
   - usb_access_mount.sh allows you to mount your USB key easily and reliably
   - usb_access_umount.sh allows you to unmount your USB key easily and reliably
   - useradd_helper.sh allows you to add more users in the same manner as used by setup.sh
+
+### Misc. notes
+Saltstack files related
+  - currently linux-lts is enabled in the salt state files as a measure to avoid lock out due to kernel updates
 
 ### Prerequisites
   - Working internet connection
