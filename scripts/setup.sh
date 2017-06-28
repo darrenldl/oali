@@ -876,14 +876,21 @@ wait_and_clear 2
 
 # wait_and_clear 2
 
-# Copy user add helper over
-echo "Copying useradd helper"
-useradd_helper_name="useradd_helper.sh"
-useradd_helper_path="$llsh_files_dir_path"/"$useradd_helper_name"
-cp "$path_to_self"/useradd_helper.sh "$useradd_helper_path"
-chmod u=rx "$useradd_helper_path"
-chmod g=rx "$useradd_helper_path"
-chmod o=   "$useradd_helper_path"
+# Copy useradd helper scripts over
+echo "Copying useradd helper scripts"
+useradd_helper1_name="useradd_helper_as_powerful.sh"
+useradd_helper1_path="$llsh_files_dir_path"/"$useradd_helper1_name"
+cp "$path_to_self"/useradd_helper_as_powerful.sh "$useradd_helper1_path"
+chmod u=rx "$useradd_helper1_path"
+chmod g=rx "$useradd_helper1_path"
+chmod o=   "$useradd_helper1_path"
+
+useradd_helper2_name="useradd_helper_restricted.sh"
+useradd_helper2_path="$llsh_files_dir_path"/"$useradd_helper2_name"
+cp "$path_to_self"/useradd_helper_restricted.sh "$useradd_helper2_path"
+chmod u=rx "$useradd_helper2_path"
+chmod g=rx "$useradd_helper2_path"
+chmod o=   "$useradd_helper2_path"
 
 # Copy note over
 echo "Generating setup note"
@@ -891,10 +898,12 @@ llsh_setup_note_name="llsh_setup_note"
 llsh_setup_note_path="$llsh_files_dir_path"/"$llsh_setup_note_name"
 cp "$path_to_self"/llsh_setup_note_template "$llsh_setup_note_path"
 chown root:root "$llsh_setup_note_path"
-sed -i "s@USB_KEY_MOUNT_SCRIPT_DUMMY@$mount_script_name@g"        "$llsh_setup_note_path"
-sed -i "s@USB_KEY_UMOUNT_SCRIPT_DUMMY@$umount_script_name@g"      "$llsh_setup_note_path"
-sed -i "s@LLSH_USB_KEY_RESET_DIR_DUMMY@$llsh_usb_key_reset_dir@g" "$llsh_setup_note_path"
-sed -i "s@USERADD_HELPER_DUMMY@$useradd_helper_name@g"            "$llsh_setup_note_path"
+# Replace placeholders with actual text
+sed -i "s@USB_KEY_MOUNT_SCRIPT_DUMMY@$mount_script_name@g"          "$llsh_setup_note_path"
+sed -i "s@USB_KEY_UMOUNT_SCRIPT_DUMMY@$umount_script_name@g"        "$llsh_setup_note_path"
+sed -i "s@LLSH_USB_KEY_RESET_DIR_DUMMY@$llsh_usb_key_reset_dir@g"   "$llsh_setup_note_path"
+sed -i "s@USERADD_HELPER_AS_POWERFUL_DUMMY@$useradd_helper1_name@g" "$llsh_setup_note_path"
+sed -i "s@USERADD_HELPER_RESTRICTED_DUMMY@$useradd_helper2_name@g"  "$llsh_setup_note_path"
 chmod u=rx "$llsh_setup_note_path"
 chmod g=rx "$llsh_setup_note_path"
 chmod o=   "$llsh_setup_note_path"

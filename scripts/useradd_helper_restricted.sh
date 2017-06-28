@@ -5,6 +5,8 @@
 INVALID_ANS="Invalid answer"
 NO_COMMAND="Command not found"
 
+groups="users,rfkill"
+
 ask_ans() {
   if   (( $# <= 1 )); then
     echo "Too few parameters"
@@ -91,7 +93,7 @@ while true; do
   done
 
   echo "Adding user"
-  useradd -m "$user_name" -G users,wheel,rfkill
+  useradd -m "$user_name" -G "$groups"
   if [[ $? == 0 ]]; then
     break
   else
