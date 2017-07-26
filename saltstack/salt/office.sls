@@ -28,6 +28,11 @@ Note taking:
     - pkgs:
       - cherrytree
 
+Time tracking:
+  pkg.installed:
+    - pkgs:
+      - hamster-time-tracker
+
 # OCR:
 #   pkg.installed:
 #     - pkgs:
