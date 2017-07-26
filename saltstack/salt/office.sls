@@ -9,12 +9,12 @@ General Office Software:
   pkg.installed:
     - pkgs:
       - libreoffice-still
-      - calligra
+      # - calligra
   
-E-book:
-  pkg.installed:
-    - pkgs:
-      - calibre
+# E-book:
+#   pkg.installed:
+#     - pkgs:
+#       - calibre
 
 PDF:
   pkg.installed:
