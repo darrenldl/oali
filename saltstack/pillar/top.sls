@@ -6,3 +6,4 @@ base:
     - pulseaudio
     - firewall
     - harden
+    - system
