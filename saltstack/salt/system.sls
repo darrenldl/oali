@@ -22,6 +22,11 @@ Power management:
       - powertop
       - tlp
 
+Optimisations:
+  pkg.installed:
+    - pkgs:
+      - irqbalance
+
 Reduce the timeout of systemd stop job:
   file.append:
     - name: {{ pillar['systemd']['config_path'] }}
