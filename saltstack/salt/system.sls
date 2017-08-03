@@ -16,6 +16,12 @@ LTS kernel:
       - linux-lts
       - linux-lts-headers
 
+Power management:
+  pkg.installed:
+    - pkgs:
+      - powertop
+      - tlp
+
 Reduce the timeout of systemd stop job:
   file.append:
     - name: {{ pillar['systemd']['config_path'] }}
