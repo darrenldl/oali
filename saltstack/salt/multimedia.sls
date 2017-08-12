@@ -1,9 +1,15 @@
-Media:
+Video:
   pkg.installed:
     - pkgs:
-      - vlc
-      - clementine
       - ffmpeg
+      - vlc
+      - qtav
+      - kmplayer
+
+Music:
+  pkg.installed:
+    - pkgs:
+      - clementine
 
 Image viewing:
   pkg.installed:
