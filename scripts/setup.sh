@@ -672,6 +672,8 @@ if $use_hardened; then
 
   install_with_retries linux-hardened
 
+  install_with_retries linux-hardened-headers
+
   wait_and_clear
 else
   remove_vanilla=false
