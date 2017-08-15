@@ -16,6 +16,11 @@ Window manager related:
     - pkgs:
       - wmctrl
 
+Terminal recording:
+  pkg.installed:
+    - pkgs:
+      - asciinema
+
 Screenshot:
   pkg.installed:
     - pkgs:
