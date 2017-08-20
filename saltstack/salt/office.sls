@@ -20,8 +20,9 @@ PDF:
   pkg.installed:
     - pkgs:
       - apvlv
-      - atril
+      # - atril
       - okular
+      - pdfsam
 
 Note taking:
   pkg.installed:
