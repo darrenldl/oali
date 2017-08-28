@@ -10,7 +10,7 @@
 
 domain (ip ip6) table filter {
     chain FLOOD_DRAIN {
-        mod limit limit 20/second ACCEPT;
+        mod limit limit 200/second ACCEPT;
 
         DROP;
     }
