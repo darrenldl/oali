@@ -10,6 +10,11 @@ General Office Software:
     - pkgs:
       - libreoffice-still
       # - calligra
+
+Calculator:
+  pkg.installed:
+    - pkgs:
+      - speedcrunch
   
 # E-book:
 #   pkg.installed:
