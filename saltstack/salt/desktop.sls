@@ -1,15 +1,35 @@
-Desktop environment:
+Desktop environment related:
   pkg.installed:
     - pkgs:
       - xorg
+      - xfwm4
+      - xfce4-settings
       # - xfce4
       # - xfce4-goodies
       # - xfce4-notifyd
       - wayland
-      - lxqt
       - sddm
-      - kwin
-      - systemsettings
+      # - kwin
+      # - systemsettings
+
+LXQt:
+  pkg.installed:
+    - pkgs:
+      - lxqt-about
+      - lxqt-admin
+      - lxqt-common
+      - lxqt-config
+      - lxqt-globalkeys
+      - lxqt-notifictiond
+      - lxqt-openssh-askpass
+      - lxqt-panel
+      - lxqt-policykit
+      - lxqt-powermanagement
+      - lxqt-qtplugin
+      - lxqt-runner
+      - lxqt-session
+      - lxqt-sudo
+      - qterminal
 
 Window manager related:
   pkg.installed:
