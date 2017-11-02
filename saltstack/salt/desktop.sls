@@ -30,6 +30,8 @@ File manager:
   pkg.installed:
     - pkgs:
       - ranger
+      - thunar
+      - thunar-volman
 
 Login manager:
   pkg.installed:
