@@ -15,21 +15,7 @@ Desktop environment related:
 LXQt:
   pkg.installed:
     - pkgs:
-      - lxqt-about
-      - lxqt-admin
-      - lxqt-common
-      - lxqt-config
-      - lxqt-globalkeys
-      - lxqt-notifictiond
-      - lxqt-openssh-askpass
-      - lxqt-panel
-      - lxqt-policykit
-      - lxqt-powermanagement
-      - lxqt-qtplugin
-      - lxqt-runner
-      - lxqt-session
-      - lxqt-sudo
-      - qterminal
+      - lxqt
 
 Window manager related:
   pkg.installed:

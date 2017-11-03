@@ -5,6 +5,7 @@ Video:
       - vlc
       - qtav
       - kmplayer
+      - mplayer
 
 Music:
   pkg.installed:
