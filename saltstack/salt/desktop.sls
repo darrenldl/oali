@@ -12,6 +12,11 @@ Desktop environment related:
       # - kwin
       # - systemsettings
 
+Rest reminder:
+  pkg.installed:
+    - pkgs:
+      - workrave
+
 LXQt:
   pkg.installed:
     - pkgs:
