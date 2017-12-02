@@ -43,6 +43,7 @@ File manager:
       - ranger
       - thunar
       - thunar-volman
+      - tumbler
 
 Login manager:
   pkg.installed:
