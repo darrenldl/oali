@@ -4,6 +4,7 @@ Web browsers:
       - firefox
       - chromium
       - qupzilla
+      - midori
 
 Mail clients:
   pkg.installed:
