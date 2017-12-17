@@ -3,6 +3,7 @@ Web browsers:
     - pkgs:
       - firefox
       - chromium
+      - qupzilla
 
 Mail clients:
   pkg.installed:
