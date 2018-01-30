@@ -7,5 +7,4 @@ Ignore lid close:
 Battery monitor:
   pkg.installed:
     - pkgs:
-      - ibam
-      - ibamtray
+      - cbatticon
