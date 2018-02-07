@@ -37,6 +37,11 @@ Screenshot:
     - pkgs:
       - spectacle
 
+Scan utils:
+  pkg.installed:
+    - pkgs:
+      - scantailor
+
 File manager:
   pkg.installed:
     - pkgs:
