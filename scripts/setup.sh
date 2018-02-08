@@ -638,6 +638,17 @@ done
 
 clear
 
+# Install prerequisites for wifi-menu
+while true; do
+  echo "Installing prerequisites for wifi-menu"
+  arch-chroot "$mount_path" pacman --noconfirm -S dialog wpa_supplicant
+  if [[ $? == 0 ]]; then
+    break
+  else
+    :
+  fi
+done
+
 end=false
 while ! $end; do
   ask_yn use_hardened "Do you want to install hardened kernel?"
