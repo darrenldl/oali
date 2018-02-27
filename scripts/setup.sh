@@ -783,6 +783,18 @@ grub_cmdline_linux_default="quiet cryptdevice=UUID=$USB_KEY_BOOT_UUID:$mapper_na
 
 sed -i "s@^GRUB_CMDLINE_LINUX_DEFAULT=.*@GRUB_CMDLINE_LINUX_DEFAULT=\"$grub_cmdline_linux_default\"@g" "$mount_path"/etc/default/grub
 
+if $use_hardened; then
+    end=false
+    while ! $end; do
+        ask_yn set_hardened_as_default "Do you want to set GRUB default boot entry to the hardened kernel?"
+        ask_if_correct end
+    done
+
+    if $set_hardened_as_default; then
+        sed -i "s@GRUB_DEFAULT=.*@GRUB_DEFAULT=\"Advanced options for Arch Linux>Arch Linux, with Linux linux-hardened\"@" $etc_default_grub_path
+    fi
+fi
+
 wait_and_clear 2
 
 # Install grub and required files
