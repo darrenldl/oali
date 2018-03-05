@@ -3,10 +3,10 @@
 #    - pkgs:
 #      - conky
 
-Cron:
-  pkg.installed:
-    - pkgs:
-      - fcron
+# Cron:
+#   pkg.installed:
+#     - pkgs:
+#       - fcron
 
 Disk usage monitoring:
   pkg.installed:
