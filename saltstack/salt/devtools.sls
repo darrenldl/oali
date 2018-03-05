@@ -27,6 +27,11 @@ C/C++:
       - gcc
       - gdb
 
+Go:
+  pkg.installed:
+    - pkgs:
+      - go
+
 Java:
   pkg.installed:
     - pkgs:
