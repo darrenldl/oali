@@ -16,11 +16,11 @@ Make sure sddm is enabled:
     - require:
       - Login manager
 
-# Make sure fcron is enabled:
-#   service.enabled:
-#     - name: fcron
-#     - require:
-#       - Cron
+Make sure fcron is enabled:
+  service.enabled:
+    - name: fcron
+    - require:
+      - Cron
 
 Make sure vnStat is enabled:
   service.enabled:
