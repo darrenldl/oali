@@ -3,7 +3,7 @@ Web browsers:
     - pkgs:
       - firefox
       - chromium
-      - qupzilla
+      - falkon
       - midori
 
 Mail clients:
