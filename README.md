@@ -35,12 +35,14 @@ This setup does not store the keyfile in the kernel ram image, which may or may 
 It is **HIGHLY RECOMMENDED** that you leave salt execution to post-install phase using script provided (see below)
 
 ### Post-install notes
-After installation, several files will be present in "/root" or "/root/llsh\_pack" (all of the files are to be accessed/executed by root)
-  - `llsh_setup_note` contains description of the files
-  - `salt_exec.sh`(present only if you answered yes to using saltstack for your further setup) allows you start the saltstack setup
-  - `usb_key_access_mount.sh` allows you to mount your USB key easily and reliably
-  - `usb_key_access_umount.sh` allows you to unmount your USB key easily and reliably
-  - `useradd_helper_restructed.sh` and `useradd_helper_as_powerful.sh` allow you to add more users in the same manner as used by setup.sh
+After installation, several files will be present in `/root` or `/root/llsh_pack` (all of the files are to be accessed/executed by root)
+  - In `/root/`
+    - `salt_exec.sh`(present only if you answered yes to using saltstack for your further setup) allows you start the saltstack setup
+  - In `/root/llsh_pack`
+    - `llsh_setup_note` contains description of the files
+    - `usb_key_access_mount.sh` allows you to mount your USB key easily and reliably
+    - `usb_key_access_umount.sh` allows you to unmount your USB key easily and reliably
+    - `useradd_helper_restructed.sh` and `useradd_helper_as_powerful.sh` allow you to add more users in the same manner as used by setup.sh
 
 ### Misc. notes
 Saltstack files related
