@@ -35,41 +35,39 @@ This setup does not store the keyfile in the kernel ram image, which may or may 
 It is **HIGHLY RECOMMENDED** that you leave salt execution to post-install phase using script provided (see below)
 
 ### Post-install notes
-After installation, several files will be present in `/root` or `/root/llsh_pack` (all of the files are to be accessed/executed by root)
-  - In `/root/`
-    - `salt_exec.sh`(present only if you answered yes to using saltstack for your further setup) allows you start the saltstack setup
-  - In `/root/llsh_pack`
-    - `llsh_setup_note` contains description of the files
-    - `usb_key_access_mount.sh` allows you to mount your USB key easily and reliably
-    - `usb_key_access_umount.sh` allows you to unmount your USB key easily and reliably
-    - `useradd_helper_restructed.sh` and `useradd_helper_as_powerful.sh` allow you to add more users in the same manner as used by setup.sh
+After installation, several files will be present in `/root/llsh_pack` (all of the files are to be accessed/executed by root)
+- `salt_exec.sh`(present only if you answered yes to using saltstack for your further setup) allows you start the saltstack setup
+- `llsh_setup_note` contains description of the files
+- `usb_key_access_mount.sh` allows you to mount your USB key easily and reliably
+- `usb_key_access_umount.sh` allows you to unmount your USB key easily and reliably
+- `useradd_helper_restructed.sh` and `useradd_helper_as_powerful.sh` allow you to add more users in the same manner as used by setup.sh
 
 ### Misc. notes
 Saltstack files related
-  - currently linux-lts is enabled in the salt state files as a measure to avoid lock out due to kernel updates
+- currently linux-lts is enabled in the salt state files as a measure to avoid lock out due to kernel updates
 
 ### Prerequisites
-  - Working internet connection
-  - Partitioning done for system partition
-  - USB key (data will be lost)
+- Working internet connection
+- Partitioning done for system partition
+- USB key (data will be lost)
 
 ### Space requirement
-  - USB key
-    - 1 GiB USB drive will be very sufficient
-  - System drive
-    - Current salt states download/install around 10 GiB of data
+- USB key
+  - 1 GiB USB drive will be very sufficient
+- System drive
+  - Current salt states download/install around 10 GiB of data
 
 ### Instructions
 #### Get the setup files
 #### With Git
-  - Update package database and install git : `pacman -Sy git`
-  - Get the files : `git clone https://github.com/darrenldl/Linux_Laptop_Salt_Hard.git`
+- Update package database and install git : `pacman -Sy git`
+- Get the files : `git clone https://github.com/darrenldl/Linux_Laptop_Salt_Hard.git`
 
 #### Without Git
-  - `wget https://github.com/darrenldl/Linux_Laptop_Salt_Hard/tarball/master -O - | tar xz`
+- `wget https://github.com/darrenldl/Linux_Laptop_Salt_Hard/tarball/master -O - | tar xz`
 
 #### Start the setup
-  - `cd Linux_Laptop_Salt_Hard/scripts; chmod u+x setup.sh; ./setup.sh`
+- `cd Linux_Laptop_Salt_Hard/scripts; chmod u+x setup.sh; ./setup.sh`
 
 ### License
 Unlicense - https://unlicense.org/
