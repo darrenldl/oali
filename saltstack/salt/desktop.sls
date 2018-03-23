@@ -12,6 +12,11 @@ Desktop environment related:
       # - kwin
       # - systemsettings
 
+Shells:
+  pkg.installed:
+    - pkgs:
+      - zsh
+
 Rest reminder:
   pkg.installed:
     - pkgs:
