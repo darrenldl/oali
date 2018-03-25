@@ -14,6 +14,11 @@ Disk usage monitoring:
       - ncdu
       - filelight
 
+CPU limiting:
+  pkg.installed:
+    - pkgs:
+      - cpulimit
+
 System info:
   pkg.installed:
     - pkgs:
