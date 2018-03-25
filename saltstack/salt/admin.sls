@@ -52,6 +52,7 @@ Task management:
     - pkgs:
       - lsof
       - htop
+      - xfce4-taskmanager
 
 Mounting:
   pkg.installed:
