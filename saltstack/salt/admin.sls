@@ -3,6 +3,11 @@
 #    - pkgs:
 #      - conky
 
+At:
+  pkg.installed:
+    - pkgs:
+      - at
+
 Cron:
   pkg.installed:
     - pkgs:
