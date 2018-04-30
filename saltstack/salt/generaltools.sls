@@ -5,6 +5,7 @@ Text editor:
       - nano
       - gedit
       - geany
+      - emacs
 
 Indexing:
   pkg.installed:
