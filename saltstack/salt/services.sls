@@ -1,6 +1,6 @@
 Make sure atd is enabled:
   service.enabled:
-    -name : atd
+    - name : atd
     - require :
       - At
 
