@@ -21,6 +21,7 @@ Network management:
     - pkgs:
       - networkmanager
       - networkmanager-openvpn
+      - network-manager-applet
 
 Add user to nm-openvpn group:
   group.present:
