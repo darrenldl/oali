@@ -1,7 +1,9 @@
-#System monitoring:
-#  pkg.installed:
-#    - pkgs:
+System monitoring:
+  pkg.installed:
+    - pkgs:
 #      - conky
+       - gtop
+       - glances
 
 At:
   pkg.installed:
