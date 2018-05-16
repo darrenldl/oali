@@ -8,6 +8,7 @@ base:
     - generaltools
     - graphics
     - harden
+    - input
     - internet
     - laptop
     - misc
