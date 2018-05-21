@@ -97,6 +97,11 @@ Partitioning:
       - parted
       - gparted
 
+Remote desktop:
+  pkg.installed:
+    - pkgs:
+      - remmina
+
 Screen sessions:
   pkg.installed:
     - pkgs:
