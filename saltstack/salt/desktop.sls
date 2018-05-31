@@ -12,6 +12,11 @@ Desktop environment related:
       # - kwin
       # - systemsettings
 
+Terminal emulators:
+  pkg.installed:
+    - pkgs:
+      - cool-retro-term
+
 Shells:
   pkg.installed:
     - pkgs:
