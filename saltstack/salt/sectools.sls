@@ -61,7 +61,6 @@ Keyring:
 Anti-malware:
   pkg.installed:
     - pkgs:
-      - clamav
       - rkhunter
 
 Auditing:

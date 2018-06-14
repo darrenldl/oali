@@ -44,6 +44,7 @@ OCaml:
     - pkgs:
       - ocaml
       - opam
+      - ocaml-findlib
 
 Python:
   pkg.installed:
