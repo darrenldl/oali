@@ -44,7 +44,6 @@ OCaml:
     - pkgs:
       - ocaml
       - opam
-      - ocamlbuild
 
 Python:
   pkg.installed:
