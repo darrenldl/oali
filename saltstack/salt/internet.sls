@@ -11,10 +11,9 @@ Mail clients:
     - pkgs:
       - thunderbird
 
-FTP:
-  pkg.installed:
-    - pkgs:
-      - filezilla
+# FTP:
+#   pkg.installed:
+#     - pkgs:
 
 Network management:
   pkg.installed:
