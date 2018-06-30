@@ -1,4 +1,4 @@
-# Config based off example script on ferm website
+# Config based on example script on ferm website
 #
 # Source of original script:
 #   Ferm example script
@@ -9,8 +9,26 @@
 #   Retrieved @ 2016-10-04 14:32
 
 domain (ip ip6) table filter {
-    chain FLOOD_DRAIN {
-        mod limit limit 200/second ACCEPT;
+    chain PER_IP_FLOOD_DRAIN {
+        # allow when under limit
+        mod hashlimit hashlimit 10/second hashlimit-burst 10
+                      hashlimit-mode dstip ACCEPT;
+
+        # log 5/second when above limit
+        mod hashlimit hashlimit 5/second hashlimit-burst 5
+                      hashlimit-mode dstip
+                      LOG log-level warning log-prefix "Flood detected: ";
+
+        DROP;
+    }
+
+    chain GLOBAL_FLOOD_DRAIN {
+        # redirect to PER_IP_FLOOD_DRAIN when under limit
+        mod limit limit 200/second limit-burst 200 jump PER_IP_FLOOD_DRAIN;
+
+        # log 10 packets/second when above limit
+        mod limit limit 5/second limit-burst 5
+                  LOG log-level warning log-prefix "Flood detected: ";
 
         DROP;
     }
@@ -26,9 +44,13 @@ domain (ip ip6) table filter {
         interface lo ACCEPT;
 
         # respond to ping, with rate limiting
-        proto icmp icmp-type echo-request jump FLOOD_DRAIN;
+        proto icmp icmp-type echo-request jump GLOBAL_FLOOD_DRAIN;
 
-        # drop everything else
+        # log with rate limit
+        mod limit limit 5/second limit-burst 5
+                  LOG log-level info log-prefix "Invalid connection: ";
+
+        # drop everything else by policy
     }
 
     # no limits on outgoing connections
