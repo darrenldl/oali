@@ -549,7 +549,7 @@ echo "Mounting system partition"
 mount /dev/mapper/"$mapper_name_sys" "$mount_path"
 
 echo "Creating boot directory"
-mkdir "$mount_path"/boot
+mkdir -p "$mount_path"/boot
 
 wait_and_clear 2
 
@@ -597,7 +597,7 @@ umount "$mount_path"/boot
 wait_and_clear
 
 echo "Generating fstab"
-mkdir "$mount_path"/etc
+mkdir -p "$mount_path"/etc
 genfstab -U "$mount_path" >> "$mount_path"/etc/fstab
 
 wait_and_clear 2
@@ -804,7 +804,7 @@ echo "Install grub onto USB key"
 if $efi_mode; then
   echo "Reset ESP directory"
   rm -rf "$mount_path"/boot/efi
-  mkdir "$mount_path"/boot/efi
+  mkdir -p "$mount_path"/boot/efi
 
   echo "Mounting ESP partition"
   mount "$USB_KEY_ESP" "$mount_path"/boot/efi
@@ -823,7 +823,7 @@ wait_and_clear 2
 echo "Setting up files in /root directory"
 llsh_files_dir_name="llsh_pack"
 llsh_files_dir_path="$mount_path"/root/"$llsh_files_dir_name"
-mkdir "$llsh_files_dir_path"
+mkdir -p "$llsh_files_dir_path"
 
 # Prepare USB key mounting/unmounting scripts and copy into new system
 echo "Generating USB key mounting and unmounting scripts"
@@ -879,7 +879,7 @@ wait_and_clear 2
 # llsh_usb_key_reset_live_dir="$mount_path"$llsh_usb_key_reset_nonlive_dir
 # echo "Initilising directory for USB key resetting scripts in encrypted boot partition"
 # echo ""
-# mkdir           $llsh_usb_key_reset_live_dir
+# mkdir -p          $llsh_usb_key_reset_live_dir
 # chown root:root $llsh_usb_key_reset_live_dir
 # chmod u=rwx     $llsh_usb_key_reset_live_dir
 # chmod g=rwx     $llsh_usb_key_reset_live_dir
