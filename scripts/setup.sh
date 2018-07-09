@@ -331,7 +331,7 @@ fi
 
 wait_and_clear 1
 
-echo "Wiping paritioning info"
+echo "Wiping parition table"
 dd if=/dev/zero of="$USB_KEY" bs=512 count=2 &>/dev/null
 
 wait_and_clear 2
