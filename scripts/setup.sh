@@ -580,7 +580,7 @@ wait_and_clear 2
 
 # Install base system
 while true; do
-  echo "Installing base system (base base-devel)"
+  echo "Installing base system(base base-devel)"
   pacstrap /mnt base base-devel
   if [[ $? == 0 ]]; then
     break
