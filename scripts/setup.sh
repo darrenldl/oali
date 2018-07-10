@@ -216,7 +216,7 @@ Stages:
     install saltstack             (optional)
       |-> copy saltstack files          (optional)
       |-> execute salt for final setup  (optional)
-    close all disks               (optional)
+    close all partitions          (optional)
     restart                       (optional)
 
 STAGEEOF
@@ -1057,7 +1057,7 @@ clear
 
 end=false
 while ! $end; do
-  ask_yn close_disks "Do you want to close the disks and USB key?"
+  ask_yn close_disks "Do you want to close the partitions and USB key?"
 
   ask_if_correct end
 done
@@ -1085,7 +1085,7 @@ if $close_disks; then
     poweroff
   fi
 else
-  echo "No shutting down will be done by the script since the disks are not closed"
+  echo "No shutting down will be done by the script since the partitions are not closed"
 
   tell_read_note
 
