@@ -64,10 +64,10 @@ Saltstack files related
 - Get the files : `git clone https://github.com/darrenldl/linux-laptop-salt-hard.git`
 
 #### Without Git
-- `wget https://github.com/darrenldl/linux-laptop-salt-hard/tarball/master -O - | tar xz`
+- `wget https://github.com/darrenldl/linux-laptop-salt-hard/archive/master.tar.gz -O - | tar xz`
 
 #### Start the setup
-- `cd linux-laptop-salt-hard/scripts; chmod u+x setup.sh; ./setup.sh`
+- `cd linux-laptop-salt-hard/scripts; ./setup.sh`
 
 ### License
 Unlicense - https://unlicense.org/
