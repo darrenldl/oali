@@ -81,11 +81,6 @@ File backup:
     - pkgs:
       - borg
 
-File synchronisation:
-  pkg.installed:
-    - pkgs:
-      - unison
-
 Cloud file access:
   pkg.installed:
     - pkgs:
