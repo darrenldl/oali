@@ -39,6 +39,11 @@ Java:
       - jdk8-openjdk
       - jre8-openjdk
 
+Javascript:
+  pkg.installed:
+    - pkgs:
+      - npm
+
 OCaml:
   pkg.installed:
     - pkgs:
