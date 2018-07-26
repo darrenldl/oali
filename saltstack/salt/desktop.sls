@@ -70,7 +70,7 @@ Audio server:
     - pkgs:
       - pulseaudio
       - paprefs
-      - pavucontrol
+      - pavucontrol-qt
 
 Screensaver:
   pkg.installed:
