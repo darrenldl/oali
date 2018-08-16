@@ -42,6 +42,11 @@ Terminal recording:
     - pkgs:
       - asciinema
 
+Screen recording:
+  pkg.installed:
+    - pkgs:
+      - simplescreenrecorder
+
 Screenshot:
   pkg.installed:
     - pkgs:
