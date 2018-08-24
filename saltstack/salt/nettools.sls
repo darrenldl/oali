@@ -30,6 +30,7 @@ Wireless tools:
   pkg.installed:
     - pkgs:
       - kismet
+      - create_ap
 
 Fingerprinting/network scanning:
   pkg.installed:

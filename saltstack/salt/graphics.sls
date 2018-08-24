@@ -20,3 +20,4 @@ Drawing:
   pkg.installed:
     - pkgs:
       - krita
+      - gpick
