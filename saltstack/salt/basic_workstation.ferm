@@ -50,6 +50,10 @@ domain (ip ip6) table filter {
         # mod limit limit 5/second limit-burst 5
         #           LOG log-level info log-prefix "Invalid connection: ";
 
+        # allow following port ranges for both TCP and UDP
+        # proto tcp syn dport (30000:30100 40000:50100 60000:60100) jump GLOBAL_FLOOD_DRAIN;
+        # proto udp     dport (30000:30100 40000:50100 60000:60100) jump ACCEPT;
+
         # drop everything else by policy
     }
 
