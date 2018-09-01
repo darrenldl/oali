@@ -22,10 +22,15 @@ Shells:
     - pkgs:
       - zsh
 
-Rest reminder:
+# Rest reminder:
+#   pkg.installed:
+#     - pkgs:
+#       - workrave
+
+Todo manager:
   pkg.installed:
     - pkgs:
-      - workrave
+      - task
 
 LXQt:
   pkg.installed:
