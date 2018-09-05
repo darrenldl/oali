@@ -7,6 +7,11 @@ Video:
       - kmplayer
       - mplayer
 
+Video editing:
+  pkg.installed:
+    - pkgs:
+      - kdenlive
+
 Music:
   pkg.installed:
     - pkgs:
