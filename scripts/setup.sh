@@ -440,7 +440,7 @@ while true; do
         ask_if_correct ask_end
       done
 
-      if (( 0 <= $new_millisec )); then
+      if (( 0 < $new_millisec )); then
         boot_key_luks_iter_time_millisec=$new_millisec
         break
       else
@@ -557,7 +557,7 @@ while true; do
         ask_if_correct ask_end
       done
 
-      if (( 0 <= $new_millisec )); then
+      if (( 0 < $new_millisec )); then
         sys_part_luks_iter_time_millisec=$new_millisec
         break
       else
