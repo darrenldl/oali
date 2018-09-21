@@ -1,7 +1,7 @@
 # linux-laptop-salt-hard
 
 ### Description
-This currently setup an optionally hardened Arch Linux installation with full disk encryption, requiring a USB key to boot and unlock.
+This currently sets up an optionally hardened Arch Linux installation with full disk encryption, requiring a USB key to boot and unlock.
 
 The script builds your USB key depending on whether the liveCD is running in UEFI mode or BIOS mode. After installation, the USB key needs to be booted from the mode your were on during installation.
 
