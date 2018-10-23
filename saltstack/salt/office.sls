@@ -1,9 +1,10 @@
-Tex:
+LaTeX:
   pkg.installed:
     - pkgs:
       - texstudio
       - texlive-most
       - texlive-lang
+      - biber
 
 General Office Software:
   pkg.installed:
