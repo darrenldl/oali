@@ -11,6 +11,7 @@ Desktop environment related:
       - sddm
       # - kwin
       # - systemsettings
+      - redshift
 
 Terminal emulators:
   pkg.installed:
