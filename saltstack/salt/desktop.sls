@@ -58,6 +58,7 @@ Screenshot:
   pkg.installed:
     - pkgs:
       - spectacle
+      - maim
 
 Scan utils:
   pkg.installed:
