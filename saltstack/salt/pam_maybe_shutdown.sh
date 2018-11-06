@@ -6,7 +6,8 @@ MAX_FAIL_COUNT=5
 COUNTFILE="/tmp/failed_auth_count"
 
 if [ ! -f "$COUNTFILE" ]; then
-  echo "0" > $COUNTFILE
+  echo "0" > "$COUNTFILE"
+  chmod 777 "$COUNTFILE"
 fi
 
 if   [[ "$PAM_TYPE" == "auth" ]]; then    # Authentication phase
