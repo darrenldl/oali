@@ -45,4 +45,5 @@ Shutdown after too many failed PAM authentications (pam_maybe_shutdown.sh script
   file.managed:
     - name: {{ pillar['pam']['pam_maybe_shutdown_sh_path'] }}
     - source: salt://pam_maybe_shutdown.sh
+    - mode: 744
     - replace: True
