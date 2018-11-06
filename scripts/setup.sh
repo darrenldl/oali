@@ -348,7 +348,7 @@ if $efi_mode; then
   echo "Calculating partition sizes"
   # use MiB for rough estimation
   # calculate % of 200 MiB size
-  esp_part_size=200
+  esp_part_size=550
   esp_part_perc=$[(esp_part_size * 100) / usb_key_size_MiB]
   esp_part_beg_perc=0
   esp_part_end_perc=$esp_part_perc
