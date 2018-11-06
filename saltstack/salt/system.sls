@@ -35,15 +35,15 @@ Reduce the timeout of systemd stop job:
         DefaultTimeoutStartSec=10s
         DefaultTimeoutStopSec=10s
 
-Shutdown after too many failed PAM authentications (system-auth file):
-  file.managed:
-    - name: {{ pillar['pam']['system-auth-path'] }}
-    - source: salt://system-auth
-    - replace: True
+# Shutdown after too many failed PAM authentications (system-auth file):
+#   file.managed:
+#     - name: {{ pillar['pam']['system-auth-path'] }}
+#     - source: salt://system-auth
+#     - replace: True
 
-Shutdown after too many failed PAM authentications (pam_maybe_shutdown.sh script):
-  file.managed:
-    - name: {{ pillar['pam']['pam_maybe_shutdown_sh_path'] }}
-    - source: salt://pam_maybe_shutdown.sh
-    - mode: 755
-    - replace: True
+# Shutdown after too many failed PAM authentications (pam_maybe_shutdown.sh script):
+#   file.managed:
+#     - name: {{ pillar['pam']['pam_maybe_shutdown_sh_path'] }}
+#     - source: salt://pam_maybe_shutdown.sh
+#     - mode: 755
+#     - replace: True
