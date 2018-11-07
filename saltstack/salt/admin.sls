@@ -4,6 +4,7 @@ System monitoring:
 #      - conky
        - gtop
        - glances
+       - nmon
 
 At:
   pkg.installed:
