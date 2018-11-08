@@ -21,12 +21,12 @@ The encrypted boot partition on USB key is passphrase protected.
 
 LUKS setup is used for all encrypted partitions.
 
-If in UEFI mode, the ESP partition will be present but is not(and cannot be) encrypted.
+If in UEFI mode, the ESP partition will be present but is not (and cannot be) encrypted.
 
 ### Notes
 Note that this setup aims to move the weak point from the laptop drive to your USB key, that is, the laptop drive is better protected than your USB key in terms of encryption.
 
-The implication then is that you should keep your USB key better protected physically(e.g. carried with you) than the laptop drive.
+The implication then is that you should keep your USB key better protected physically (e.g. carried with you) than the laptop drive.
 
 Also, you need to enter the passphrase of the boot partition twice during booting.
 
