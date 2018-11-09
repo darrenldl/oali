@@ -73,3 +73,8 @@ VPN:
   pkg.installed:
     - pkgs:
       - openvpn
+
+Nitrokey:
+  pkg.installed:
+    - pkgs:
+      - nitrokey-app
