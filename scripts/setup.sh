@@ -713,6 +713,8 @@ while true; do
   fi
 done
 
+clear
+
 end=false
 while ! $end; do
   ask_yn use_hardened "Do you want to install hardened kernel?"
