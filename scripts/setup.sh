@@ -1092,26 +1092,26 @@ if $use_salt; then
 
   wait_and_clear 2
 
-  end=false
-  while ! $end; do
-    ask_yn run_salt "Do you want to execute saltstack right now?"
+  # end=false
+  # while ! $end; do
+  #  ask_yn run_salt "Do you want to execute saltstack right now?"
+  #
+  # ask_if_correct end
+  # done
 
-    ask_if_correct end
-  done
+  # clear
 
-  clear
-
-  if $run_salt; then
-    echo "Please note that you will need to reapply firewall state to generate firewall rules properly"
-    echo "You can execute /root/$salt_exec_script_name on next boot to reapply all states"
-    echo "Press enter to continue"
-    read
-
-    echo "Executing salt for final setup"
-    arch-chroot "$mount_path" salt-call --local state.apply
-
-    wait_and_clear 2
-  fi
+  # if $run_salt; then
+  #   echo "Please note that you will need to reapply firewall state to generate firewall rules properly"
+  #   echo "You can execute /root/$salt_exec_script_name on next boot to reapply all states"
+  #   echo "Press enter to continue"
+  #   read
+  #
+  #   echo "Executing salt for final setup"
+  #   arch-chroot "$mount_path" salt-call --local state.apply
+  #
+  #    wait_and_clear 2
+  # fi
 else
   # Mark script not present in setup note
   sed -i "s@SALT_STACK_EXEC_SCRIPT_DUMMY@SaltSatck execution script not installed@g" "$llsh_setup_note_path"
