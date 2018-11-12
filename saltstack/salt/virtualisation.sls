@@ -19,3 +19,5 @@ Virt manager:
       - dnsmasq
       # NAT networking
       - ebtables
+      # firewall backend
+      - firewalld
