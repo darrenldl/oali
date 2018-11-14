@@ -20,4 +20,4 @@ Virt manager:
       # NAT networking
       - ebtables
       # firewall backend
-      - firewalld
+      # - firewalld

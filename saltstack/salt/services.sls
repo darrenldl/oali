@@ -10,11 +10,11 @@ Make sure libvirtd is enabled:
     - require :
       - Virt manager
 
-Make sure firewalld is enabled:
-  service.enabled:
-    - name : firewalld
-    - require :
-      - Virt manager
+# Make sure firewalld is enabled:
+#   service.enabled:
+#     - name : firewalld
+#     - require :
+#       - Virt manager
 
 Make sure NetworkManager is enabled:
   service.enabled:
