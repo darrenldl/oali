@@ -8,6 +8,11 @@ Network diagnosis:
     - pkgs:
       - traceroute
 
+DNS:
+  pkg.installed:
+    - pkgs:
+      - dnsutils
+
 Network monitoring:
   pkg.installed:
     - pkgs:
