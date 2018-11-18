@@ -12,6 +12,7 @@ Desktop environment related:
       # - kwin
       # - systemsettings
       - redshift
+      - archlinux-wallpaper
 
 Terminal emulators:
   pkg.installed:
