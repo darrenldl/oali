@@ -66,12 +66,12 @@ Scan utils:
     - pkgs:
       - scantailor
 
-File manager:
+File managers:
   pkg.installed:
     - pkgs:
-      - ranger
-      - thunar
-      - thunar-volman
+      - vifm
+      # - thunar
+      # - thunar-volman
       - tumbler
 
 Login manager:
