@@ -13,6 +13,7 @@ Desktop environment related:
       # - systemsettings
       - redshift
       - archlinux-wallpaper
+      - elementary-icon-theme
 
 Terminal emulators:
   pkg.installed:
