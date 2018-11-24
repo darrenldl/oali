@@ -102,3 +102,8 @@ Screen sessions:
   pkg.installed:
     - pkgs:
       - screen
+
+Package management:
+  pkg.installed:
+    - pkgs:
+      - pacman-contrib
