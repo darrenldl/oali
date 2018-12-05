@@ -4,6 +4,7 @@ base:
     - desktop
     - devtools
     - files
+    - file_system
     - finance
     - firewall
     - generaltools
