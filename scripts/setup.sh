@@ -386,35 +386,35 @@ fi
 
 wait_and_clear 2
 
-end=false
-while ! $end; do
-  ask_yn rand_wipe "Do you want to overwrite partitions which will be encrypted with random bytes(/dev/urandom)?\nNote that this may NOT be effective on USB keys, and may DECREASE lifespan of your USB key."
+# end=false
+# while ! $end; do
+#   ask_yn rand_wipe "Do you want to overwrite partitions which will be encrypted with random bytes(/dev/urandom)?\nNote that this may NOT be effective on USB keys, and may DECREASE lifespan of your USB key."
 
-  ask_if_correct end
-done
+#   ask_if_correct end
+# done
 
-clear
+# clear
 
-if $rand_wipe; then
-  end=false
-  while ! $end; do
-    echo "Ovewriting boot partition with random bytes"
-    ddrescue --force /dev/urandom "$USB_KEY_BOOT" &>/dev/null
-    if [[ $? == 0 ]]; then
-      break
-    else
-      ask_end=false
-      while ! $ask_end; do
-        ask_yn repeat "ddrescue reported failure (may just be due to out of space). Do you want to repeat overwriting?"
-        comple repeat end
+# if $rand_wipe; then
+#   end=false
+#   while ! $end; do
+#     echo "Ovewriting boot partition with random bytes"
+#     ddrescue --force /dev/urandom "$USB_KEY_BOOT" &>/dev/null
+#     if [[ $? == 0 ]]; then
+#       break
+#     else
+#       ask_end=false
+#       while ! $ask_end; do
+#         ask_yn repeat "ddrescue reported failure (may just be due to out of space). Do you want to repeat overwriting?"
+#         comple repeat end
 
-        ask_if_correct ask_end
-      done
-    fi
-  done
-fi
+#         ask_if_correct ask_end
+#       done
+#     fi
+#   done
+# fi
 
-wait_and_clear
+# wait_and_clear
 
 boot_key_luks_cipher=aes-xts-plain64
 boot_key_luks_key_size=512
