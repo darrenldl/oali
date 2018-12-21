@@ -410,6 +410,54 @@ done
 
 clear
 
+# ask for hostname
+echo "Choose hostname"
+echo ""
+
+end=false
+while ! $end; do
+  ask_ans host_name "Please enter hostname"
+
+  echo "You entered : " $host_name
+  ask_if_correct end
+done
+
+clear
+
+# Ask if want to use hardened kernel
+echo "Choose whether to install hardened kernel or not"
+echo ""
+
+end=false
+while ! $end; do
+  ask_yn use_hardened "Do you want to install hardened kernel?"
+
+  ask_if_correct end
+done
+
+if $use_hardened; then
+  end=false
+  while ! $end; do
+    ask_yn remove_vanilla "Do you want to remove vanilla kernel?"
+
+    ask_if_correct end
+  done
+else
+  remove_vanilla=false
+fi
+
+clear
+
+# Ask if want to use SaltStack
+end=false
+while ! $end; do
+  ask_yn use_salt "Do you want to use saltstack for further installation?"
+
+  ask_if_correct end
+done
+
+clear
+
 ## Partition the USB key
 efi_firmware_path="/sys/firmware/efi"
 echo "Preparing USB key"
@@ -675,14 +723,7 @@ mount /dev/mapper/"$mapper_name_boot" "$mount_path"/boot
 wait_and_clear
 
 # Setup hostname
-end=false
-while ! $end; do
-  ask_ans host_name "Please enter hostname"
-
-  echo "You entered : " $host_name
-  ask_if_correct end
-done
-
+echo "Setting up hostname"
 echo $host_name > "$mount_path"/etc/hostname
 
 wait_and_clear 2
@@ -720,23 +761,7 @@ done
 
 clear
 
-end=false
-while ! $end; do
-  ask_yn use_hardened "Do you want to install hardened kernel?"
-
-  ask_if_correct end
-done
-
 if $use_hardened; then
-  end=false
-  while ! $end; do
-    ask_yn remove_vanilla "Do you want to remove vanilla kernel?"
-
-    ask_if_correct end
-  done
-
-  clear
-
   if $remove_vanilla; then
     # Remove vanilla kernel
     while true; do
@@ -757,21 +782,7 @@ if $use_hardened; then
   install_with_retries linux-hardened-headers
 
   wait_and_clear
-else
-  remove_vanilla=false
 fi
-
-clear
-
-while true; do
-  echo "Setting root password"
-  arch-chroot "$mount_path" passwd
-  if [[ $? == 0 ]]; then
-    break
-  else
-    :
-  fi
-done
 
 clear
 
@@ -1009,6 +1020,21 @@ cp "$llsh_setup_note_path" /boot
 
 wait_and_clear 2
 
+echo "Root setup"
+echo ""
+
+while true; do
+  echo "Setting root password"
+  arch-chroot "$mount_path" passwd
+  if [[ $? == 0 ]]; then
+    break
+  else
+    :
+  fi
+done
+
+clear
+
 echo "User setup"
 echo ""
 
@@ -1046,16 +1072,9 @@ while true; do
   fi
 done
 
-echo "User : " $user_name " added"
+echo "User :" $user_name "added"
 
 wait_and_clear 2
-
-end=false
-while ! $end; do
-  ask_yn use_salt "Do you want to use saltstack for further installation?"
-
-  ask_if_correct end
-done
 
 if $use_salt; then
   # Generate saltstack execution script
