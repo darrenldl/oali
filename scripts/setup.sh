@@ -456,6 +456,8 @@ if $use_hardened; then
   done
 fi
 
+clear
+
 # Ask if want to use SaltStack
 end=false
 while ! $end; do
