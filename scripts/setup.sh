@@ -285,8 +285,7 @@ echo ""
 
 end=false
 while ! $end; do
-  echo -n "Please specify a partition to use : "
-  read SYS_PART
+  ask_ans SYS_PART "Please specify a partition to use"
 
   if [ -b "$SYS_PART" ]; then
     echo "System parition picked :" "$SYS_PART"
