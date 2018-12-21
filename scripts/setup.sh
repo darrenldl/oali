@@ -254,7 +254,7 @@ while ! $end; do
   if hash $EDITOR &>/dev/null; then
     echo "Editor selected :" $EDITOR
     ask_if_correct end
-  else 
+  else
     echo -e $NO_COMMAND
   fi
 done
@@ -313,6 +313,39 @@ while ! $end; do
     ask_if_correct end
   else
     echo "Device does not exist"
+  fi
+done
+
+clear
+
+# Ask user if it wants to adjust iteration time
+while true; do
+  echo "The current iteration time for the BOOT partition on USB key in millisecond is :" $boot_key_luks_iter_time_millisec
+  end=false
+  while ! $end; do
+    ask_yn adjust_millisec "Do you want to adjust the iteration time?"
+
+    ask_if_correct end
+  done
+
+  if $adjust_millisec; then
+    while true; do
+      ask_end=false
+      while ! $ask_end; do
+        ask_ans new_millisec "Please enter new iteration time in millisecond"
+
+        ask_if_correct ask_end
+      done
+
+      if (( 0 < $new_millisec )); then
+        boot_key_luks_iter_time_millisec=$new_millisec
+        break
+      else
+        echo "Time invalid"
+      fi
+    done
+  else
+    break
   fi
 done
 
@@ -420,37 +453,6 @@ boot_key_luks_cipher=aes-xts-plain64
 boot_key_luks_key_size=512
 boot_key_luks_iter_time_millisec=5000
 boot_key_luks_hash=sha512
-
-# Ask user if it wants to adjust iteration time
-while true; do
-  echo "The current iteration time for the BOOT partition on USB key in millisecond is :" $boot_key_luks_iter_time_millisec
-  end=false
-  while ! $end; do
-    ask_yn adjust_millisec "Do you want to adjust the iteration time?"
-
-    ask_if_correct end
-  done
-
-  if $adjust_millisec; then
-    while true; do
-      ask_end=false
-      while ! $ask_end; do
-        ask_ans new_millisec "Please enter new iteration time in millisecond"
-
-        ask_if_correct ask_end
-      done
-
-      if (( 0 < $new_millisec )); then
-        boot_key_luks_iter_time_millisec=$new_millisec
-        break
-      else
-        echo "Time invalid"
-      fi
-    done
-  else
-    break
-  fi
-done
 
 # Encrypt USB key boot partition
 while true; do
