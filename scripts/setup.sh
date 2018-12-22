@@ -249,7 +249,7 @@ echo ""
 end=false
 while ! $end; do
   EDITOR=""
-  echo -n "Please specifiy an editor to use : "
+  echo -n "Please specifiy a text editor to use : "
   read EDITOR
 
   if hash $EDITOR &>/dev/null; then
