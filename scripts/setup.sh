@@ -136,6 +136,7 @@ install_with_retries() {
       if $change_name; then
         ask_new_name_end=false
         while ! $ask_new_name_end; do
+          echo "Original package name :" $package_name
           echo "Please enter new package name : "
           read package_name
 
