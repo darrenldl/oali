@@ -387,7 +387,7 @@ clear
 
 end=false
 while ! $end; do
-  ask_yn use_default_keyfile "Do you want this setup script to generate a keyfile for you? This is used for system disk"
+  ask_yn use_default_keyfile "Do you want this setup script to generate a keyfile for you? This is used for system partition"
 
   if $use_default_keyfile; then
     cat <<WARNINGKEYFILEEOF
