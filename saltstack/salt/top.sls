@@ -18,6 +18,7 @@ base:
     - nettools
     - networkmanager
     - office
+    - phone
     - pulseaudio
     - recovery
     - sectools
