@@ -3,7 +3,7 @@ base:
     - admin
     - desktop
     - devtools
-    - files
+    - file
     - file_system
     - finance
     - firewall
