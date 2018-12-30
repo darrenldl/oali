@@ -51,7 +51,7 @@ Password management:
   pkg.installed:
     - pkgs:
       # - keepassx2
-      # - keepass
+      - keepass
       - keepassxc
 
 Keyring:
