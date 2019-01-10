@@ -3,6 +3,7 @@ General Development Tools:
     - pkgs:
       - meld
       - git
+      - bat
 
 Hex editor:
   pkg.installed:
