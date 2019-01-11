@@ -81,6 +81,7 @@ File backup:
   pkg.installed:
     - pkgs:
       - borg
+      - restic
 
 Cloud file access:
   pkg.installed:
