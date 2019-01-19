@@ -13,6 +13,6 @@ echo "Unmounting boot partition"
 umount /boot
 
 echo "Closing boot partition"
-cryptsetup luksClose /dev/mapper/"$mapper_name_boot"
+cryptsetup close /dev/mapper/"$mapper_name_boot"
 
 echo "USB key unmounted successfully"

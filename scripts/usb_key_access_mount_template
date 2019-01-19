@@ -9,7 +9,7 @@ while true; do
 
   if [ -b /dev/disk/by-uuid/"$usb_key_boot_uuid" ]; then
     echo "Unlocking boot partition"
-    cryptsetup luksOpen /dev/disk/by-uuid/"$usb_key_boot_uuid" "$mapper_name_boot"
+    cryptsetup open /dev/disk/by-uuid/"$usb_key_boot_uuid" "$mapper_name_boot"
     if [[ $? == 0 ]]; then
       break
     else
