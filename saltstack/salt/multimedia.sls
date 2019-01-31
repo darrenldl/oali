@@ -4,8 +4,7 @@ Video:
       - ffmpeg
       - vlc
       - qtav
-      - kmplayer
-      - mplayer
+      - mpv
 
 Video editing:
   pkg.installed:
