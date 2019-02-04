@@ -2,6 +2,7 @@ Text editor:
   pkg.installed:
     - pkgs:
       - vim
+      - neovim
       - nano
       - gedit
       - geany
