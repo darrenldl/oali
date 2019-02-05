@@ -1089,6 +1089,7 @@ if $use_salt; then
   salt_exec_script_path="$llsh_files_dir_path"/"$salt_exec_script_name"
   cp salt_stack_execute_template "$salt_exec_script_path"
   chown root:root "$salt_exec_script_path"
+  sed -i "s@MAPPER_NAME_BOOT_DUMMY@$mapper_name_boot@g" "$salt_exec_script_path"
   chmod u=rx "$salt_exec_script_path"
   chmod g=rx "$salt_exec_script_path"
   chmod o=   "$salt_exec_script_path"

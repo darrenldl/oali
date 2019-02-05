@@ -1,2 +1,9 @@
 #!/bin/bash
+mapper_name_boot=MAPPER_NAME_BOOT_DUMMY
+
+if [ ! -b /dev/mapper/"$mapper_name_boot" ]; then
+  echo "USB key does not seem to be mounted"
+  echo "Please make sure you have mounted the USB key using usb_key_access_mount.sh"
+fi
+
 salt-call --local state.apply
