@@ -741,8 +741,8 @@ wait_and_clear 2
 echo "Setting locale"
 sed -i "s@#en_US.UTF-8 UTF-8@en_US.UTF-8 UTF-8@g" "$mount_path"/etc/locale.gen
 sed -i "s@#en_DK.UTF-8 UTF-8@en_DK.UTF-8 UTF-8@g" "$mount_path"/etc/locale.gen
-echo "LANG=en_US.UTF-8" >  "$mount_path"/etc/locale.conf
-echo "LC_ALL=en_US.UTF-8" >  "$mount_path"/etc/locale.conf
+echo "LANG=en_US.UTF-8"    >  "$mount_path"/etc/locale.conf
+echo "LC_ALL=en_US.UTF-8"  >> "$mount_path"/etc/locale.conf
 echo "LC_TIME=en_DK.UTF-8" >> "$mount_path"/etc/locale.conf
 arch-chroot "$mount_path" locale-gen
 
