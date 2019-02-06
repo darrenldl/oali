@@ -35,6 +35,7 @@ SSH:
     - pkgs:
       - openssh
       - putty
+      - mosh
 
 BitTorrent:
   pkg.installed:
