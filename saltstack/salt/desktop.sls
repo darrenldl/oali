@@ -61,7 +61,6 @@ Screenshot:
     - pkgs:
       - spectacle
       - maim
-      - flameshot
 
 Scan utils:
   pkg.installed:
