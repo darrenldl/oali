@@ -34,6 +34,7 @@ Note taking:
   pkg.installed:
     - pkgs:
       - cherrytree
+      - zim
 
 Time tracking:
   pkg.installed:
