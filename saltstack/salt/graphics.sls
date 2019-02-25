@@ -3,6 +3,7 @@ Image editing:
     - pkgs:
       - gimp
       - pinta
+      - imagemagick
 
 Image management:
   pkg.installed:
