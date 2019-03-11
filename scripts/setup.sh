@@ -574,6 +574,7 @@ boot_key_luks_hash=sha512
 while true; do
   echo "Encrypting boot partition"
   cryptsetup luksFormat -y                                            \
+                        --type luks1                                  \
                         --cipher    $boot_key_luks_cipher             \
                         --key-size  $boot_key_luks_key_size           \
                         --iter-time $boot_key_luks_iter_time_millisec \
