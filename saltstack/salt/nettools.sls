@@ -2,6 +2,7 @@ Network statistics:
   pkg.installed:
     - pkgs:
       - vnstat
+      - iftop
 
 Network diagnosis:
   pkg.installed:
