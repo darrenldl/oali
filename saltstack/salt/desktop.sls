@@ -55,6 +55,7 @@ Screen recording:
   pkg.installed:
     - pkgs:
       - simplescreenrecorder
+      - peek
 
 Screenshot:
   pkg.installed:
