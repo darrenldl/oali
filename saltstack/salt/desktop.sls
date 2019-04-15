@@ -20,6 +20,7 @@ Terminal emulators:
     - pkgs:
       - cool-retro-term
       - kitty
+      - terminology
 
 Shells:
   pkg.installed:
