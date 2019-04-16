@@ -8,6 +8,12 @@ Text editor:
       - geany
       - emacs
 
+Searching:
+  pkg.installed:
+    - pkgs:
+      - ripgrep
+      - fzf
+
 Indexing:
   pkg.installed:
     - pkgs:
