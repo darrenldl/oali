@@ -58,6 +58,7 @@ Python:
       - python
       - python-pip
       - python2
+      - python-fuse
 
 Rust:
   pkg.installed:
