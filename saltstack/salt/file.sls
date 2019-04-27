@@ -4,3 +4,8 @@ File synchronisation:
       - unison
       - syncthing
       - syncthing-gtk
+
+File cleanup:
+  pkg.installed:
+    - pkgs:
+      - rmlint
