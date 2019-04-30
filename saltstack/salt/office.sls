@@ -29,6 +29,7 @@ PDF:
       # - atril
       - okular
       - pdfsam
+      - poppler
 
 Note taking:
   pkg.installed:
