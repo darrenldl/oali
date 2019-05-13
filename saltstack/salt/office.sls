@@ -30,6 +30,7 @@ PDF:
       - okular
       - pdfsam
       - poppler
+      - diffpdf
 
 Note taking:
   pkg.installed:
