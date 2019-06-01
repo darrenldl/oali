@@ -103,6 +103,8 @@ Screen sessions:
   pkg.installed:
     - pkgs:
       - screen
+      - tmux
+      - tmuxp
 
 Package management:
   pkg.installed:
