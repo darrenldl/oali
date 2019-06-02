@@ -21,6 +21,7 @@ Disk usage monitoring:
     - pkgs:
       - ncdu
       - filelight
+      - pydf
 
 CPU limiting:
   pkg.installed:
