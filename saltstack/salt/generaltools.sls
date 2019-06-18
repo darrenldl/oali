@@ -13,6 +13,7 @@ Searching:
     - pkgs:
       - ripgrep
       - fzf
+      - fd
 
 Indexing:
   pkg.installed:
