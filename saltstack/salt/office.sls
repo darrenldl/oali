@@ -43,9 +43,9 @@ Time tracking:
     - pkgs:
       - hamster-time-tracker
 
-OCR:
-  pkg.installed:
-    - pkgs:
-      - tesseract
-      - tesseract-data
-      - paperwork
+# OCR:
+#   pkg.installed:
+#     - pkgs:
+#       - tesseract
+#       - tesseract-data
+#       - paperwork
