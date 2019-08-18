@@ -3,13 +3,13 @@ Video:
     - pkgs:
       - ffmpeg
       - vlc
-      - qtav
+      # - qtav
       - mpv
 
-Video editing:
-  pkg.installed:
-    - pkgs:
-      - kdenlive
+# Video editing:
+#   pkg.installed:
+#     - pkgs:
+#       - kdenlive
 
 Music:
   pkg.installed:

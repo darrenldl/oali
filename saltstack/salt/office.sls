@@ -25,7 +25,6 @@ Calculator:
 PDF:
   pkg.installed:
     - pkgs:
-      - apvlv
       # - atril
       - okular
       - pdfsam
@@ -36,12 +35,12 @@ Note taking:
   pkg.installed:
     - pkgs:
       - cherrytree
-      - zim
+      # - zim
 
-Time tracking:
-  pkg.installed:
-    - pkgs:
-      - hamster-time-tracker
+# Time tracking:
+#   pkg.installed:
+#     - pkgs:
+#       - hamster-time-tracker
 
 # OCR:
 #   pkg.installed:

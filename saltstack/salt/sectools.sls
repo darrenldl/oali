@@ -12,10 +12,10 @@ Secure chat:
       # Tox chat
       - qtox
 
-Vulnerability scan/management:
-  pkg.installed:
-    - pkgs:
-      - openvas
+# Vulnerability scan/management:
+#   pkg.installed:
+#     - pkgs:
+#       - openvas
 
 Intrusion detection:
   pkg.installed:
@@ -42,7 +42,6 @@ Hashing:
 Cryptographic:
   pkg.installed:
     - pkgs:
-      - ccrypt
       - gnupg
       - gpa
       - veracrypt
@@ -50,9 +49,7 @@ Cryptographic:
 Password management:
   pkg.installed:
     - pkgs:
-      # - keepassx2
       - keepass
-      - keepassxc
 
 Keyring:
   pkg.installed:

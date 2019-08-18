@@ -19,8 +19,8 @@ Terminal emulators:
   pkg.installed:
     - pkgs:
       - cool-retro-term
-      - kitty
-      - terminology
+      # - kitty
+      # - terminology
 
 Shells:
   pkg.installed:

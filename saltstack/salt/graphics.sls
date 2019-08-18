@@ -13,7 +13,7 @@ Image management:
 Image viewing:
   pkg.installed:
     - pkgs:
-      - deepin-image-viewer
+      # - deepin-image-viewer
       - eom
       - feh
 

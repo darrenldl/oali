@@ -1,4 +1,4 @@
-Personal finance management:
-  pkg.installed:
-    - pkgs:
-      - homebank
+# Personal finance management:
+#   pkg.installed:
+#     - pkgs:
+#       - homebank

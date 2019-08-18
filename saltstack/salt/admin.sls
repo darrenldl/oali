@@ -6,10 +6,10 @@ System monitoring:
        - glances
        - nmon
 
-At:
-  pkg.installed:
-    - pkgs:
-      - at
+# At:
+#   pkg.installed:
+#     - pkgs:
+#       - at
 
 Cron:
   pkg.installed:

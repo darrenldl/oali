@@ -5,7 +5,7 @@ Text editor:
       - neovim
       - nano
       - gedit
-      - geany
+      # - geany
       - emacs
 
 Searching:
@@ -15,10 +15,10 @@ Searching:
       - fzf
       - fd
 
-Indexing:
-  pkg.installed:
-    - pkgs:
-      - recoll
+# Indexing:
+#   pkg.installed:
+#     - pkgs:
+#       - recoll
 
 Archiving:
   pkg.installed:

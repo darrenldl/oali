@@ -10,11 +10,11 @@ Hex editor:
     - pkgs:
       - okteta
 
-IDE:
-  pkg.installed:
-    - pkgs:
-      - eric          # for Python and Ruby
-      - codeblocks    # for C/C++
+# IDE:
+#   pkg.installed:
+#     - pkgs:
+      # - eric          # for Python and Ruby
+      # - codeblocks    # for C/C++
 
 GUI Framework/Libraries:
   pkg.installed:
@@ -36,9 +36,9 @@ Go:
 Java:
   pkg.installed:
     - pkgs:
-      - intellij-idea-community-edition
-      - jdk8-openjdk
-      - jre8-openjdk
+      # - intellij-idea-community-edition
+      - jdk-openjdk
+      - jre-openjdk
 
 Javascript:
   pkg.installed:

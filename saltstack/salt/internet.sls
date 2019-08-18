@@ -4,7 +4,7 @@ Web browsers:
       - firefox
       - chromium
       - falkon
-      - midori
+      # - midori
 
 Mail clients:
   pkg.installed:

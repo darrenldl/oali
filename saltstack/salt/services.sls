@@ -1,8 +1,8 @@
-Make sure atd is enabled:
-  service.enabled:
-    - name : atd
-    - require :
-      - At
+# Make sure atd is enabled:
+#   service.enabled:
+#     - name : atd
+#     - require :
+#       - At
 
 Make sure libvirtd is enabled:
   service.enabled:
