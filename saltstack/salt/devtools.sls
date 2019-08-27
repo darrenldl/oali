@@ -49,6 +49,7 @@ OCaml:
   pkg.installed:
     - pkgs:
       - ocaml
+      - dune
       - opam
       - ocaml-findlib
 
