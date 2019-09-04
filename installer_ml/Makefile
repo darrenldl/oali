@@ -18,7 +18,7 @@ OCPINDENT = ocp-indent \
 	$(CINAPSFILES)
 
 .PHONY: all
-all : lib test-lib doc
+all : exe
 
 .PHONY: exe
 exe:

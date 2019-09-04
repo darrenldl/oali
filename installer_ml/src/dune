@@ -1,5 +1,7 @@
 (executable
  (name installer)
- (libraries lwt
+ (libraries core_kernel
+            lwt
+            lwt.unix
             sexplib)
  (preprocess (pps ppx_sexp_conv)))

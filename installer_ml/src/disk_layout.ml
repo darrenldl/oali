@@ -1,9 +1,8 @@
-type partition =
-  { disk : string
-  ; part_num : int }
+open Core_kernel
 
 type disk_layout =
-  { sys_part : string
-  ; swap_part : string option
-  ; boot_part : string
-  ; efi_part : string option }
+  { sys_part : Partition.t
+  ; swap_part : Partition.t option
+  ; boot_part : Partition.t
+  ; efi_part : Partition.t option
+  } [@@deriving sexp]
