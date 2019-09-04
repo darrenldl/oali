@@ -1,4 +1,2 @@
 *.swp
 *.rkt~
-_build/
-installer_ml/_build/
