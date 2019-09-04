@@ -1,3 +1,5 @@
 (executable
  (name installer)
- (libraries lwt))
+ (libraries lwt
+            sexplib)
+ (preprocess (pps ppx_sexp_conv)))
