@@ -1,6 +1,3 @@
-type file_sys =
-  Fat32 | Ext4
-
 let format_part fs part =
   let part_str = Partition.to_string part in
   let command =
