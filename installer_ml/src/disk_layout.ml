@@ -15,11 +15,6 @@ type lower =
 
 type plain_fs = {fs : fs} [@@deriving sexp]
 
-type luks_key =
-  | Key_file of string
-  | Passphrase of string
-[@@deriving sexp]
-
 type luks_version =
   | LuksV1
   | LuksV2
@@ -27,7 +22,7 @@ type luks_version =
 
 type luks =
   { enc_params : enc_params option
-  ; key : luks_key
+  ; key : string
   ; version : luks_version
   ; inner_fs : plain_fs
   ; mapper_name : string }
@@ -55,29 +50,68 @@ let make_lower ~disk ~part_num = {disk; part_num}
 let lower_part_to_cmd_string {disk; part_num} =
   Printf.sprintf "/dev/%s%d" disk part_num
 
-let mount {upper; lower} ~mount_point =
+let luks_to_mapper_name_cmd_string { mapper_name; _} =
+  Printf.sprintf "/dev/mapper/%s" mapper_name
+
+let mount_part {lower; upper} ~mount_point =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
-    Result.map_error
+    let%lwt res = exec [|"mount"; lower_str; mount_point|] in
+    Stdlib.Result.map_error
       (fun _ -> "Failed to mount lower_str")
-      (exec [|"mount"; lower_str; mount_point|])
+      res
+    |> Lwt.return
   | Luks luks ->
-    Result.map_error
-      (fun _ -> Printf.sprintf "Failed to open LUKS device %s" lower_str)
-      (exec [|"cryptsetup"; "open"; lower_str; luks.mapper_name|])
+    let (stdin, f) = exec_with_stdin [|"cryptsetup"; "open"; "--key-file=-"; lower_str; luks.mapper_name|] in
+    let%lwt () = Lwt_io.write stdin luks.key in
+    let%lwt res = f () in
+    match res with
+    | Error _ ->
+      Lwt.return_error (Printf.sprintf "Failed to open LUKS device %s" lower_str)
+    | Ok _ ->
+      let%lwt res =
+        exec [|"mount"; luks_to_mapper_name_cmd_string luks; mount_point|] in
+      Stdlib.Result.map_error
+        (fun _ -> "Failed to mount mapper device")
+        res
+      |> Lwt.return
 
-let format_part {upper; lower} =
-  let part_str =
-    match upper with
-    | PlainFS p | Luks {inner_fs = p; _} ->
-      plain_part_to_string p
-  in
-  let command =
-    match fs with
-    | Fat32 ->
-      [|"mkfs.fat"; "-F32 "; part_str|]
-    | Ext4 ->
-      [|"mkfs.ext4 "; part_str|]
-  in
-  Proc_utils.exec command
+let unmount_part {lower; upper} =
+  let lower_str = lower_part_to_cmd_string lower in
+  match upper with
+  | PlainFS _ ->
+    let%lwt res =
+      exec [|"umount"; lower_str|]
+      in
+    Stdlib.Result.map_error
+      (fun _ -> Printf.sprintf "Failed to unmount %s" lower_str)
+      res
+    |> Lwt.return
+  | Luks luks ->
+    let mapper_name = luks_to_mapper_name_cmd_string luks in
+    let%lwt res = exec [|"umount"; mapper_name|] in
+    match res with
+    | Error _ ->
+      Lwt.return_error (Printf.sprintf "Failed to unmount %s" mapper_name)
+    | Ok _ ->
+      let%lwt res = exec [|"cryptsetup"; "close"; lower_str|] in
+      Stdlib.Result.map_error
+        (fun _ -> Printf.sprintf "Failed to close LUKS device %s" lower_str)
+        res
+      |> Lwt.return
+
+(* let format_part {upper; lower} =
+ *   let part_str =
+ *     match upper with
+ *     | PlainFS p | Luks {inner_fs = p; _} ->
+ *       plain_part_to_string p
+ *   in
+ *   let command =
+ *     match fs with
+ *     | Fat32 ->
+ *       [|"mkfs.fat"; "-F32 "; part_str|]
+ *     | Ext4 ->
+ *       [|"mkfs.ext4 "; part_str|]
+ *   in
+ *   Proc_utils.exec command *)
