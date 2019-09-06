@@ -71,6 +71,18 @@ let luks_open {lower; upper} =
       res
     |> Lwt.return
 
+let luks_close {lower; upper} =
+  let lower_str = lower_part_to_cmd_string lower in
+  match upper with
+  | PlainFS _ ->
+    failwith "LUKS expected"
+  | Luks luks ->
+    let%lwt res = exec [|"cryptsetup"; "close"; luks.mapper_name|] in
+    Stdlib.Result.map_error
+      (fun _ -> Printf.sprintf "Failed to close LUKS device %s" lower_str)
+      res
+    |> Lwt.return
+
 let mount_part {lower; upper} ~mount_point =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
