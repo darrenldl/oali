@@ -122,12 +122,7 @@ let unmount_part {lower; upper} =
       | Error _ ->
         Lwt.return_error (Printf.sprintf "Failed to unmount %s" mapper_name)
       | Ok _ ->
-        let%lwt res = exec [|"cryptsetup"; "close"; luks.mapper_name|] in
-        Stdlib.Result.map_error
-          (fun _ ->
-             Printf.sprintf "Failed to close LUKS device %s" lower_str)
-          res
-        |> Lwt.return )
+        luks_close {lower; upper} )
 
 let format_cmd fs part =
   match fs with
