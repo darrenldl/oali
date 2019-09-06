@@ -8,7 +8,7 @@ type exec_result =
 let exec_result_is_ok res = res.status = WEXITED 0
 
 let exec command : (exec_result, exec_result) result Lwt.t =
-  let p = Lwt_process.open_process_in ("", command) in
+  let p = Lwt_process.open_process_full ("", command) in
   let%lwt status = p#status in
   let%lwt stdout = Lwt_io.read p#stdout in
   let res = {command; status; stdout} in

@@ -66,6 +66,7 @@ let mount_part {lower; upper} ~mount_point =
           [|"cryptsetup"; "open"; "--key-file=-"; lower_str; luks.mapper_name|]
       in
       let%lwt () = Lwt_io.write stdin luks.key in
+      let%lwt () = Lwt_io.close stdin in
       let%lwt res = f () in
       match res with
       | Error _ ->
@@ -96,7 +97,7 @@ let unmount_part {lower; upper} =
       | Error _ ->
         Lwt.return_error (Printf.sprintf "Failed to unmount %s" mapper_name)
       | Ok _ ->
-        let%lwt res = exec [|"cryptsetup"; "close"; lower_str|] in
+        let%lwt res = exec [|"cryptsetup"; "close"; luks.mapper_name|] in
         Stdlib.Result.map_error
           (fun _ ->
              Printf.sprintf "Failed to close LUKS device %s" lower_str)
