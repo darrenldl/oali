@@ -170,18 +170,3 @@ let format_part {upper; lower} =
              Printf.sprintf "Failed to format partition %s" mapper_name)
           res
         |> Lwt.return )
-
-(* let format_part {upper; lower} =
- *   let part_str =
- *     match upper with
- *     | PlainFS p | Luks {inner_fs = p; _} ->
- *       plain_part_to_string p
- *   in
- *   let command =
- *     match fs with
- *     | Fat32 ->
- *       [|"mkfs.fat"; "-F32 "; part_str|]
- *     | Ext4 ->
- *       [|"mkfs.ext4 "; part_str|]
- *   in
- *   Proc_utils.exec command *)
