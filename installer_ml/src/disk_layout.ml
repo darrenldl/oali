@@ -53,25 +53,38 @@ let lower_part_to_cmd_string {disk; part_num} =
 let luks_to_mapper_name_cmd_string {mapper_name; _} =
   Printf.sprintf "/dev/mapper/%s" mapper_name
 
+let luks_open {lower; upper} =
+  let lower_str = lower_part_to_cmd_string lower in
+  match upper with
+  | PlainFS _ ->
+    failwith "LUKS expected"
+  | Luks luks ->
+    let stdin, f =
+      exec_with_stdin
+        [|"cryptsetup"; "open"; "--key-file=-"; lower_str; luks.mapper_name|]
+    in
+    let%lwt () = Lwt_io.write stdin luks.key in
+    let%lwt () = Lwt_io.close stdin in
+    let%lwt res = f () in
+    Stdlib.Result.map_error
+      (fun _ -> Printf.sprintf "Failed to open LUKS device %s" lower_str)
+      res
+    |> Lwt.return
+
 let mount_part {lower; upper} ~mount_point =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
     let%lwt res = exec [|"mount"; lower_str; mount_point|] in
-    Stdlib.Result.map_error (fun _ -> "Failed to mount lower_str") res
+    Stdlib.Result.map_error
+      (fun _ -> Printf.sprintf "Failed to mount %s" lower_str)
+      res
     |> Lwt.return
   | Luks luks -> (
-      let stdin, f =
-        exec_with_stdin
-          [|"cryptsetup"; "open"; "--key-file=-"; lower_str; luks.mapper_name|]
-      in
-      let%lwt () = Lwt_io.write stdin luks.key in
-      let%lwt () = Lwt_io.close stdin in
-      let%lwt res = f () in
+      let%lwt res = luks_open {lower; upper} in
       match res with
-      | Error _ ->
-        Lwt.return_error
-          (Printf.sprintf "Failed to open LUKS device %s" lower_str)
+      | Error e ->
+        Lwt.return_error e
       | Ok _ ->
         let%lwt res =
           exec [|"mount"; luks_to_mapper_name_cmd_string luks; mount_point|]
@@ -103,6 +116,24 @@ let unmount_part {lower; upper} =
              Printf.sprintf "Failed to close LUKS device %s" lower_str)
           res
         |> Lwt.return )
+
+let format_cmd fs part =
+  match fs with
+  | Fat32 ->
+    [|"mkfs.fat"; "-F32"; part|]
+  | Ext4 ->
+    [|"mkfs.ext4"; part|]
+
+(* let format_part {upper; lower} =
+ *   let lower_str = lower_part_to_cmd_string lower in
+ *   match upper with
+ *   | PlainFS {fs} ->
+ *     let%lwt res = exec (format_cmd fs lower_str) in
+ *     Stdlib.Result.map_error (fun _ -> Printf.sprintf "Failed to format %s" lower_str)
+ *       res
+ *     |> Lwt.return
+ *   | Luks luks ->
+ *     let%lwt res = exec *)
 
 (* let format_part {upper; lower} =
  *   let part_str =
