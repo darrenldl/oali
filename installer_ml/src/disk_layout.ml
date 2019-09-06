@@ -1,4 +1,4 @@
-open Core_kernel
+open Sexplib.Std
 open Proc_utils
 
 type fs =
@@ -58,10 +58,14 @@ let lower_part_to_cmd_string {disk; part_num} =
 let mount {upper; lower} ~mount_point =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
-  | PlainFS fs ->
-    exec [|"mount"; lower_str; mount_point|]
+  | PlainFS _ ->
+    Result.map_error
+      (fun _ -> "Failed to mount lower_str")
+      (exec [|"mount"; lower_str; mount_point|])
   | Luks luks ->
-    exec [|"cryptsetup"; "open"; "--type"; "luks"|]
+    Result.map_error
+      (fun _ -> Printf.sprintf "Failed to open LUKS device %s" lower_str)
+      (exec [|"cryptsetup"; "open"; lower_str; luks.mapper_name|])
 
 let format_part {upper; lower} =
   let part_str =

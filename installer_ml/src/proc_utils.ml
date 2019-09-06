@@ -5,10 +5,14 @@ type exec_result =
   ; status : process_status
   ; stdout : string }
 
-let exec command : exec_result Lwt.t =
+let exec_result_is_ok res = res.status = WEXITED 0
+
+let exec command : (exec_result, exec_result) result Lwt.t =
   let p = Lwt_process.open_process_in ("", command) in
   let%lwt status = p#status in
   let%lwt stdout = Lwt_io.read p#stdout in
-  Lwt.return {command; status; stdout}
-
-let assert_ok res = assert (res.status = WEXITED 0)
+  let res = {command; status; stdout} in
+  if exec_result_is_ok res then
+    Lwt.return (Ok res)
+  else
+    Lwt.return (Error res)
