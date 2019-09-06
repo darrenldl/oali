@@ -6,7 +6,10 @@ type fs =
   | Ext4
 [@@deriving sexp]
 
-type enc_params = {iter_time : int} [@@deriving sexp]
+type enc_params =
+  { iter_time_ms : int
+  ; key_size : int }
+[@@deriving sexp]
 
 type lower =
   { disk : string
@@ -131,16 +134,42 @@ let format_cmd fs part =
   | Ext4 ->
     [|"mkfs.ext4"; part|]
 
-(* let format_part {upper; lower} =
- *   let lower_str = lower_part_to_cmd_string lower in
- *   match upper with
- *   | PlainFS {fs} ->
- *     let%lwt res = exec (format_cmd fs lower_str) in
- *     Stdlib.Result.map_error (fun _ -> Printf.sprintf "Failed to format %s" lower_str)
- *       res
- *     |> Lwt.return
- *   | Luks luks ->
- *     let%lwt res = exec *)
+let format_part {upper; lower} =
+  let lower_str = lower_part_to_cmd_string lower in
+  match upper with
+  | PlainFS {fs} ->
+    let%lwt res = exec (format_cmd fs lower_str) in
+    Stdlib.Result.map_error
+      (fun _ -> Printf.sprintf "Failed to format %s" lower_str)
+      res
+    |> Lwt.return
+  | Luks luks -> (
+      let enc_params = Option.get luks.enc_params in
+      let stdin, f =
+        exec_with_stdin
+          [| "cryptsetup"
+           ; "luksFormat"
+           ; "-y"
+           ; "--key-file=-"
+           ; "--iter-time"
+           ; string_of_int enc_params.iter_time_ms
+           ; "--key-size"
+           ; string_of_int enc_params.key_size |]
+      in
+      let%lwt () = Lwt_io.write stdin luks.key in
+      let%lwt () = Lwt_io.close stdin in
+      let%lwt res = f () in
+      match res with
+      | Error _ ->
+        Lwt.return_error "Failed to create LUKS partition"
+      | Ok _ ->
+        let mapper_name = luks_to_mapper_name_cmd_string luks in
+        let%lwt res = exec (format_cmd luks.inner_fs.fs mapper_name) in
+        Stdlib.Result.map_error
+          (fun _ ->
+             Printf.sprintf "Failed to format partition %s" mapper_name)
+          res
+        |> Lwt.return )
 
 (* let format_part {upper; lower} =
  *   let part_str =
