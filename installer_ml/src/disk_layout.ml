@@ -50,7 +50,7 @@ let make_lower ~disk ~part_num = {disk; part_num}
 let lower_part_to_cmd_string {disk; part_num} =
   Printf.sprintf "/dev/%s%d" disk part_num
 
-let luks_to_mapper_name_cmd_string { mapper_name; _} =
+let luks_to_mapper_name_cmd_string {mapper_name; _} =
   Printf.sprintf "/dev/mapper/%s" mapper_name
 
 let mount_part {lower; upper} ~mount_point =
@@ -58,48 +58,50 @@ let mount_part {lower; upper} ~mount_point =
   match upper with
   | PlainFS _ ->
     let%lwt res = exec [|"mount"; lower_str; mount_point|] in
-    Stdlib.Result.map_error
-      (fun _ -> "Failed to mount lower_str")
-      res
+    Stdlib.Result.map_error (fun _ -> "Failed to mount lower_str") res
     |> Lwt.return
-  | Luks luks ->
-    let (stdin, f) = exec_with_stdin [|"cryptsetup"; "open"; "--key-file=-"; lower_str; luks.mapper_name|] in
-    let%lwt () = Lwt_io.write stdin luks.key in
-    let%lwt res = f () in
-    match res with
-    | Error _ ->
-      Lwt.return_error (Printf.sprintf "Failed to open LUKS device %s" lower_str)
-    | Ok _ ->
-      let%lwt res =
-        exec [|"mount"; luks_to_mapper_name_cmd_string luks; mount_point|] in
-      Stdlib.Result.map_error
-        (fun _ -> "Failed to mount mapper device")
-        res
-      |> Lwt.return
+  | Luks luks -> (
+      let stdin, f =
+        exec_with_stdin
+          [|"cryptsetup"; "open"; "--key-file=-"; lower_str; luks.mapper_name|]
+      in
+      let%lwt () = Lwt_io.write stdin luks.key in
+      let%lwt res = f () in
+      match res with
+      | Error _ ->
+        Lwt.return_error
+          (Printf.sprintf "Failed to open LUKS device %s" lower_str)
+      | Ok _ ->
+        let%lwt res =
+          exec [|"mount"; luks_to_mapper_name_cmd_string luks; mount_point|]
+        in
+        Stdlib.Result.map_error
+          (fun _ -> "Failed to mount mapper device")
+          res
+        |> Lwt.return )
 
 let unmount_part {lower; upper} =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
-    let%lwt res =
-      exec [|"umount"; lower_str|]
-      in
+    let%lwt res = exec [|"umount"; lower_str|] in
     Stdlib.Result.map_error
       (fun _ -> Printf.sprintf "Failed to unmount %s" lower_str)
       res
     |> Lwt.return
-  | Luks luks ->
-    let mapper_name = luks_to_mapper_name_cmd_string luks in
-    let%lwt res = exec [|"umount"; mapper_name|] in
-    match res with
-    | Error _ ->
-      Lwt.return_error (Printf.sprintf "Failed to unmount %s" mapper_name)
-    | Ok _ ->
-      let%lwt res = exec [|"cryptsetup"; "close"; lower_str|] in
-      Stdlib.Result.map_error
-        (fun _ -> Printf.sprintf "Failed to close LUKS device %s" lower_str)
-        res
-      |> Lwt.return
+  | Luks luks -> (
+      let mapper_name = luks_to_mapper_name_cmd_string luks in
+      let%lwt res = exec [|"umount"; mapper_name|] in
+      match res with
+      | Error _ ->
+        Lwt.return_error (Printf.sprintf "Failed to unmount %s" mapper_name)
+      | Ok _ ->
+        let%lwt res = exec [|"cryptsetup"; "close"; lower_str|] in
+        Stdlib.Result.map_error
+          (fun _ ->
+             Printf.sprintf "Failed to close LUKS device %s" lower_str)
+          res
+        |> Lwt.return )
 
 (* let format_part {upper; lower} =
  *   let part_str =
