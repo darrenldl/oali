@@ -11,15 +11,9 @@ let exec_result_is_ok res = res.status = WEXITED 0
 let input_all_lines in_chan =
   let rec aux in_chan acc =
     let stop, acc =
-      try
-        false, input_line in_chan :: acc
-      with
-      | End_of_file -> true, acc
+      try (false, input_line in_chan :: acc) with End_of_file -> (true, acc)
     in
-    if stop then
-      acc
-    else
-      aux in_chan acc
+    if stop then acc else aux in_chan acc
   in
   List.rev (aux in_chan [])
 
@@ -32,11 +26,10 @@ let exec prog args : (exec_result, exec_result) result =
 
 let exec_with_stdin prog args :
   out_channel * (unit -> (exec_result, exec_result) result) =
-  let (stdout_chan, stdin_chan) = Unix.open_process_args prog args in
+  let stdout_chan, stdin_chan = Unix.open_process_args prog args in
   ( stdin_chan
   , fun () ->
     let stdout = input_all_lines stdout_chan in
     let status = Unix.close_process (stdout_chan, stdin_chan) in
     let res = {prog; args; status; stdout} in
-    if exec_result_is_ok res then Ok res
-    else Error res )
+    if exec_result_is_ok res then Ok res else Error res )

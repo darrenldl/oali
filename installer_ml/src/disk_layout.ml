@@ -77,8 +77,8 @@ let luks_open {lower; upper; _} =
   | Luks luks ->
     assert (luks.state = LuksClosed);
     let stdin, f =
-      exec_with_stdin
-        "cryptsetup" [|"open"; "--key-file=-"; lower_str; luks.mapper_name|]
+      exec_with_stdin "cryptsetup"
+        [|"open"; "--key-file=-"; lower_str; luks.mapper_name|]
     in
     output_string stdin luks.key;
     let res = f () in
@@ -108,7 +108,7 @@ let mount_part ({lower; upper; state} as p) ~mount_point =
     Stdlib.Result.map_error
       (fun _ -> Printf.sprintf "Failed to mount %s" lower_str)
       res
-  | Luks luks ->
+  | Luks luks -> (
       let res = luks_open {lower; upper; state} in
       match res with
       | Error _ ->
@@ -120,7 +120,7 @@ let mount_part ({lower; upper; state} as p) ~mount_point =
         (match res with Ok _ -> p.state <- Mounted | _ -> ());
         Stdlib.Result.map_error
           (fun _ -> "Failed to mount mapper device")
-          res
+          res )
 
 let unmount_part ({lower; upper; state} as p) =
   assert (state = Mounted);
@@ -156,17 +156,17 @@ let format_part ({upper; lower; state} as p) =
   | PlainFS {fs} ->
     let res =
       let prog, args = format_cmd fs lower_str in
-      exec prog args in
+      exec prog args
+    in
     (match res with Ok _ -> p.state <- Unmounted | _ -> ());
     Stdlib.Result.map_error
       (fun _ -> Printf.sprintf "Failed to format %s" lower_str)
       res
-  | Luks luks ->
+  | Luks luks -> (
       let enc_params = Option.get luks.enc_params in
       let stdin, f =
-        exec_with_stdin
-          "cryptsetup"
-          [|"luksFormat"
+        exec_with_stdin "cryptsetup"
+          [| "luksFormat"
            ; "-y"
            ; "--key-file=-"
            ; "--iter-time"
@@ -180,11 +180,12 @@ let format_part ({upper; lower; state} as p) =
         Error "Failed to create LUKS partition"
       | Ok _ ->
         let mapper_name = luks_to_mapper_name_cmd_string luks in
-        let res = let prog, args = format_cmd luks.inner_fs.fs mapper_name in
+        let res =
+          let prog, args = format_cmd luks.inner_fs.fs mapper_name in
           exec prog args
         in
         (match res with Ok _ -> p.state <- Unmounted | _ -> ());
         Stdlib.Result.map_error
           (fun _ ->
              Printf.sprintf "Failed to format partition %s" mapper_name)
-          res
+          res )
