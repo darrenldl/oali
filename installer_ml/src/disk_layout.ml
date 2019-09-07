@@ -23,12 +23,18 @@ type luks_version =
   | LuksV2
 [@@deriving sexp]
 
+type luks_state =
+  | LuksOpened
+  | LuksClosed
+[@@deriving sexp]
+
 type luks =
   { enc_params : enc_params option
   ; key : string
   ; version : luks_version
   ; inner_fs : plain_fs
-  ; mapper_name : string }
+  ; mapper_name : string
+  ; mutable state : luks_state }
 [@@deriving sexp]
 
 type upper =
@@ -36,9 +42,16 @@ type upper =
   | Luks of luks
 [@@deriving sexp]
 
+type state =
+  | Unformatted
+  | Mounted
+  | Unmounted
+[@@deriving sexp]
+
 type part =
   { lower : lower
-  ; upper : upper }
+  ; upper : upper
+  ; mutable state : state }
 [@@deriving sexp]
 
 type t =
@@ -56,12 +69,13 @@ let lower_part_to_cmd_string {disk; part_num} =
 let luks_to_mapper_name_cmd_string {mapper_name; _} =
   Printf.sprintf "/dev/mapper/%s" mapper_name
 
-let luks_open {lower; upper} =
+let luks_open {lower; upper; _} =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
     failwith "LUKS expected"
   | Luks luks ->
+    assert (luks.state = LuksClosed);
     let stdin, f =
       exec_with_stdin
         [|"cryptsetup"; "open"; "--key-file=-"; lower_str; luks.mapper_name|]
@@ -74,29 +88,32 @@ let luks_open {lower; upper} =
       res
     |> Lwt.return
 
-let luks_close {lower; upper} =
+let luks_close {lower; upper; _} =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
     failwith "LUKS expected"
   | Luks luks ->
+    assert (luks.state = LuksOpened);
     let%lwt res = exec [|"cryptsetup"; "close"; luks.mapper_name|] in
     Stdlib.Result.map_error
       (fun _ -> Printf.sprintf "Failed to close LUKS device %s" lower_str)
       res
     |> Lwt.return
 
-let mount_part {lower; upper} ~mount_point =
+let mount_part ({lower; upper; state} as p) ~mount_point =
+  assert (state = Unmounted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
     let%lwt res = exec [|"mount"; lower_str; mount_point|] in
+    (match res with Ok _ -> p.state <- Mounted | _ -> ());
     Stdlib.Result.map_error
       (fun _ -> Printf.sprintf "Failed to mount %s" lower_str)
       res
     |> Lwt.return
   | Luks luks -> (
-      let%lwt res = luks_open {lower; upper} in
+      let%lwt res = luks_open {lower; upper; state} in
       match res with
       | Error e ->
         Lwt.return_error e
@@ -104,16 +121,19 @@ let mount_part {lower; upper} ~mount_point =
         let%lwt res =
           exec [|"mount"; luks_to_mapper_name_cmd_string luks; mount_point|]
         in
+        (match res with Ok _ -> p.state <- Mounted | _ -> ());
         Stdlib.Result.map_error
           (fun _ -> "Failed to mount mapper device")
           res
         |> Lwt.return )
 
-let unmount_part {lower; upper} =
+let unmount_part ({lower; upper; state} as p) =
+  assert (state = Mounted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
     let%lwt res = exec [|"umount"; lower_str|] in
+    (match res with Ok _ -> p.state <- Unmounted | _ -> ());
     Stdlib.Result.map_error
       (fun _ -> Printf.sprintf "Failed to unmount %s" lower_str)
       res
@@ -125,7 +145,8 @@ let unmount_part {lower; upper} =
       | Error _ ->
         Lwt.return_error (Printf.sprintf "Failed to unmount %s" mapper_name)
       | Ok _ ->
-        luks_close {lower; upper} )
+        (match res with Ok _ -> p.state <- Unmounted | _ -> ());
+        luks_close {lower; upper; state} )
 
 let format_cmd fs part =
   match fs with
@@ -134,11 +155,13 @@ let format_cmd fs part =
   | Ext4 ->
     [|"mkfs.ext4"; part|]
 
-let format_part {upper; lower} =
+let format_part ({upper; lower; state} as p) =
+  assert (state = Unformatted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS {fs} ->
     let%lwt res = exec (format_cmd fs lower_str) in
+    (match res with Ok _ -> p.state <- Unmounted | _ -> ());
     Stdlib.Result.map_error
       (fun _ -> Printf.sprintf "Failed to format %s" lower_str)
       res
@@ -165,6 +188,7 @@ let format_part {upper; lower} =
       | Ok _ ->
         let mapper_name = luks_to_mapper_name_cmd_string luks in
         let%lwt res = exec (format_cmd luks.inner_fs.fs mapper_name) in
+        (match res with Ok _ -> p.state <- Unmounted | _ -> ());
         Stdlib.Result.map_error
           (fun _ ->
              Printf.sprintf "Failed to format partition %s" mapper_name)
