@@ -79,7 +79,8 @@ let luks_open {lower; upper; _} =
   | Luks luks ->
     assert (luks.state = LuksClosed);
     let stdin, f =
-      sprintf "cryptsetup open --key-file=- %s %s" lower_str luks.mapper_name |> exec_with_stdin
+      sprintf "cryptsetup open --key-file=- %s %s" lower_str luks.mapper_name
+      |> exec_with_stdin
     in
     output_string stdin luks.key;
     f ()
@@ -92,7 +93,7 @@ let luks_close {upper; _} =
     assert (luks.state = LuksOpened);
     sprintf "cryptsetup close %s" luks.mapper_name |> exec
 
-let mount_part ({lower; upper; state}) ~mount_point =
+let mount_part {lower; upper; state} ~mount_point =
   assert (state = Unmounted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
@@ -100,7 +101,8 @@ let mount_part ({lower; upper; state}) ~mount_point =
     sprintf "mount %s %s" lower_str mount_point |> exec
   | Luks luks ->
     luks_open {lower; upper; state};
-    sprintf "mount %s %s" (luks_to_mapper_name_cmd_string luks) (mount_point) |> exec
+    sprintf "mount %s %s" (luks_to_mapper_name_cmd_string luks) mount_point
+    |> exec
 
 let unmount_part ({lower; upper; state} as p) =
   assert (state = Mounted);
@@ -108,11 +110,11 @@ let unmount_part ({lower; upper; state} as p) =
   match upper with
   | PlainFS _ ->
     sprintf "umount %s" lower_str |> exec
-  | Luks luks -> (
-      let mapper_name = luks_to_mapper_name_cmd_string luks in
-      sprintf "umount %s" mapper_name |> exec;
-      p.state <- Unmounted;
-      luks_close {lower; upper; state} )
+  | Luks luks ->
+    let mapper_name = luks_to_mapper_name_cmd_string luks in
+    sprintf "umount %s" mapper_name |> exec;
+    p.state <- Unmounted;
+    luks_close {lower; upper; state}
 
 let format_cmd fs part =
   match fs with
@@ -127,22 +129,22 @@ let format_part ({upper; lower; state} as p) =
   match upper with
   | PlainFS {fs} ->
     format_cmd fs lower_str |> exec;
-    p.state <- Unmounted;
+    p.state <- Unmounted
   | Luks luks ->
-      let enc_params = Option.get luks.enc_params in
-      let stdin, f =
-        String.concat " "
-          [ "cryptsetup";
-             "luksFormat"
-           ; "-y"
-           ; "--key-file=-"
-           ; "--iter-time"
-           ; string_of_int enc_params.iter_time_ms
-           ; "--key-size"
-           ; string_of_int enc_params.key_size ]
-  |> exec_with_stdin 
-      in
-      output_string stdin luks.key;
-      f ();
-      let mapper_name = luks_to_mapper_name_cmd_string luks in
-      format_cmd luks.inner_fs.fs mapper_name |> exec
+    let enc_params = Option.get luks.enc_params in
+    let stdin, f =
+      String.concat " "
+        [ "cryptsetup"
+        ; "luksFormat"
+        ; "-y"
+        ; "--key-file=-"
+        ; "--iter-time"
+        ; string_of_int enc_params.iter_time_ms
+        ; "--key-size"
+        ; string_of_int enc_params.key_size ]
+      |> exec_with_stdin
+    in
+    output_string stdin luks.key;
+    f ();
+    let mapper_name = luks_to_mapper_name_cmd_string luks in
+    format_cmd luks.inner_fs.fs mapper_name |> exec
