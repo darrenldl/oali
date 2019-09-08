@@ -1,15 +1,30 @@
+open Sexplib.Std
+
 type task = Task_config.t -> unit
+
+type progress = {
+  finished : string list
+}
+[@@deriving sexp]
 
 type t = {
   config : Task_config.t;
   to_run : (string * task) Queue.t;
+  failed : (string * task) Queue.t;
   finished : (string * task) Queue.t;
 }
 
 let make config =
   { config;
-    to_run = Queue.create ()
+    to_run = Queue.create ();
+        failed = Queue.create ()
   ; finished = Queue.create ()}
+
+let to_progress task_book =
+  let acc = ref [] in
+  Queue.iter (fun x -> acc := x :: !acc)
+    task_book.finished;
+  List.rev !acc
 
 let register task_book ~name task =
   Queue.push (name, task) task_book.to_run
@@ -39,7 +54,7 @@ let run task_book =
         if retry then
           aux task_book (Some (name, task))
         else (
-          ()
+          Queue.push (name, task) task_book.failed;
         )
       else (
         Queue.push (name, task) task_book.finished;
