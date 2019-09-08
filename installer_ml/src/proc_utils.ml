@@ -6,6 +6,8 @@ type exec_result =
   ; status : process_status
   ; stdout : string list }
 
+exception Exec_not_ok of exec_result
+
 let exec_result_is_ok res = res.status = WEXITED 0
 
 let input_all_lines in_chan =
