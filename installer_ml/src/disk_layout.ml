@@ -81,66 +81,37 @@ let luks_open {lower; upper; _} =
         [|"open"; "--key-file=-"; lower_str; luks.mapper_name|]
     in
     output_string stdin luks.key;
-    let res = f () in
-    Stdlib.Result.map_error
-      (fun _ -> Printf.sprintf "Failed to open LUKS device %s" lower_str)
-      res
+    f ()
 
-let luks_close {lower; upper; _} =
-  let lower_str = lower_part_to_cmd_string lower in
+let luks_close {upper; _} =
   match upper with
   | PlainFS _ ->
     failwith "LUKS expected"
   | Luks luks ->
     assert (luks.state = LuksOpened);
-    let res = exec "cryptsetup" [|"close"; luks.mapper_name|] in
-    Stdlib.Result.map_error
-      (fun _ -> Printf.sprintf "Failed to close LUKS device %s" lower_str)
-      res
+    exec "cryptsetup" [|"close"; luks.mapper_name|]
 
-let mount_part ({lower; upper; state} as p) ~mount_point =
+let mount_part ({lower; upper; state}) ~mount_point =
   assert (state = Unmounted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
-    let res = exec "mount" [|lower_str; mount_point|] in
-    (match res with Ok _ -> p.state <- Mounted | _ -> ());
-    Stdlib.Result.map_error
-      (fun _ -> Printf.sprintf "Failed to mount %s" lower_str)
-      res
-  | Luks luks -> (
-      let res = luks_open {lower; upper; state} in
-      match res with
-      | Error _ ->
-        res
-      | Ok _ ->
-        let res =
-          exec "mount" [|luks_to_mapper_name_cmd_string luks; mount_point|]
-        in
-        (match res with Ok _ -> p.state <- Mounted | _ -> ());
-        Stdlib.Result.map_error
-          (fun _ -> "Failed to mount mapper device")
-          res )
+    exec "mount" [|lower_str; mount_point|]
+  | Luks luks ->
+    luks_open {lower; upper; state};
+    exec "mount" [|luks_to_mapper_name_cmd_string luks; mount_point|]
 
 let unmount_part ({lower; upper; state} as p) =
   assert (state = Mounted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
-    let res = exec "umount" [|lower_str|] in
-    (match res with Ok _ -> p.state <- Unmounted | _ -> ());
-    Stdlib.Result.map_error
-      (fun _ -> Printf.sprintf "Failed to unmount %s" lower_str)
-      res
+    exec "umount" [|lower_str|]
   | Luks luks -> (
       let mapper_name = luks_to_mapper_name_cmd_string luks in
-      let res = exec "umount" [|mapper_name|] in
-      match res with
-      | Error _ ->
-        Error (Printf.sprintf "Failed to unmount %s" mapper_name)
-      | Ok _ ->
-        (match res with Ok _ -> p.state <- Unmounted | _ -> ());
-        luks_close {lower; upper; state} )
+      exec "umount" [|mapper_name|];
+      p.state <- Unmounted;
+      luks_close {lower; upper; state} )
 
 let format_cmd fs part =
   match fs with
@@ -154,15 +125,10 @@ let format_part ({upper; lower; state} as p) =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS {fs} ->
-    let res =
-      let prog, args = format_cmd fs lower_str in
-      exec prog args
-    in
-    (match res with Ok _ -> p.state <- Unmounted | _ -> ());
-    Stdlib.Result.map_error
-      (fun _ -> Printf.sprintf "Failed to format %s" lower_str)
-      res
-  | Luks luks -> (
+    let prog, args = format_cmd fs lower_str in
+    exec prog args;
+    p.state <- Unmounted;
+  | Luks luks ->
       let enc_params = Option.get luks.enc_params in
       let stdin, f =
         exec_with_stdin "cryptsetup"
@@ -175,17 +141,7 @@ let format_part ({upper; lower; state} as p) =
            ; string_of_int enc_params.key_size |]
       in
       output_string stdin luks.key;
-      match f () with
-      | Error _ ->
-        Error "Failed to create LUKS partition"
-      | Ok _ ->
-        let mapper_name = luks_to_mapper_name_cmd_string luks in
-        let res =
-          let prog, args = format_cmd luks.inner_fs.fs mapper_name in
-          exec prog args
-        in
-        (match res with Ok _ -> p.state <- Unmounted | _ -> ());
-        Stdlib.Result.map_error
-          (fun _ ->
-             Printf.sprintf "Failed to format partition %s" mapper_name)
-          res )
+      f ();
+      let mapper_name = luks_to_mapper_name_cmd_string luks in
+      let prog, args = format_cmd luks.inner_fs.fs mapper_name in
+      exec prog args
