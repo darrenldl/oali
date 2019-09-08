@@ -1,6 +1,8 @@
 open Sexplib.Std
 open Proc_utils
 
+let sprintf = Printf.sprintf
+
 type fs =
   | Fat32
   | Ext4
@@ -64,10 +66,10 @@ type t =
 let make_lower ~disk ~part_num = {disk; part_num}
 
 let lower_part_to_cmd_string {disk; part_num} =
-  Printf.sprintf "/dev/%s%d" disk part_num
+  sprintf "/dev/%s%d" disk part_num
 
 let luks_to_mapper_name_cmd_string {mapper_name; _} =
-  Printf.sprintf "/dev/mapper/%s" mapper_name
+  sprintf "/dev/mapper/%s" mapper_name
 
 let luks_open {lower; upper; _} =
   let lower_str = lower_part_to_cmd_string lower in
@@ -77,8 +79,7 @@ let luks_open {lower; upper; _} =
   | Luks luks ->
     assert (luks.state = LuksClosed);
     let stdin, f =
-      exec_with_stdin "cryptsetup"
-        [|"open"; "--key-file=-"; lower_str; luks.mapper_name|]
+      sprintf "cryptsetup open --key-file=- %s %s" lower_str luks.mapper_name |> exec_with_stdin
     in
     output_string stdin luks.key;
     f ()
@@ -89,59 +90,59 @@ let luks_close {upper; _} =
     failwith "LUKS expected"
   | Luks luks ->
     assert (luks.state = LuksOpened);
-    exec "cryptsetup" [|"close"; luks.mapper_name|]
+    sprintf "cryptsetup close %s" luks.mapper_name |> exec
 
 let mount_part ({lower; upper; state}) ~mount_point =
   assert (state = Unmounted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
-    exec (Printf.sprintf "mount %s %s" lower_str mount_point)
+    sprintf "mount %s %s" lower_str mount_point |> exec
   | Luks luks ->
     luks_open {lower; upper; state};
-    exec (Printf.sprintf "mount %s %s" (luks_to_mapper_name_cmd_string luks) (mount_point))
+    sprintf "mount %s %s" (luks_to_mapper_name_cmd_string luks) (mount_point) |> exec
 
 let unmount_part ({lower; upper; state} as p) =
   assert (state = Mounted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
-    exec (Printf.sprintf "umount %s" lower_str)
+    sprintf "umount %s" lower_str |> exec
   | Luks luks -> (
       let mapper_name = luks_to_mapper_name_cmd_string luks in
-      exec (Printf.sprintf "umount %s" mapper_name);
+      sprintf "umount %s" mapper_name |> exec;
       p.state <- Unmounted;
       luks_close {lower; upper; state} )
 
 let format_cmd fs part =
   match fs with
   | Fat32 ->
-    ("mkfs.fat", [|"-F32"; part|])
+    sprintf "mkfs.fat -F32 %s" part
   | Ext4 ->
-    ("mkfs.ext4", [|part|])
+    sprintf "mkfs.ext4 %s" part
 
 let format_part ({upper; lower; state} as p) =
   assert (state = Unformatted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS {fs} ->
-    let prog, args = format_cmd fs lower_str in
-    exec prog args;
+    format_cmd fs lower_str |> exec;
     p.state <- Unmounted;
   | Luks luks ->
       let enc_params = Option.get luks.enc_params in
       let stdin, f =
-        exec_with_stdin "cryptsetup"
-          [| "luksFormat"
+        String.concat " "
+          [ "cryptsetup";
+             "luksFormat"
            ; "-y"
            ; "--key-file=-"
            ; "--iter-time"
            ; string_of_int enc_params.iter_time_ms
            ; "--key-size"
-           ; string_of_int enc_params.key_size |]
+           ; string_of_int enc_params.key_size ]
+  |> exec_with_stdin 
       in
       output_string stdin luks.key;
       f ();
       let mapper_name = luks_to_mapper_name_cmd_string luks in
-      let prog, args = format_cmd luks.inner_fs.fs mapper_name in
-      exec prog args
+      format_cmd luks.inner_fs.fs mapper_name |> exec
