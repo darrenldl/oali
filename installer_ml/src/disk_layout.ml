@@ -83,7 +83,8 @@ let luks_open {lower; upper; _} =
       |> exec_with_stdin
     in
     output_string stdin luks.key;
-    f ()
+    f ();
+    luks.state <- LuksOpened
 
 let luks_close {upper; _} =
   match upper with
@@ -91,30 +92,33 @@ let luks_close {upper; _} =
     failwith "LUKS expected"
   | Luks luks ->
     assert (luks.state = LuksOpened);
-    sprintf "cryptsetup close %s" luks.mapper_name |> exec
+    sprintf "cryptsetup close %s" luks.mapper_name |> exec;
+    luks.state <- LuksClosed
 
-let mount_part {lower; upper; state} ~mount_point =
+let mount_part ({lower; upper; state} as p) ~mount_point =
   assert (state = Unmounted);
   let lower_str = lower_part_to_cmd_string lower in
-  match upper with
-  | PlainFS _ ->
-    sprintf "mount %s %s" lower_str mount_point |> exec
-  | Luks luks ->
-    luks_open {lower; upper; state};
-    sprintf "mount %s %s" (luks_to_mapper_name_cmd_string luks) mount_point
-    |> exec
+  ( match upper with
+    | PlainFS _ ->
+      sprintf "mount %s %s" lower_str mount_point |> exec
+    | Luks luks ->
+      luks_open {lower; upper; state};
+      sprintf "mount %s %s" (luks_to_mapper_name_cmd_string luks) mount_point
+      |> exec );
+  p.state <- Mounted
 
 let unmount_part ({lower; upper; state} as p) =
   assert (state = Mounted);
   let lower_str = lower_part_to_cmd_string lower in
-  match upper with
-  | PlainFS _ ->
-    sprintf "umount %s" lower_str |> exec
-  | Luks luks ->
-    let mapper_name = luks_to_mapper_name_cmd_string luks in
-    sprintf "umount %s" mapper_name |> exec;
-    p.state <- Unmounted;
-    luks_close {lower; upper; state}
+  ( match upper with
+    | PlainFS _ ->
+      sprintf "umount %s" lower_str |> exec
+    | Luks luks ->
+      let mapper_name = luks_to_mapper_name_cmd_string luks in
+      sprintf "umount %s" mapper_name |> exec;
+      p.state <- Unmounted;
+      luks_close {lower; upper; state} );
+  p.state <- Unmounted
 
 let format_cmd fs part =
   match fs with
@@ -126,25 +130,25 @@ let format_cmd fs part =
 let format_part ({upper; lower; state} as p) =
   assert (state = Unformatted);
   let lower_str = lower_part_to_cmd_string lower in
-  match upper with
-  | PlainFS {fs} ->
-    format_cmd fs lower_str |> exec;
-    p.state <- Unmounted
-  | Luks luks ->
-    let enc_params = Option.get luks.enc_params in
-    let stdin, f =
-      String.concat " "
-        [ "cryptsetup"
-        ; "luksFormat"
-        ; "-y"
-        ; "--key-file=-"
-        ; "--iter-time"
-        ; string_of_int enc_params.iter_time_ms
-        ; "--key-size"
-        ; string_of_int enc_params.key_size ]
-      |> exec_with_stdin
-    in
-    output_string stdin luks.key;
-    f ();
-    let mapper_name = luks_to_mapper_name_cmd_string luks in
-    format_cmd luks.inner_fs.fs mapper_name |> exec
+  ( match upper with
+    | PlainFS {fs} ->
+      format_cmd fs lower_str |> exec
+    | Luks luks ->
+      let enc_params = Option.get luks.enc_params in
+      let stdin, f =
+        String.concat " "
+          [ "cryptsetup"
+          ; "luksFormat"
+          ; "-y"
+          ; "--key-file=-"
+          ; "--iter-time"
+          ; string_of_int enc_params.iter_time_ms
+          ; "--key-size"
+          ; string_of_int enc_params.key_size ]
+        |> exec_with_stdin
+      in
+      output_string stdin luks.key;
+      f ();
+      let mapper_name = luks_to_mapper_name_cmd_string luks in
+      format_cmd luks.inner_fs.fs mapper_name |> exec );
+  p.state <- Unmounted
