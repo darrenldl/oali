@@ -96,20 +96,20 @@ let mount_part ({lower; upper; state}) ~mount_point =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
-    exec "mount" [|lower_str; mount_point|]
+    exec (Printf.sprintf "mount %s %s" lower_str mount_point)
   | Luks luks ->
     luks_open {lower; upper; state};
-    exec "mount" [|luks_to_mapper_name_cmd_string luks; mount_point|]
+    exec (Printf.sprintf "mount %s %s" (luks_to_mapper_name_cmd_string luks) (mount_point))
 
 let unmount_part ({lower; upper; state} as p) =
   assert (state = Mounted);
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | PlainFS _ ->
-    exec "umount" [|lower_str|]
+    exec (Printf.sprintf "umount %s" lower_str)
   | Luks luks -> (
       let mapper_name = luks_to_mapper_name_cmd_string luks in
-      exec "umount" [|mapper_name|];
+      exec (Printf.sprintf "umount %s" mapper_name);
       p.state <- Unmounted;
       luks_close {lower; upper; state} )
 

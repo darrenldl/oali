@@ -1,3 +1,5 @@
-open Disk_layout
-
-let () = Lwt_main.run (Lwt_io.printl "Hello")
+let () =
+  try
+  Proc_utils.exec "ls"
+  with
+  | Proc_utils.Exec_fail r -> print_endline (Proc_utils.report_failure r)
