@@ -43,3 +43,9 @@ let ask_yn_end_retry ~(ret:'a) prompt =
     Stop ret
   | No ->
     Retry
+
+let tell_press_enter () =
+  print_newline ();
+  print_string "Please press enter to continue";
+  read_line () |> ignore;
+  print_newline ();

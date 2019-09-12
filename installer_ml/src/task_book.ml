@@ -36,7 +36,9 @@ let run task_book =
     | None ->
       ()
     | Some (name, task) ->
-      Printf.printf "Executing task : %s\n" (String.lowercase_ascii name);
+      Proc_utils.exec_no_capture "clear";
+      Printf.printf "Current task : %s\n" (String.lowercase_ascii name);
+      print_newline ();
       let succeeded, new_config =
         try
           let config = task task_book.config in

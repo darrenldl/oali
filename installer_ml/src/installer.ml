@@ -33,4 +33,15 @@ let () =
               Retry)
       in
       {config with editor = Some editor});
+  reg ~name:"configure mirrorlist" (fun config ->
+      let editor = Option.get config.editor in
+      Printf.printf "Editor %s will be used for editing mirror list\n" editor;
+      tell_press_enter ();
+      retry (fun () ->
+          exec_no_capture (Printf.sprintf "%s /etc/pacman.d/mirrorlist" editor);
+
+          ask_yn_end_retry ~ret:() "Finished editing?"
+        );
+      config
+    );
   Task_book.run task_book

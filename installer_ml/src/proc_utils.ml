@@ -71,14 +71,17 @@ let exec_with_stdin cmd =
   let f () = f () |> ignore in
   (stdin_chan, f)
 
-let exec_no_capture_no_exn cmd =
+let exec_ret_no_capture_no_exn cmd =
   let status = Unix.system cmd in
   let res = {cmd; status; stdout = []; stderr = []} in
   if exec_result_is_ok res then Ok res else Error res
 
-let exec_no_capture cmd =
-  match exec_no_capture_no_exn cmd with
+let exec_ret_no_capture cmd =
+  match exec_ret_no_capture_no_exn cmd with
   | Ok r ->
     r
   | Error r ->
     raise (Exec_fail r)
+
+let exec_no_capture cmd =
+  exec_ret_no_capture cmd |> ignore
