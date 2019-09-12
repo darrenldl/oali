@@ -26,11 +26,7 @@ let () =
             in
             try
               exec (Printf.sprintf "hash %s" editor);
-              match ask_yn "Is the choice correct?" with
-              | Yes ->
-                Stop editor
-              | No ->
-                Retry
+              ask_yn_end_retry ~ret:editor "Is the choice correct?"
             with Exec_fail _ ->
               print_endline
                 "Failed to find editor, please pick a different one";

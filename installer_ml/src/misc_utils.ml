@@ -36,3 +36,10 @@ let ask_yn prompt =
       let y = String.sub "yes" 0 len in
       let n = String.sub "no" 0 len in
       if s = y then Stop Yes else if s = n then Stop No else Retry)
+
+let ask_yn_end_retry ~(ret:'a) prompt =
+  match ask_yn prompt with
+  | Yes ->
+    Stop ret
+  | No ->
+    Retry
