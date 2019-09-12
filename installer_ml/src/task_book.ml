@@ -1,11 +1,11 @@
 open Sexplib.Std
 
-type task = Task_config.t -> unit
+type task = Task_config.t -> Task_config.t
 
 type progress = {finished : string list} [@@deriving sexp]
 
 type t =
-  { config : Task_config.t
+  { mutable config : Task_config.t
   ; to_run : (string * task) Queue.t
   ; failed : (string * task) Queue.t
   ; finished : (string * task) Queue.t }
@@ -36,11 +36,14 @@ let run task_book =
     | None ->
       ()
     | Some (name, task) ->
-      let succeeded =
-        try task task_book.config; true
+      Printf.printf "Executing task : %s\n" (String.lowercase_ascii name);
+      let succeeded, new_config =
+        try
+          let config = task task_book.config in
+          print_newline (); (true, config)
         with Proc_utils.Exec_fail r ->
           print_endline (Proc_utils.report_failure r);
-          false
+          (false, task_book.config)
       in
       if not succeeded then
         (* TODO ask if retry *)
@@ -48,6 +51,7 @@ let run task_book =
         if retry then aux task_book (Some (name, task))
         else Queue.push (name, task) task_book.failed
       else (
+        task_book.config <- new_config;
         Queue.push (name, task) task_book.finished;
         aux task_book None )
   in

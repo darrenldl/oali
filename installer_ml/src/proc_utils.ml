@@ -3,7 +3,8 @@ type process_status = Unix.process_status
 type exec_result =
   { cmd : string
   ; status : process_status
-  ; stdout : string list }
+  ; stdout : string list
+  ; stderr : string list }
 
 exception Exec_fail of exec_result
 
@@ -33,10 +34,13 @@ let input_all_lines in_chan =
   List.rev (aux in_chan [])
 
 let exec_ret_no_exn cmd : (exec_result, exec_result) result =
-  let stdout_chan = Unix.open_process_in cmd in
+  let stdout_chan, stdin_chan, stderr_chan = Unix.open_process_full cmd [||] in
   let stdout = input_all_lines stdout_chan in
-  let status = Unix.close_process_in stdout_chan in
-  let res = {cmd; status; stdout} in
+  let stderr = input_all_lines stderr_chan in
+  let status =
+    Unix.close_process_full (stdout_chan, stdin_chan, stderr_chan)
+  in
+  let res = {cmd; status; stdout; stderr} in
   if exec_result_is_ok res then Ok res else Error res
 
 let exec_ret cmd : exec_result =
@@ -46,12 +50,15 @@ let exec cmd = exec_ret cmd |> ignore
 
 let exec_ret_with_stdin_no_exn cmd :
   out_channel * (unit -> (exec_result, exec_result) result) =
-  let stdout_chan, stdin_chan = Unix.open_process cmd in
+  let stdout_chan, stdin_chan, stderr_chan = Unix.open_process_full cmd [||] in
   ( stdin_chan
   , fun () ->
     let stdout = input_all_lines stdout_chan in
-    let status = Unix.close_process (stdout_chan, stdin_chan) in
-    let res = {cmd; status; stdout} in
+    let stderr = input_all_lines stderr_chan in
+    let status =
+      Unix.close_process_full (stdout_chan, stdin_chan, stderr_chan)
+    in
+    let res = {cmd; status; stdout; stderr} in
     if exec_result_is_ok res then Ok res else Error res )
 
 let exec_ret_with_stdin cmd : out_channel * (unit -> exec_result) =
@@ -66,7 +73,7 @@ let exec_with_stdin cmd =
 
 let exec_no_capture_no_exn cmd =
   let status = Unix.system cmd in
-  let res = {cmd; status; stdout = []} in
+  let res = {cmd; status; stdout = []; stderr = []} in
   if exec_result_is_ok res then Ok res else Error res
 
 let exec_no_capture cmd =
