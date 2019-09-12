@@ -48,4 +48,9 @@ let tell_press_enter () =
   print_newline ();
   print_string "Please press enter to continue";
   read_line () |> ignore;
-  print_newline ();
+  print_newline ()
+
+let pick_choice choices =
+  List.iteri (fun i s ->
+      Printf.printf "%d. %s" i s
+    ) choices;

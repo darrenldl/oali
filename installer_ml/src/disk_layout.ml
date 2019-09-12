@@ -58,7 +58,7 @@ type part =
 
 type t =
   { sys_part : part
-  ; swap_part : part option
+  (* ; swap_part : part option *)
   ; boot_part : part
   ; efi_part : part option }
 [@@deriving sexp]
@@ -152,3 +152,5 @@ let format_part ({upper; lower; state} as p) =
       let mapper_name = luks_to_mapper_name_cmd_string luks in
       format_cmd luks.inner_fs.fs mapper_name |> exec );
   p.state <- Unmounted
+
+let format

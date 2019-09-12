@@ -44,4 +44,7 @@ let () =
         );
       config
     );
+  reg ~name:"pick disk layout" (fun config ->
+      config
+    );
   Task_book.run task_book
