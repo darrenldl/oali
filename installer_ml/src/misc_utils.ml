@@ -63,7 +63,7 @@ let pick_choice choices =
   print_endline "Options";
   print_newline ();
   List.iteri (fun i s ->
-      Printf.printf "%d. %s" i s
+      Printf.printf "    %d    %s\n" i s
     ) choices;
   print_newline ();
   let choice_count = List.length choices in
