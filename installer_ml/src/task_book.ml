@@ -45,7 +45,8 @@ let run task_book =
           print_newline (); (true, config)
         with Proc_utils.Exec_fail r ->
           print_endline (Proc_utils.report_failure r);
-          (false, task_book.config)
+           (false, task_book.config)
+           | _ -> print_endline "Unknown failure"; (false, task_book.config)
       in
       if not succeeded then
         (* TODO ask if retry *)

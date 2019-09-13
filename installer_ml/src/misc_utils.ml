@@ -44,6 +44,15 @@ let ask_yn_end_retry ~(ret:'a) prompt =
   | No ->
     Retry
 
+let ask_int ?upper_bound_exc prompt =
+  ask_string ~is_valid:(fun s -> try
+                           let x = int_of_string s in
+                           match upper_bound_exc with
+                           | None -> true
+                           | Some ub -> x < ub
+                           with Failure _ -> false) prompt
+  |> int_of_string
+
 let tell_press_enter () =
   print_newline ();
   print_string "Please press enter to continue";
@@ -51,6 +60,11 @@ let tell_press_enter () =
   print_newline ()
 
 let pick_choice choices =
+  print_endline "Options";
+  print_newline ();
   List.iteri (fun i s ->
       Printf.printf "%d. %s" i s
     ) choices;
+  print_newline ();
+  let choice_count = List.length choices in
+  ask_int ~upper_bound_exc:choice_count "Enter choice"

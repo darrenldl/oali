@@ -152,5 +152,3 @@ let format_part ({upper; lower; state} as p) =
       let mapper_name = luks_to_mapper_name_cmd_string luks in
       format_cmd luks.inner_fs.fs mapper_name |> exec );
   p.state <- Unmounted
-
-let format
