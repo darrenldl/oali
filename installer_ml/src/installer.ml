@@ -12,11 +12,11 @@ let () =
    *     print_endline "done";
    *     List.iter print_endline res.stdout;
    *   config); *)
-  (* reg ~name:"update time" (fun config ->
+  (* reg ~name:"Update time" (fun config ->
    *     exec "timedatectl set-ntp true";
    *     config
    *   ); *)
-  (* reg ~name:"pick editor" (fun config ->
+  (* reg ~name:"Pick editor" (fun config ->
    *     let editor =
    *       retry (fun () ->
    *           let editor =
@@ -33,7 +33,7 @@ let () =
    *             Retry)
    *     in
    *     {config with editor = Some editor}); *)
-  (* reg ~name:"configure mirrorlist" (fun config ->
+  (* reg ~name:"Configure mirrorlist" (fun config ->
    *     let editor = Option.get config.editor in
    *     Printf.printf "Editor %s will be used for editing mirror list\n" editor;
    *     tell_press_enter ();
@@ -44,7 +44,7 @@ let () =
    *       );
    *     config
    *   ); *)
-  reg ~name:"pick disk layout" (fun config ->
+  reg ~name:"Pick disk layout" (fun config ->
       let parts = Disk_utils.part_list () in
       let choice = pick_choice parts in
       print_int choice;
