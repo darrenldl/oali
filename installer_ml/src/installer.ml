@@ -65,6 +65,22 @@ let () =
           config
         )
       | Sys_part_plus_boot_plus_maybe_EFI -> (
+          let parts = Disk_utils.list_parts () in
+          let disk_part_map = Disk_utils.group_parts_by_disks parts in
+          let disk_part_tree = disk_part_map
+                               |> Disk_utils.DiskPartMap.to_seq
+                               |> List.of_seq
+                               |> List.sort (fun (k1, _) (k2, _) -> compare k1 k2)
+                               |> List.map (fun (k, l) ->
+                                   k, List.sort compare l
+                                 )
+          in
+          List.iter (fun (k, l) ->
+              print_endline k;
+              List.iter (fun (p, uuid) ->
+                  Printf.printf "%s - %s\n" p uuid
+                ) l
+            ) disk_part_tree;
           config
         )
       | Sys_part_plus_usb_drive -> (

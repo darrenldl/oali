@@ -72,3 +72,13 @@ let pick_choice ?(confirm = true) ?(header = "Options") choices =
       let choice = ask_int ~upper_bound_exc:choice_count "Enter choice" in
       if confirm then confirm_answer_is_correct_end_retry ~ret:choice
       else Stop choice)
+
+let pick_choice_grouped ?(confirm = true) ?(header = "Options") (choices : ('a * 'b list) list) =
+  retry (fun () ->
+      print_endline header;
+      print_newline ();
+      let flat = List.fold_left (fun acc (_, l) ->
+          acc @ l
+        ) choices
+      in
+    )
