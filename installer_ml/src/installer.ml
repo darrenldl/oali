@@ -59,6 +59,9 @@ let () =
   reg ~name:"Configure disk setup parameters" (fun config ->
       match Option.get config.disk_layout_choice with
       | Single_disk -> (
+          let disks = Disk_utils.disk_list () in
+          let choice = pick_choice ~header:"Pick disk" disks in
+          print_int choice;
           config
         )
       | Sys_part_plus_boot_plus_maybe_EFI -> (

@@ -43,10 +43,11 @@ let ask_yn_end_retry ~(ret : 'a) prompt =
 let ask_int ?upper_bound_exc prompt =
   ask_string
     ~is_valid:(fun s ->
-        try
-          let x = int_of_string s in
+          match int_of_string_opt s with
+          | None -> false
+          | Some x ->
           match upper_bound_exc with None -> true | Some ub -> x < ub
-        with Failure _ -> false)
+      )
     prompt
   |> int_of_string
 
@@ -61,9 +62,9 @@ let confirm_answer_is_correct () = ask_yn "Is the answer correct?"
 let confirm_answer_is_correct_end_retry ~ret =
   ask_yn_end_retry ~ret "Is the answer correct?"
 
-let pick_choice ?(confirm = true) choices =
+let pick_choice ?(confirm = true) ?(header = "Options") choices =
   retry (fun () ->
-      print_endline "Options";
+      print_endline header;
       print_newline ();
       List.iteri (fun i s -> Printf.printf "%5d    %s\n" i s) choices;
       print_newline ();
