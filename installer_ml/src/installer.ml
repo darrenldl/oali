@@ -57,4 +57,10 @@ let () =
         disk_layout_choice = Some choice
       }
     );
+  reg ~name:"Configure disk setup parameters" (fun config ->
+      match Option.get config.disk_layout_choice with
+      | Single_disk -> config
+      | Sys_part_plus_boot_plus_maybe_EFI -> config
+      | Sys_part_plus_usb_drive -> config
+    );
   Task_book.run task_book
