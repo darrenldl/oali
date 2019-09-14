@@ -26,7 +26,7 @@ let () =
    *           in
    *           try
    *             exec (Printf.sprintf "hash %s" editor);
-   *             ask_yn_end_retry ~ret:editor "Is the choice correct?"
+   *             confirm_answer_is_correct_end_retry ~ret:editor
    *           with Exec_fail _ ->
    *             print_endline
    *               "Failed to find editor, please pick a different one";

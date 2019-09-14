@@ -64,12 +64,24 @@ let tell_press_enter () =
   read_line () |> ignore;
   print_newline ()
 
-let pick_choice choices =
-  print_endline "Options";
-  print_newline ();
-  List.iteri (fun i s ->
-      Printf.printf "%5d    %s\n" i s
-    ) choices;
-  print_newline ();
-  let choice_count = List.length choices in
-  ask_int ~upper_bound_exc:choice_count "Enter choice"
+let confirm_answer_is_correct () =
+  ask_yn "Is the answer correct?"
+
+let confirm_answer_is_correct_end_retry ~ret =
+  ask_yn_end_retry ~ret "Is the answer correct?"
+
+let pick_choice ?(confirm = true) choices =
+  retry (fun () ->
+      print_endline "Options";
+      print_newline ();
+      List.iteri (fun i s ->
+          Printf.printf "%5d    %s\n" i s
+        ) choices;
+      print_newline ();
+      let choice_count = List.length choices in
+      let choice = ask_int ~upper_bound_exc:choice_count "Enter choice" in
+      if confirm then
+        confirm_answer_is_correct_end_retry ~ret:choice
+      else
+        Stop choice
+    )
