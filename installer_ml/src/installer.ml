@@ -44,14 +44,17 @@ let () =
    *       );
    *     config
    *   ); *)
-  reg ~name:"Pick disk layout" (fun config ->
+  reg ~name:"Pick disk layout choice" (fun config ->
+      let open Disk_layout in
       let choices = [
-        "single disk";
-        "system partition + boot partition + maybe EFI partition";
-        "system partition + boot and maybe EFI on external USB drive";
+        "single disk", Single_disk;
+        "system partition + boot partition + maybe EFI partition", Sys_part_plus_boot_plus_maybe_EFI;
+        "system partition + boot stuff on external USB drive", Sys_part_plus_usb_drive;
       ] in
-      let choice = pick_choice choices in
-      print_int choice;
-      config
+      let choice_num = pick_choice (List.map (fun (x, _) -> x) choices) in
+      let choice = (fun (_, y) -> y) (List.nth choices choice_num) in
+      { config with
+        disk_layout_choice = Some choice
+      }
     );
   Task_book.run task_book
