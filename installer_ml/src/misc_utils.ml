@@ -21,7 +21,12 @@ let retry (f : unit -> 'a retry) : 'a =
 let ask_string ?(is_valid = fun _ -> true) prompt =
   retry (fun () ->
       Printf.printf "%s : " prompt;
-      let res = read_line () in
+      let res =
+        try
+          read_line ()
+        with
+        | End_of_file -> ""
+      in
       if is_valid res then Stop res
       else (
         print_endline "Invalid answer, please try again";
