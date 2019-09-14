@@ -45,8 +45,12 @@ let () =
    *     config
    *   ); *)
   reg ~name:"Pick disk layout" (fun config ->
-      let parts = Disk_utils.part_list () in
-      let choice = pick_choice parts in
+      let choices = [
+        "single disk";
+        "system partition + boot partition + maybe EFI partition";
+        "system partition + boot and maybe EFI on external USB drive";
+      ] in
+      let choice = pick_choice choices in
       print_int choice;
       config
     );
