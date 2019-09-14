@@ -26,8 +26,8 @@ type luks_version =
 [@@deriving sexp]
 
 type luks_state =
-  | LuksOpened
-  | LuksClosed
+  | Luks_opened
+  | Luks_closed
 [@@deriving sexp]
 
 type luks =
@@ -40,7 +40,7 @@ type luks =
 [@@deriving sexp]
 
 type upper =
-  | PlainFS of plain_fs
+  | Plain_FS of plain_fs
   | Luks of luks
 [@@deriving sexp]
 
@@ -79,32 +79,32 @@ let luks_to_mapper_name_cmd_string {mapper_name; _} =
 let luks_open {lower; upper; _} =
   let lower_str = lower_part_to_cmd_string lower in
   match upper with
-  | PlainFS _ ->
+  | Plain_FS _ ->
     failwith "LUKS expected"
   | Luks luks ->
-    assert (luks.state = LuksClosed);
+    assert (luks.state = Luks_closed);
     let stdin, f =
       sprintf "cryptsetup open --key-file=- %s %s" lower_str luks.mapper_name
       |> exec_with_stdin
     in
     output_string stdin luks.key;
     f ();
-    luks.state <- LuksOpened
+    luks.state <- Luks_opened
 
 let luks_close {upper; _} =
   match upper with
-  | PlainFS _ ->
+  | Plain_FS _ ->
     failwith "LUKS expected"
   | Luks luks ->
-    assert (luks.state = LuksOpened);
+    assert (luks.state = Luks_opened);
     sprintf "cryptsetup close %s" luks.mapper_name |> exec;
-    luks.state <- LuksClosed
+    luks.state <- Luks_closed
 
 let mount_part ({lower; upper; state} as p) ~mount_point =
   assert (state = Unmounted);
   let lower_str = lower_part_to_cmd_string lower in
   ( match upper with
-    | PlainFS _ ->
+    | Plain_FS _ ->
       sprintf "mount %s %s" lower_str mount_point |> exec
     | Luks luks ->
       luks_open {lower; upper; state};
@@ -116,7 +116,7 @@ let unmount_part ({lower; upper; state} as p) =
   assert (state = Mounted);
   let lower_str = lower_part_to_cmd_string lower in
   ( match upper with
-    | PlainFS _ ->
+    | Plain_FS _ ->
       sprintf "umount %s" lower_str |> exec
     | Luks luks ->
       let mapper_name = luks_to_mapper_name_cmd_string luks in
@@ -136,7 +136,7 @@ let format_part ({upper; lower; state} as p) =
   assert (state = Unformatted);
   let lower_str = lower_part_to_cmd_string lower in
   ( match upper with
-    | PlainFS {fs} ->
+    | Plain_FS {fs} ->
       format_cmd fs lower_str |> exec
     | Luks luks ->
       let enc_params = Option.get luks.enc_params in
