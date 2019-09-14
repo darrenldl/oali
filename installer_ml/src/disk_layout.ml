@@ -57,15 +57,16 @@ type part =
 [@@deriving sexp]
 
 type t =
-  { sys_part : part
-  (* ; swap_part : part option *)
+  { sys_part : part (* ; swap_part : part option *)
   ; boot_part : part
   ; efi_part : part option }
 [@@deriving sexp]
 
-type layout_choice = Single_disk | Sys_part_plus_boot_plus_maybe_EFI
-                   | Sys_part_plus_usb_drive
-  [@@deriving sexp]
+type layout_choice =
+  | Single_disk
+  | Sys_part_plus_boot_plus_maybe_EFI
+  | Sys_part_plus_usb_drive
+[@@deriving sexp]
 
 let make_lower ~disk ~part_num = {disk; part_num}
 

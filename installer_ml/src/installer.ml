@@ -46,21 +46,22 @@ let () =
    *   ); *)
   reg ~name:"Pick disk layout choice" (fun config ->
       let open Disk_layout in
-      let choices = [
-        "single disk", Single_disk;
-        "system partition + boot partition + maybe EFI partition", Sys_part_plus_boot_plus_maybe_EFI;
-        "system partition + boot stuff on external USB drive", Sys_part_plus_usb_drive;
-      ] in
+      let choices =
+        [ ("single disk", Single_disk)
+        ; ( "system partition + boot partition + maybe EFI partition"
+          , Sys_part_plus_boot_plus_maybe_EFI )
+        ; ( "system partition + boot stuff on external USB drive"
+          , Sys_part_plus_usb_drive ) ]
+      in
       let choice_num = pick_choice (List.map (fun (x, _) -> x) choices) in
       let choice = (fun (_, y) -> y) (List.nth choices choice_num) in
-      { config with
-        disk_layout_choice = Some choice
-      }
-    );
+      {config with disk_layout_choice = Some choice});
   reg ~name:"Configure disk setup parameters" (fun config ->
       match Option.get config.disk_layout_choice with
-      | Single_disk -> config
-      | Sys_part_plus_boot_plus_maybe_EFI -> config
-      | Sys_part_plus_usb_drive -> config
-    );
+      | Single_disk ->
+        config
+      | Sys_part_plus_boot_plus_maybe_EFI ->
+        config
+      | Sys_part_plus_usb_drive ->
+        config);
   Task_book.run task_book

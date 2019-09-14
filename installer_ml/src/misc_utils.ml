@@ -21,12 +21,7 @@ let retry (f : unit -> 'a retry) : 'a =
 let ask_string ?(is_valid = fun _ -> true) prompt =
   retry (fun () ->
       Printf.printf "%s : " prompt;
-      let res =
-        try
-          read_line ()
-        with
-        | End_of_file -> ""
-      in
+      let res = try read_line () with End_of_file -> "" in
       if is_valid res then Stop res
       else (
         print_endline "Invalid answer, please try again";
@@ -42,20 +37,17 @@ let ask_yn prompt =
       let n = String.sub "no" 0 len in
       if s = y then Stop Yes else if s = n then Stop No else Retry)
 
-let ask_yn_end_retry ~(ret:'a) prompt =
-  match ask_yn prompt with
-  | Yes ->
-    Stop ret
-  | No ->
-    Retry
+let ask_yn_end_retry ~(ret : 'a) prompt =
+  match ask_yn prompt with Yes -> Stop ret | No -> Retry
 
 let ask_int ?upper_bound_exc prompt =
-  ask_string ~is_valid:(fun s -> try
-                           let x = int_of_string s in
-                           match upper_bound_exc with
-                           | None -> true
-                           | Some ub -> x < ub
-                           with Failure _ -> false) prompt
+  ask_string
+    ~is_valid:(fun s ->
+        try
+          let x = int_of_string s in
+          match upper_bound_exc with None -> true | Some ub -> x < ub
+        with Failure _ -> false)
+    prompt
   |> int_of_string
 
 let tell_press_enter () =
@@ -64,8 +56,7 @@ let tell_press_enter () =
   read_line () |> ignore;
   print_newline ()
 
-let confirm_answer_is_correct () =
-  ask_yn "Is the answer correct?"
+let confirm_answer_is_correct () = ask_yn "Is the answer correct?"
 
 let confirm_answer_is_correct_end_retry ~ret =
   ask_yn_end_retry ~ret "Is the answer correct?"
@@ -74,14 +65,9 @@ let pick_choice ?(confirm = true) choices =
   retry (fun () ->
       print_endline "Options";
       print_newline ();
-      List.iteri (fun i s ->
-          Printf.printf "%5d    %s\n" i s
-        ) choices;
+      List.iteri (fun i s -> Printf.printf "%5d    %s\n" i s) choices;
       print_newline ();
       let choice_count = List.length choices in
       let choice = ask_int ~upper_bound_exc:choice_count "Enter choice" in
-      if confirm then
-        confirm_answer_is_correct_end_retry ~ret:choice
-      else
-        Stop choice
-    )
+      if confirm then confirm_answer_is_correct_end_retry ~ret:choice
+      else Stop choice)

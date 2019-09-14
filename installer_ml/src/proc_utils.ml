@@ -83,5 +83,4 @@ let exec_ret_no_capture cmd =
   | Error r ->
     raise (Exec_fail r)
 
-let exec_no_capture cmd =
-  exec_ret_no_capture cmd |> ignore
+let exec_no_capture cmd = exec_ret_no_capture cmd |> ignore

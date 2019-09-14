@@ -39,7 +39,7 @@ let run task_book =
       Proc_utils.exec_no_capture "clear";
       print_endline name;
       for _ = 0 to String.length name - 1 do
-        print_string "=";
+        print_string "="
       done;
       print_newline ();
       print_newline ();
@@ -47,10 +47,13 @@ let run task_book =
         try
           let config = task task_book.config in
           print_newline (); (true, config)
-        with Proc_utils.Exec_fail r ->
+        with
+        | Proc_utils.Exec_fail r ->
           print_endline (Proc_utils.report_failure r);
-           (false, task_book.config)
-           | _ -> print_endline "Unknown failure"; (false, task_book.config)
+          (false, task_book.config)
+        | _ ->
+          print_endline "Unknown failure";
+          (false, task_book.config)
       in
       if not succeeded then
         (* TODO ask if retry *)
