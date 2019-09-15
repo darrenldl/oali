@@ -150,7 +150,9 @@ let format_part ({upper; lower; state} as p) =
       format_cmd luks.inner_fs mapper_name |> exec );
   p.state <- Unmounted
 
-let make_luks ?enc_params ~key ?(version = LuksV2) inner_fs ~mapper_name =
+let make_luks ?enc_params
+    ?(key = Rand_utils.gen_rand_string ~len:1024 |> Cstruct.to_string)
+    ?(version = LuksV2) inner_fs ~mapper_name =
   {enc_params; key; version; inner_fs; mapper_name; state = Luks_closed}
 
 let make_part ~path upper =

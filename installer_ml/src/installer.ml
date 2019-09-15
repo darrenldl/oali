@@ -58,6 +58,8 @@ let () =
       {config with disk_layout_choice = Some choice});
   reg ~name:"Configure disk setup parameters" (fun config ->
       let open Disk_layout in
+      let mapper_name_boot = "crypt_boot" in
+      let mapper_name_root = "crypt_root" in
       match Option.get config.disk_layout_choice with
       | Single_disk ->
         let disks = Disk_utils.list_disks () in
@@ -119,7 +121,11 @@ let () =
             make_part ~path:boot_part_path
               (Luks
                  (make_luks ~key ~version:LuksV1 Ext4
-                    ~mapper_name:"crypt_boot"))
+                    ~mapper_name:mapper_name_boot))
+          in
+          let sys_part =
+            make_part ~path:sys_part_path
+              (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
           in
           config
         else config
