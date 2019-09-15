@@ -26,7 +26,7 @@ let list_disks () =
   |> List.map part_to_disk
   |> List.sort_uniq compare
 
-let group_parts_by_disks parts =
+let group_parts_by_disks_map parts =
   parts
   |> List.map (fun (part, uuid) -> part_to_disk part, part, uuid)
   |> List.fold_left (fun tbl (disk, part, uuid) ->
@@ -34,3 +34,12 @@ let group_parts_by_disks parts =
       | None -> DiskPartMap.add disk [(part, uuid)] tbl
       | Some l -> DiskPartMap.add disk ((part, uuid) :: l) tbl
     ) DiskPartMap.empty
+
+let group_parts_by_disks parts =
+  group_parts_by_disks_map parts
+  |> DiskPartMap.to_seq
+  |> List.of_seq
+  |> List.sort (fun (k1, _) (k2, _) -> compare k1 k2)
+  |> List.map (fun (k, l) ->
+      k, List.sort compare l
+    )

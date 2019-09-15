@@ -73,12 +73,11 @@ let pick_choice ?(confirm = true) ?(header = "Options") choices =
       if confirm then confirm_answer_is_correct_end_retry ~ret:choice
       else Stop choice)
 
-let pick_choice_grouped ?(confirm = true) ?(header = "Options") (choices : ('a * 'b list) list) =
+let pick_choice_grouped ?(confirm = true) ?(first_header = "Options") ?(second_header = "Options") (choices : ('a * 'b list) list) =
   retry (fun () ->
-      print_endline header;
-      print_newline ();
-      let flat = List.fold_left (fun acc (_, l) ->
-          acc @ l
-        ) choices
-      in
+      let first_layer = List.map (fun (k, _) -> k) choices in
+      let choice1 = pick_choice ~confirm:false ~header:first_header first_layer in
+      let second_layer = List.nth choices choice1 |> fun (_, l) -> l in
+      let choice2 = pick_choice ~confirm:false ~header:second_header second_layer in
+      if confirm then confirm_answer_is_correct_end_retry ~ret:(choice1, choice2) else Stop (choice1, choice2)
     )
