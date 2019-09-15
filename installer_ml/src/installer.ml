@@ -112,7 +112,7 @@ let () =
             efi_part_path
         in
         if encrypt then
-          let key =
+          let boot_key =
             ask_string_confirm
               ~is_valid:(fun x -> x <> "")
               "Please enter passphrase for encryption"
@@ -120,7 +120,7 @@ let () =
           let boot_part =
             make_part ~path:boot_part_path
               (Luks
-                 (make_luks ~key ~version:LuksV1 Ext4
+                 (make_luks ~key:boot_key ~version:LuksV1 Ext4
                     ~mapper_name:mapper_name_boot))
           in
           let sys_part =
@@ -128,7 +128,16 @@ let () =
               (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
           in
           config
-        else config
+        else
+          let boot_part =
+            make_part
+              (Plain_FS Ext4)
+          in
+          let sys_part =
+            make_part
+              (Plain_FS Ext4)
+          in
+          config
       | Sys_part_plus_usb_drive ->
         config);
   Task_book.run task_book
