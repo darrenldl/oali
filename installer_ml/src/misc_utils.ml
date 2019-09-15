@@ -69,9 +69,13 @@ let pick_choice ?(confirm = true) ?(header = "Options") choices =
       List.iteri (fun i s -> Printf.printf "%5d    %s\n" i s) choices;
       print_newline ();
       let choice_count = List.length choices in
-      let choice = ask_int ~upper_bound_exc:choice_count "Enter choice" in
-      if confirm then confirm_answer_is_correct_end_retry ~ret:choice
-      else Stop choice)
+      if choice_count = 1 then (
+        print_endline "Selected the only choice automatically";
+      Stop 0)
+      else
+        let choice = ask_int ~upper_bound_exc:choice_count "Enter choice" in
+        if confirm then confirm_answer_is_correct_end_retry ~ret:choice
+        else Stop choice)
 
 let pick_choice_grouped ?(confirm = true) ?(first_header = "Options") ?(second_header = "Options") (choices : ('a * 'b list) list) =
   retry (fun () ->
@@ -81,3 +85,15 @@ let pick_choice_grouped ?(confirm = true) ?(first_header = "Options") ?(second_h
       let choice2 = pick_choice ~confirm:false ~header:second_header second_layer in
       if confirm then confirm_answer_is_correct_end_retry ~ret:(choice1, choice2) else Stop (choice1, choice2)
     )
+
+let list_no_nth l n =
+  let rec aux acc l n =
+    match l with
+    | [] -> List.rev acc
+    | x :: xs ->
+      if n = 0 then
+        aux acc xs (pred n)
+      else
+        aux (x :: acc) xs (pred n)
+  in
+  aux [] l n

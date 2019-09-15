@@ -41,3 +41,15 @@ let group_parts_by_disks parts =
   |> List.map (fun (k, l) ->
       k, List.sort compare l
     )
+
+let get_part_from_tree tree disk part =
+  let (_, l) = List.nth tree disk in
+  List.nth l part
+
+let remove_part_from_tree tree disk part =
+  List.mapi (fun i (k, l) ->
+      if i = disk then
+        (k, Misc_utils.list_no_nth l part)
+      else
+        (k, l)
+    ) tree
