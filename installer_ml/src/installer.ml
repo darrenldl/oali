@@ -78,11 +78,14 @@ let () =
           in
           print_endline boot_part;
           let _efi_part =
-            if Sys.file_exists "/sys/firmware/efi" then
+            if Sys.file_exists "/sys/firmware/efi" then (
+              print_boxed_msg "System is in EFI mode, launching EFI partition selection menu";
               let (disk, part) = pick_choice_grouped ~first_header:"Select disk containing the EFI partition" ~second_header:"Select EFI partition" disk_part_tree in
-              Some (Disk_utils.get_part_from_tree disk_part_tree disk part)
-            else
+              Some (Disk_utils.get_part_from_tree disk_part_tree disk part))
+            else (
+              print_boxed_msg "System is in BIOS mode, EFI partition selection skipped";
               None
+            )
           in
           config
         )

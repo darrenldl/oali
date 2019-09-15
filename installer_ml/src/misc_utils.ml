@@ -97,3 +97,10 @@ let list_no_nth l n =
         aux (x :: acc) xs (pred n)
   in
   aux [] l n
+
+let print_boxed_msg s =
+  let len = String.length s + 4 in
+  let line = String.concat "" ["+"; String.make (len - 2) '-'; "+"] in
+  print_endline line;
+  Printf.printf "| %s |\n" s;
+  print_endline line
