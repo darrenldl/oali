@@ -43,11 +43,11 @@ let ask_yn_end_retry ~(ret : 'a) prompt =
 let ask_int ?upper_bound_exc prompt =
   ask_string
     ~is_valid:(fun s ->
-          match int_of_string_opt s with
-          | None -> false
-          | Some x ->
-          match upper_bound_exc with None -> true | Some ub -> x < ub
-      )
+        match int_of_string_opt s with
+        | None ->
+          false
+        | Some x -> (
+            match upper_bound_exc with None -> true | Some ub -> x < ub ))
     prompt
   |> int_of_string
 
@@ -71,36 +71,38 @@ let pick_choice ?(confirm = true) ?(header = "Options") choices =
       let choice_count = List.length choices in
       if choice_count = 1 then (
         print_endline "Selected the only choice automatically";
-      Stop 0)
+        Stop 0 )
       else
         let choice = ask_int ~upper_bound_exc:choice_count "Enter choice" in
         if confirm then confirm_answer_is_correct_end_retry ~ret:choice
         else Stop choice)
 
-let pick_choice_grouped ?(confirm = true) ?(first_header = "Options") ?(second_header = "Options") (choices : ('a * 'b list) list) =
+let pick_choice_grouped ?(confirm = true) ?(first_header = "Options")
+    ?(second_header = "Options") (choices : ('a * 'b list) list) =
   retry (fun () ->
       let first_layer = List.map (fun (k, _) -> k) choices in
-      let choice1 = pick_choice ~confirm:false ~header:first_header first_layer in
+      let choice1 =
+        pick_choice ~confirm:false ~header:first_header first_layer
+      in
       let second_layer = List.nth choices choice1 |> fun (_, l) -> l in
-      let choice2 = pick_choice ~confirm:false ~header:second_header second_layer in
-      if confirm then confirm_answer_is_correct_end_retry ~ret:(choice1, choice2) else Stop (choice1, choice2)
-    )
+      let choice2 =
+        pick_choice ~confirm:false ~header:second_header second_layer
+      in
+      if confirm then
+        confirm_answer_is_correct_end_retry ~ret:(choice1, choice2)
+      else Stop (choice1, choice2))
 
 let list_no_nth l n =
   let rec aux acc l n =
     match l with
-    | [] -> List.rev acc
+    | [] ->
+      List.rev acc
     | x :: xs ->
-      if n = 0 then
-        aux acc xs (pred n)
-      else
-        aux (x :: acc) xs (pred n)
+      if n = 0 then aux acc xs (pred n) else aux (x :: acc) xs (pred n)
   in
   aux [] l n
 
 let print_boxed_msg s =
   let len = String.length s + 4 in
   let line = String.concat "" ["+"; String.make (len - 2) '-'; "+"] in
-  print_endline line;
-  Printf.printf "| %s |\n" s;
-  print_endline line
+  print_endline line; Printf.printf "| %s |\n" s; print_endline line

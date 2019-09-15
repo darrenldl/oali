@@ -13,12 +13,7 @@ type enc_params =
   ; key_size : int }
 [@@deriving sexp]
 
-type lower =
-  { disk : string
-  ; part_num : int }
-[@@deriving sexp]
-
-type plain_fs = {fs : fs} [@@deriving sexp]
+type lower = {path : string} [@@deriving sexp]
 
 type luks_version =
   | LuksV1
@@ -34,13 +29,13 @@ type luks =
   { enc_params : enc_params option
   ; key : string
   ; version : luks_version
-  ; inner_fs : plain_fs
+  ; inner_fs : fs
   ; mapper_name : string
   ; mutable state : luks_state }
 [@@deriving sexp]
 
 type upper =
-  | Plain_FS of plain_fs
+  | Plain_FS of fs
   | Luks of luks
 [@@deriving sexp]
 
@@ -68,23 +63,23 @@ type layout_choice =
   | Sys_part_plus_usb_drive
 [@@deriving sexp]
 
-let make_lower ~disk ~part_num = {disk; part_num}
+(* let make_lower ~disk ~part_num = {disk; part_num} *)
 
-let lower_part_to_cmd_string {disk; part_num} =
-  sprintf "/dev/%s%d" disk part_num
+(* let lower_part_to_cmd_string {disk; part_num} =
+ *   sprintf "/dev/%s%d" disk part_num *)
 
 let luks_to_mapper_name_cmd_string {mapper_name; _} =
   sprintf "/dev/mapper/%s" mapper_name
 
 let luks_open {lower; upper; _} =
-  let lower_str = lower_part_to_cmd_string lower in
   match upper with
   | Plain_FS _ ->
     failwith "LUKS expected"
   | Luks luks ->
     assert (luks.state = Luks_closed);
     let stdin, f =
-      sprintf "cryptsetup open --key-file=- %s %s" lower_str luks.mapper_name
+      sprintf "cryptsetup open --key-file=- %s %s" lower.path
+        luks.mapper_name
       |> exec_with_stdin
     in
     output_string stdin luks.key;
@@ -102,10 +97,9 @@ let luks_close {upper; _} =
 
 let mount_part ({lower; upper; state} as p) ~mount_point =
   assert (state = Unmounted);
-  let lower_str = lower_part_to_cmd_string lower in
   ( match upper with
     | Plain_FS _ ->
-      sprintf "mount %s %s" lower_str mount_point |> exec
+      sprintf "mount %s %s" lower.path mount_point |> exec
     | Luks luks ->
       luks_open {lower; upper; state};
       sprintf "mount %s %s" (luks_to_mapper_name_cmd_string luks) mount_point
@@ -114,10 +108,9 @@ let mount_part ({lower; upper; state} as p) ~mount_point =
 
 let unmount_part ({lower; upper; state} as p) =
   assert (state = Mounted);
-  let lower_str = lower_part_to_cmd_string lower in
   ( match upper with
     | Plain_FS _ ->
-      sprintf "umount %s" lower_str |> exec
+      sprintf "umount %s" lower.path |> exec
     | Luks luks ->
       let mapper_name = luks_to_mapper_name_cmd_string luks in
       sprintf "umount %s" mapper_name |> exec;
@@ -134,10 +127,9 @@ let format_cmd fs part =
 
 let format_part ({upper; lower; state} as p) =
   assert (state = Unformatted);
-  let lower_str = lower_part_to_cmd_string lower in
   ( match upper with
-    | Plain_FS {fs} ->
-      format_cmd fs lower_str |> exec
+    | Plain_FS fs ->
+      format_cmd fs lower.path |> exec
     | Luks luks ->
       let enc_params = Option.get luks.enc_params in
       let stdin, f =
@@ -155,5 +147,12 @@ let format_part ({upper; lower; state} as p) =
       output_string stdin luks.key;
       f ();
       let mapper_name = luks_to_mapper_name_cmd_string luks in
-      format_cmd luks.inner_fs.fs mapper_name |> exec );
+      format_cmd luks.inner_fs mapper_name |> exec );
   p.state <- Unmounted
+
+let make_luks ?enc_params ~key ?(version = LuksV2) inner_fs ~mapper_name =
+  {enc_params; key; version; inner_fs; mapper_name; state = Luks_closed}
+
+let make_part ~path upper =
+  let lower = {path} in
+  {lower; upper; state = Unformatted}
