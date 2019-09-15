@@ -129,14 +129,8 @@ let () =
           in
           config
         else
-          let boot_part =
-            make_part
-              (Plain_FS Ext4)
-          in
-          let sys_part =
-            make_part
-              (Plain_FS Ext4)
-          in
+          let boot_part = make_part (Plain_FS Ext4) in
+          let sys_part = make_part (Plain_FS Ext4) in
           config
       | Sys_part_plus_usb_drive ->
         config);
