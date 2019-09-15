@@ -57,6 +57,7 @@ let () =
       let choice = (fun (_, y) -> y) (List.nth choices choice_num) in
       {config with disk_layout_choice = Some choice});
   reg ~name:"Configure disk setup parameters" (fun config ->
+      let open Disk_layout in
       match Option.get config.disk_layout_choice with
       | Single_disk ->
         let disks = Disk_utils.list_disks () in
@@ -65,25 +66,7 @@ let () =
       | Sys_part_plus_boot_plus_maybe_EFI ->
         let parts = Disk_utils.list_parts () in
         let disk_part_tree = Disk_part_tree.of_parts parts in
-        let disk_part_tree, sys_part_path =
-          let disk_index, part_index =
-            pick_choice_grouped
-              ~first_header:"Select disk containing the system partition"
-              ~second_header:"Select system partition" disk_part_tree
-          in
-          ( Disk_part_tree.remove_part_by_index ~disk_index ~part_index disk_part_tree
-          , Disk_part_tree.get ~disk_index ~part_index disk_part_tree )
-        in
-        let disk_part_tree, boot_part_path =
-          let disk_index, part_index =
-            pick_choice_grouped
-              ~first_header:"Select disk containing the boot partition"
-              ~second_header:"Select boot partition" disk_part_tree
-          in
-          ( Disk_part_tree.remove_part_by_index ~disk_index ~part_index disk_part_tree
-          , Disk_part_tree.get ~disk_index ~part_index disk_part_tree)
-        in
-        let efi_part_path =
+        let disk_part_tree, efi_part_path =
           if Sys.file_exists "/sys/firmware/efi" then (
             print_boxed_msg
               "System is in EFI mode, launching EFI partition selection menu";
@@ -92,13 +75,54 @@ let () =
                 ~first_header:"Select disk containing the EFI partition"
                 ~second_header:"Select EFI partition" disk_part_tree
             in
-            Some (Disk_part_tree.get ~disk_index ~part_index disk_part_tree) )
+            ( Disk_part_tree.remove_part_by_index ~disk_index ~part_index
+                disk_part_tree
+            , Some
+                (Disk_part_tree.get ~disk_index ~part_index disk_part_tree)
+            ) )
           else (
             print_boxed_msg
               "System is in BIOS mode, EFI partition selection skipped";
-            None )
+            (disk_part_tree, None) )
         in
-        config
+        let disk_part_tree, boot_part_path =
+          let disk_index, part_index =
+            pick_choice_grouped
+              ~first_header:"Select disk containing the boot partition"
+              ~second_header:"Select boot partition" disk_part_tree
+          in
+          ( Disk_part_tree.remove_part_by_index ~disk_index ~part_index
+              disk_part_tree
+          , Disk_part_tree.get ~disk_index ~part_index disk_part_tree )
+        in
+        let sys_part_path =
+          let disk_index, part_index =
+            pick_choice_grouped
+              ~first_header:"Select disk containing the system partition"
+              ~second_header:"Select system partition" disk_part_tree
+          in
+          Disk_part_tree.get ~disk_index ~part_index disk_part_tree
+        in
+        let encrypt = ask_yn "Enable encryption?" = Yes in
+        let efi_part =
+          Option.map
+            (fun path -> make_part ~path (Plain_FS Fat32))
+            efi_part_path
+        in
+        if encrypt then
+          let key =
+            ask_string_confirm
+              ~is_valid:(fun x -> x <> "")
+              "Please enter passphrase for encryption"
+          in
+          let boot_part =
+            make_part ~path:boot_part_path
+              (Luks
+                 (make_luks ~key ~version:LuksV1 Ext4
+                    ~mapper_name:"crypt_boot"))
+          in
+          config
+        else config
       | Sys_part_plus_usb_drive ->
         config);
   Task_book.run task_book

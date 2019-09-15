@@ -62,6 +62,11 @@ let confirm_answer_is_correct () = ask_yn "Is the answer correct?"
 let confirm_answer_is_correct_end_retry ~ret =
   ask_yn_end_retry ~ret "Is the answer correct?"
 
+let ask_string_confirm ?(is_valid = fun _ -> true) prompt =
+  retry (fun () ->
+      let ret = ask_string ~is_valid prompt in
+      confirm_answer_is_correct_end_retry ~ret)
+
 let pick_choice ?(confirm = true) ?(header = "Options") choices =
   retry (fun () ->
       print_endline header;

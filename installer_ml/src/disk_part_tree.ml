@@ -28,11 +28,9 @@ let get ~disk_index ~part_index tree =
 let remove_part_by_index ~disk_index ~part_index tree =
   List.mapi
     (fun i (k, l) ->
-       if i = disk_index then (k, Misc_utils.list_no_nth l part_index) else (k, l))
+       if i = disk_index then (k, Misc_utils.list_no_nth l part_index)
+       else (k, l))
     tree
 
 let remove_part part tree =
-  List.map
-    (fun (k, l) ->
-       k, List.filter (fun p -> p <> part) l
-    ) tree
+  List.map (fun (k, l) -> (k, List.filter (fun p -> p <> part) l)) tree
