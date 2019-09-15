@@ -60,24 +60,15 @@ let () =
       match Option.get config.disk_layout_choice with
       | Single_disk -> (
           let disks = Disk_utils.list_disks () in
-          let choice = pick_choice ~header:"Pick disk" disks in
+          let choice = pick_choice ~header:"Disks" disks in
           print_int choice;
           config
         )
       | Sys_part_plus_boot_plus_maybe_EFI -> (
           let parts = Disk_utils.list_parts () in
           let disk_part_tree = Disk_utils.group_parts_by_disks parts in
-          List.iter (fun (k, l) ->
-              print_endline k;
-              List.iter (fun (p, uuid) ->
-                  Printf.printf "%s - %s\n" p uuid
-                ) l
-            ) disk_part_tree;
-          let disk_part_tree_for_choice = List.map
-              (fun (k, l) ->
-                 k, List.map (fun (x, _) -> x) l
-              ) disk_part_tree in
-          let (disk, part) = pick_choice_grouped disk_part_tree_for_choice in
+          (* Select system partition *)
+          let (disk, part) = pick_choice_grouped ~first_header:"Select disk containing the system partition" ~second_header:"Select system partition" disk_part_tree in
           Printf.printf "disk : %d, part : %d" disk part;
           config
         )
