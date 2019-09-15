@@ -127,11 +127,13 @@ let () =
             make_part ~path:sys_part_path
               (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
           in
-          config
+          let disk_layout = make_layout ~efi_part ~boot_part ~sys_part in
+          {config with disk_layout = Some disk_layout}
         else
-          let boot_part = make_part (Plain_FS Ext4) in
-          let sys_part = make_part (Plain_FS Ext4) in
-          config
+          let boot_part = make_part ~path:boot_part_path (Plain_FS Ext4) in
+          let sys_part = make_part ~path:sys_part_path (Plain_FS Ext4) in
+          let disk_layout = make_layout ~efi_part ~boot_part ~sys_part in
+          {config with disk_layout = Some disk_layout}
       | Sys_part_plus_usb_drive ->
         config);
   Task_book.run task_book

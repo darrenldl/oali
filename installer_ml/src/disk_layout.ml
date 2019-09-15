@@ -158,3 +158,5 @@ let make_luks ?enc_params
 let make_part ~path upper =
   let lower = {path} in
   {lower; upper; state = Unformatted}
+
+let make_layout ~efi_part ~boot_part ~sys_part = {efi_part; boot_part; sys_part}

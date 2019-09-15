@@ -6,6 +6,7 @@
             lwt_ppx
             sexplib
             re
-            nocrypto)
+            nocrypto
+            nocrypto.unix)
  (preprocess (pps ppx_sexp_conv
                   lwt_ppx)))
