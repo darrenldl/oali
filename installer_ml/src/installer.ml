@@ -90,9 +90,12 @@ let () =
         else (
           print_endline "Creating MBR partition table";
           exec (Printf.sprintf "parted %s mklabel msdos" disk) );
+        let encrypt = ask_yn "Enable encryption?" = Yes in
         (* partitioning *)
+        print_endline "Partitioning";
         let disk_size_MiB = Disk_utils.disk_size disk / 1024 / 1024 in
-        let boot_part_perc = 25 in
+        let boot_part_size_MiB = 500 in
+        let boot_part_perc = boot_part_size_MiB * 100 / disk_size_MiB in
         if is_efi_mode then (
           let esp_part_size_MiB = 550 in
           let esp_part_perc = esp_part_size_MiB * 100 / disk_size_MiB in
@@ -106,17 +109,80 @@ let () =
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
                disk boot_part_beg_perc boot_part_end_perc);
+          exec
+            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
+               disk boot_part_end_perc 50);
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
-          config )
-        else (
+          let esp_part_path = Printf.sprintf "%s1" disk in
+          let boot_part_path = Printf.sprintf "%s2" disk in
+          let sys_part_path = Printf.sprintf "%s3" disk in
+          let esp_part =
+            Some (make_part ~path:esp_part_path (Plain_FS Fat32))
+          in
+          if encrypt then
+            let boot_key =
+              ask_string_confirm
+                ~is_valid:(fun x -> x <> "")
+                "Please enter passphrase for encryption"
+            in
+            let boot_part =
+              make_part ~path:boot_part_path
+                (Luks
+                   (make_luks ~key:boot_key ~version:LuksV1 Ext4
+                      ~mapper_name:mapper_name_boot))
+            in
+            let sys_part =
+              make_part ~path:sys_part_path
+                (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
+            in
+            let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
+            {config with disk_layout = Some disk_layout}
+          else
+            let boot_part = make_part ~path:boot_part_path (Plain_FS Ext4) in
+            let sys_part = make_part ~path:sys_part_path (Plain_FS Ext4) in
+            let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
+            {config with disk_layout = Some disk_layout} )
+        else
+          let boot_part_end_perc = boot_part_perc in
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %d%%"
-               disk boot_part_perc);
-          config )
+               disk boot_part_end_perc);
+          exec
+            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
+               disk boot_part_end_perc 50);
+          let boot_part_path = Printf.sprintf "%s1" disk in
+          let sys_part_path = Printf.sprintf "%s2" disk in
+          if encrypt then
+            let boot_key =
+              ask_string_confirm
+                ~is_valid:(fun x -> x <> "")
+                "Please enter passphrase for encryption"
+            in
+            let boot_part =
+              make_part ~path:boot_part_path
+                (Luks
+                   (make_luks ~key:boot_key ~version:LuksV1 Ext4
+                      ~mapper_name:mapper_name_boot))
+            in
+            let sys_part =
+              make_part ~path:sys_part_path
+                (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
+            in
+            let disk_layout =
+              make_layout ~esp_part:None ~boot_part ~sys_part
+            in
+            {config with disk_layout = Some disk_layout}
+          else
+            let boot_part = make_part ~path:boot_part_path (Plain_FS Ext4) in
+            let sys_part = make_part ~path:sys_part_path (Plain_FS Ext4) in
+            let disk_layout =
+              make_layout ~esp_part:None ~boot_part ~sys_part
+            in
+            {config with disk_layout = Some disk_layout}
       | Sys_part_plus_boot_plus_maybe_EFI ->
         let parts = Disk_utils.list_parts () in
         let disk_part_tree = Disk_part_tree.of_parts parts in
-        let disk_part_tree, efi_part_path =
+        let disk_part_tree, esp_part_path =
           if is_efi_mode then
             let disk_index, part_index =
               pick_choice_grouped
@@ -149,10 +215,10 @@ let () =
           Disk_part_tree.get ~disk_index ~part_index disk_part_tree
         in
         let encrypt = ask_yn "Enable encryption?" = Yes in
-        let efi_part =
+        let esp_part =
           Option.map
             (fun path -> make_part ~path (Plain_FS Fat32))
-            efi_part_path
+            esp_part_path
         in
         if encrypt then
           let boot_key =
@@ -170,12 +236,12 @@ let () =
             make_part ~path:sys_part_path
               (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
           in
-          let disk_layout = make_layout ~efi_part ~boot_part ~sys_part in
+          let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
           {config with disk_layout = Some disk_layout}
         else
           let boot_part = make_part ~path:boot_part_path (Plain_FS Ext4) in
           let sys_part = make_part ~path:sys_part_path (Plain_FS Ext4) in
-          let disk_layout = make_layout ~efi_part ~boot_part ~sys_part in
+          let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
           {config with disk_layout = Some disk_layout}
       | Sys_part_plus_usb_drive ->
         config);

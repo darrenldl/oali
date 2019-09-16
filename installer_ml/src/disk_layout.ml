@@ -54,7 +54,7 @@ type part =
 type t =
   { sys_part : part (* ; swap_part : part option *)
   ; boot_part : part
-  ; efi_part : part option }
+  ; esp_part : part option }
 [@@deriving sexp]
 
 type layout_choice =
@@ -159,4 +159,4 @@ let make_part ~path upper =
   let lower = {path} in
   {lower; upper; state = Unformatted}
 
-let make_layout ~efi_part ~boot_part ~sys_part = {efi_part; boot_part; sys_part}
+let make_layout ~esp_part ~boot_part ~sys_part = {esp_part; boot_part; sys_part}
