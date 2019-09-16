@@ -160,7 +160,7 @@ let format layout =
   format_part layout.sys_part
 
 let make_luks ?enc_params
-    ?(key = Rand_utils.gen_rand_string ~len:1024 |> Cstruct.to_string)
+    ?(key = Rand_utils.gen_rand_string ~len:1024)
     ?(version = LuksV2) inner_fs ~mapper_name =
   {enc_params; key; version; inner_fs; mapper_name; state = Luks_closed}
 
