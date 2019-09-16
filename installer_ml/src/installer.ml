@@ -177,4 +177,7 @@ let () =
         let sys_part = make_sys_part encrypt sys_part_path in
         let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
         {config with disk_layout = Some disk_layout});
+  reg ~name:"Format disk" (fun config ->
+      config
+    );
   Task_book.run task_book
