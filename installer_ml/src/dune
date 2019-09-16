@@ -1,9 +1,6 @@
 (executable
  (name installer)
- (libraries core_kernel
-            lwt
-            lwt.unix
-            lwt_ppx
+ (libraries base
             sexplib
             re
             nocrypto
