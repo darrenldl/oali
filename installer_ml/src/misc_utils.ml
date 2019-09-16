@@ -69,6 +69,7 @@ let ask_string_confirm ?(is_valid = fun _ -> true) prompt =
 
 let pick_choice ?(confirm = true) ?(header = "Options") choices =
   retry (fun () ->
+      assert (List.length choices > 0);
       print_endline header;
       print_newline ();
       List.iteri (fun i s -> Printf.printf "%5d    %s\n" i s) choices;

@@ -51,6 +51,9 @@ let run task_book =
         | Proc_utils.Exec_fail r ->
           print_endline (Proc_utils.report_failure r);
           (false, task_book.config)
+        | Failure msg ->
+          Printf.printf "Failure : %s" msg;
+          (false, task_book.config)
         | _ ->
           print_endline "Unknown failure";
           (false, task_book.config)

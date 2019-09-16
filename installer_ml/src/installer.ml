@@ -77,6 +77,8 @@ let () =
       match Option.get config.disk_layout_choice with
       | Single_disk ->
         let disks = Disk_utils.list_disks () in
+        if List.length disks = 0 then
+          failwith "Not enough disks found, please make sure you have connected at least one disk";
         let disk =
           retry (fun () ->
               let disk_index = pick_choice ~header:"Disks" disks in
@@ -146,6 +148,10 @@ let () =
           {config with disk_layout = Some disk_layout}
       | Sys_part_plus_boot_plus_maybe_EFI ->
         let parts = Disk_utils.list_parts () in
+        if (is_efi_mode && List.length parts < 3)
+        || ((not is_efi_mode) && List.length parts < 2) then (
+            failwith "Not enough partitions found, please make sure partitioning was done correctly";
+        );
         let disk_part_tree = Disk_part_tree.of_parts parts in
         let disk_part_tree, esp_part_path =
           if is_efi_mode then
@@ -191,24 +197,36 @@ let () =
       config
     );
   reg ~name:"Mounting disk" (fun config ->
+      let is_efi_mode = Option.get config.is_efi_mode in
+      let disk_layout = Option.get config.disk_layout in
+      Disk_layout.mount_sys_part disk_layout;
+      Unix.mkdir "/mnt/boot/" 0o744;
+      Disk_layout.mount_boot_part disk_layout;
+      if is_efi_mode then (
+        Unix.mkdir "/mnt/boot/efi/" 0o744;
+        Disk_layout.mount_esp_part disk_layout;
+      );
       config
     );
-  reg ~name:"Installing key files" (fun config ->
-      config
-    );
-  reg ~name:"Installing base system" (fun config ->
+  (* reg ~name:"Installing key files" (fun config ->
+   *     config
+   *   ); *)
+  reg ~name:"Installing base system (base base-devel)" (fun config ->
+      exec_no_capture "pacstrap /mnt base base-devel";
       config
     );
   reg ~name:"Generating fstab" (fun config ->
-      exec "mkdir -p /mnt/boot";
       exec "genfstab -U /mnt >> /mnt/etc/fstab";
       config
     );
   reg ~name:"Setting up hostname" (fun config ->
+      let oc = open_out "/mnt/etc/hostname" in
+      Fun.protect ~finally:(fun () -> close_out oc)
+        (fun () -> output_string oc (Option.get config.hostname));
       config
     );
   reg ~name:"Updating package database" (fun config ->
-      Arch_chroot.exec "pacman --noconfirm -Sy";
+      Arch_chroot.pacman "-Sy";
       config
     );
   reg ~name:"Installing wifi-menu" (fun config ->

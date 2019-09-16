@@ -5,6 +5,12 @@ let mapper_name_boot = "crypt_boot"
 
 let mapper_name_root = "crypt_root"
 
+let esp_mount_point = "/mnt/boot/efi/"
+
+let boot_mount_point = "/mnt/boot"
+
+let sys_mount_point = "/mnt/"
+
 type fs =
   | Fat32
   | Ext4
@@ -187,3 +193,12 @@ let make_sys_part encrypt path =
   if encrypt then
     make_part ~path (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
   else make_part ~path (Plain_FS Ext4)
+
+let mount_esp_part layout =
+  mount_part (Option.get layout.esp_part) ~mount_point:esp_mount_point
+
+let mount_boot_part layout =
+  mount_part layout.boot_part ~mount_point:boot_mount_point
+
+let mount_sys_part layout =
+  mount_part layout.sys_part ~mount_point:sys_mount_point
