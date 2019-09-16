@@ -24,3 +24,15 @@ let get_tail_num s =
     None
   | Some pos ->
     Some (String.sub s pos (len - pos) |> int_of_string)
+
+let strip_prefix ~prefix s =
+  let prefix_len = String.length prefix in
+  let s_len = String.length s in
+  if s_len < prefix_len then
+    s
+  else
+    let sub = String.sub s 0 prefix_len in
+    if sub = prefix then
+      tail prefix_len s
+    else
+      s

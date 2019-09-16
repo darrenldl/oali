@@ -13,3 +13,10 @@ let part_to_disk s = String_utils.strip_tail_num s
 let list_disks () =
   let parts = list_parts () in
   parts |> List.map part_to_disk |> List.sort_uniq compare
+
+let disk_size disk =
+  let disk = String_utils.strip_prefix ~prefix:"/dev/" disk in
+  let ic = open_in (Printf.sprintf "/sys/block/%s/size" disk) in
+  let size_str = input_line ic in
+  close_in ic;
+  int_of_string size_str
