@@ -1,7 +1,9 @@
 open Sexplib.Std
 open Proc_utils
 
-let sprintf = Printf.sprintf
+let mapper_name_boot = "crypt_boot"
+
+let mapper_name_root = "crypt_root"
 
 type fs =
   | Fat32
@@ -69,7 +71,7 @@ type layout_choice =
  *   sprintf "/dev/%s%d" disk part_num *)
 
 let luks_to_mapper_name_cmd_string {mapper_name; _} =
-  sprintf "/dev/mapper/%s" mapper_name
+  Printf.sprintf "/dev/mapper/%s" mapper_name
 
 let luks_open {lower; upper; _} =
   match upper with
@@ -78,7 +80,7 @@ let luks_open {lower; upper; _} =
   | Luks luks ->
     assert (luks.state = Luks_closed);
     let stdin, f =
-      sprintf "cryptsetup open --key-file=- %s %s" lower.path
+      Printf.sprintf "cryptsetup open --key-file=- %s %s" lower.path
         luks.mapper_name
       |> exec_with_stdin
     in
@@ -92,17 +94,19 @@ let luks_close {upper; _} =
     failwith "LUKS expected"
   | Luks luks ->
     assert (luks.state = Luks_opened);
-    sprintf "cryptsetup close %s" luks.mapper_name |> exec;
+    Printf.sprintf "cryptsetup close %s" luks.mapper_name |> exec;
     luks.state <- Luks_closed
 
 let mount_part ({lower; upper; state} as p) ~mount_point =
   assert (state = Unmounted);
   ( match upper with
     | Plain_FS _ ->
-      sprintf "mount %s %s" lower.path mount_point |> exec
+      Printf.sprintf "mount %s %s" lower.path mount_point |> exec
     | Luks luks ->
       luks_open {lower; upper; state};
-      sprintf "mount %s %s" (luks_to_mapper_name_cmd_string luks) mount_point
+      Printf.sprintf "mount %s %s"
+        (luks_to_mapper_name_cmd_string luks)
+        mount_point
       |> exec );
   p.state <- Mounted
 
@@ -110,10 +114,10 @@ let unmount_part ({lower; upper; state} as p) =
   assert (state = Mounted);
   ( match upper with
     | Plain_FS _ ->
-      sprintf "umount %s" lower.path |> exec
+      Printf.sprintf "umount %s" lower.path |> exec
     | Luks luks ->
       let mapper_name = luks_to_mapper_name_cmd_string luks in
-      sprintf "umount %s" mapper_name |> exec;
+      Printf.sprintf "umount %s" mapper_name |> exec;
       p.state <- Unmounted;
       luks_close {lower; upper; state} );
   p.state <- Unmounted
@@ -121,9 +125,9 @@ let unmount_part ({lower; upper; state} as p) =
 let format_cmd fs part =
   match fs with
   | Fat32 ->
-    sprintf "mkfs.fat -F32 %s" part
+    Printf.sprintf "mkfs.fat -F32 %s" part
   | Ext4 ->
-    sprintf "mkfs.ext4 %s" part
+    Printf.sprintf "mkfs.ext4 %s" part
 
 let format_part ({upper; lower; state} as p) =
   assert (state = Unformatted);
@@ -160,3 +164,21 @@ let make_part ~path upper =
   {lower; upper; state = Unformatted}
 
 let make_layout ~esp_part ~boot_part ~sys_part = {esp_part; boot_part; sys_part}
+
+let make_esp_part path = make_part ~path (Plain_FS Fat32)
+
+let make_boot_part encrypt path =
+  if encrypt then
+    let key =
+      Misc_utils.ask_string_confirm
+        ~is_valid:(fun x -> x <> "")
+        "Please enter passphrase for encryption"
+    in
+    make_part ~path
+      (Luks (make_luks ~key ~version:LuksV1 Ext4 ~mapper_name:mapper_name_boot))
+  else make_part ~path (Plain_FS Ext4)
+
+let make_sys_part encrypt path =
+  if encrypt then
+    make_part ~path (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
+  else make_part ~path (Plain_FS Ext4)

@@ -50,8 +50,8 @@ let () =
         [ ("single disk", Single_disk)
         ; ( "system partition + boot partition + maybe EFI partition"
           , Sys_part_plus_boot_plus_maybe_EFI )
-        (* ; ( "system partition + boot stuff on external USB drive"
-         *   , Sys_part_plus_usb_drive ) *)
+          (* ; ( "system partition + boot stuff on external USB drive"
+           *   , Sys_part_plus_usb_drive ) *)
         ]
       in
       let choice_num = pick_choice (List.map (fun (x, _) -> x) choices) in
@@ -59,8 +59,6 @@ let () =
       {config with disk_layout_choice = Some choice});
   reg ~name:"Configure disk setup parameters" (fun config ->
       let open Disk_layout in
-      let mapper_name_boot = "crypt_boot" in
-      let mapper_name_root = "crypt_root" in
       let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
       if is_efi_mode then
         print_boxed_msg
@@ -117,32 +115,11 @@ let () =
           let esp_part_path = Printf.sprintf "%s1" disk in
           let boot_part_path = Printf.sprintf "%s2" disk in
           let sys_part_path = Printf.sprintf "%s3" disk in
-          let esp_part =
-            Some (make_part ~path:esp_part_path (Plain_FS Fat32))
-          in
-          if encrypt then
-            let boot_key =
-              ask_string_confirm
-                ~is_valid:(fun x -> x <> "")
-                "Please enter passphrase for encryption"
-            in
-            let boot_part =
-              make_part ~path:boot_part_path
-                (Luks
-                   (make_luks ~key:boot_key ~version:LuksV1 Ext4
-                      ~mapper_name:mapper_name_boot))
-            in
-            let sys_part =
-              make_part ~path:sys_part_path
-                (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
-            in
-            let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
-            {config with disk_layout = Some disk_layout}
-          else
-            let boot_part = make_part ~path:boot_part_path (Plain_FS Ext4) in
-            let sys_part = make_part ~path:sys_part_path (Plain_FS Ext4) in
-            let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
-            {config with disk_layout = Some disk_layout} )
+          let esp_part = Some (make_esp_part esp_part_path) in
+          let boot_part = make_boot_part encrypt boot_part_path in
+          let sys_part = make_sys_part encrypt sys_part_path in
+          let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
+          {config with disk_layout = Some disk_layout} )
         else
           let boot_part_end_perc = boot_part_perc in
           exec
@@ -153,33 +130,12 @@ let () =
                disk boot_part_end_perc 50);
           let boot_part_path = Printf.sprintf "%s1" disk in
           let sys_part_path = Printf.sprintf "%s2" disk in
-          if encrypt then
-            let boot_key =
-              ask_string_confirm
-                ~is_valid:(fun x -> x <> "")
-                "Please enter passphrase for encryption"
-            in
-            let boot_part =
-              make_part ~path:boot_part_path
-                (Luks
-                   (make_luks ~key:boot_key ~version:LuksV1 Ext4
-                      ~mapper_name:mapper_name_boot))
-            in
-            let sys_part =
-              make_part ~path:sys_part_path
-                (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
-            in
-            let disk_layout =
-              make_layout ~esp_part:None ~boot_part ~sys_part
-            in
-            {config with disk_layout = Some disk_layout}
-          else
-            let boot_part = make_part ~path:boot_part_path (Plain_FS Ext4) in
-            let sys_part = make_part ~path:sys_part_path (Plain_FS Ext4) in
-            let disk_layout =
-              make_layout ~esp_part:None ~boot_part ~sys_part
-            in
-            {config with disk_layout = Some disk_layout}
+          let boot_part = make_boot_part encrypt boot_part_path in
+          let sys_part = make_sys_part encrypt sys_part_path in
+          let disk_layout =
+            make_layout ~esp_part:None ~boot_part ~sys_part
+          in
+          {config with disk_layout = Some disk_layout}
       | Sys_part_plus_boot_plus_maybe_EFI ->
         let parts = Disk_utils.list_parts () in
         let disk_part_tree = Disk_part_tree.of_parts parts in
@@ -216,33 +172,9 @@ let () =
           Disk_part_tree.get ~disk_index ~part_index disk_part_tree
         in
         let encrypt = ask_yn "Enable encryption?" = Yes in
-        let esp_part =
-          Option.map
-            (fun path -> make_part ~path (Plain_FS Fat32))
-            esp_part_path
-        in
-        if encrypt then
-          let boot_key =
-            ask_string_confirm
-              ~is_valid:(fun x -> x <> "")
-              "Please enter passphrase for encryption"
-          in
-          let boot_part =
-            make_part ~path:boot_part_path
-              (Luks
-                 (make_luks ~key:boot_key ~version:LuksV1 Ext4
-                    ~mapper_name:mapper_name_boot))
-          in
-          let sys_part =
-            make_part ~path:sys_part_path
-              (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
-          in
-          let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
-          {config with disk_layout = Some disk_layout}
-        else
-          let boot_part = make_part ~path:boot_part_path (Plain_FS Ext4) in
-          let sys_part = make_part ~path:sys_part_path (Plain_FS Ext4) in
-          let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
-          {config with disk_layout = Some disk_layout}
-    );
+        let esp_part = Option.map make_esp_part esp_part_path in
+        let boot_part = make_boot_part encrypt boot_part_path in
+        let sys_part = make_sys_part encrypt sys_part_path in
+        let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
+        {config with disk_layout = Some disk_layout});
   Task_book.run task_book
