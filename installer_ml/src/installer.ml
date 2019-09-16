@@ -44,6 +44,10 @@ let () =
    *       );
    *     config
    *   ); *)
+  reg ~name:"Setting hostname" (fun config ->
+      let hostname = ask_string_confirm ~is_valid:(fun x -> x <> "") "Hostname" in
+      { config with hostname = Some hostname}
+    );
   reg ~name:"Pick disk layout choice" (fun config ->
       let open Disk_layout in
       let choices =
@@ -57,9 +61,13 @@ let () =
       let choice_num = pick_choice (List.map (fun (x, _) -> x) choices) in
       let choice = (fun (_, y) -> y) (List.nth choices choice_num) in
       {config with disk_layout_choice = Some choice});
+  reg ~name:"Checking if in EFI mode" (fun config ->
+      let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
+      { config with is_efi_mode = Some is_efi_mode }
+    );
   reg ~name:"Configure disk setup parameters" (fun config ->
       let open Disk_layout in
-      let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
+      let is_efi_mode = Option.get config.is_efi_mode in
       if is_efi_mode then
         print_boxed_msg
           "System is in EFI mode, launching EFI partition selection menu"
@@ -177,7 +185,41 @@ let () =
         let sys_part = make_sys_part encrypt sys_part_path in
         let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
         {config with disk_layout = Some disk_layout});
-  reg ~name:"Format disk" (fun config ->
+  reg ~name:"Formatting disk" (fun config ->
+      let disk_layout = Option.get config.disk_layout in
+      Disk_layout.format disk_layout;
+      config
+    );
+  reg ~name:"Mounting disk" (fun config ->
+      config
+    );
+  reg ~name:"Installing key files" (fun config ->
+      config
+    );
+  reg ~name:"Installing base system" (fun config ->
+      config
+    );
+  reg ~name:"Generating fstab" (fun config ->
+      exec "mkdir -p /mnt/boot";
+      exec "genfstab -U /mnt >> /mnt/etc/fstab";
+      config
+    );
+  reg ~name:"Setting up hostname" (fun config ->
+      config
+    );
+  reg ~name:"Updating package database" (fun config ->
+      Arch_chroot.exec "pacman --noconfirm -Sy";
+      config
+    );
+  reg ~name:"Installing wifi-menu" (fun config ->
+      Arch_chroot.install ["dialog"; "wpa_supplicant"];
+      config
+    );
+  reg ~name:"Setting up bootloader" (fun config ->
+      Arch_chroot.install ["grub"];
+      if Option.get config.is_efi_mode then (
+        Arch_chroot.install ["efibootmgr"; "efitools"]
+      );
       config
     );
   Task_book.run task_book

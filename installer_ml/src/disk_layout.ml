@@ -154,6 +154,11 @@ let format_part ({upper; lower; state} as p) =
       format_cmd luks.inner_fs mapper_name |> exec );
   p.state <- Unmounted
 
+let format layout =
+  Option.iter format_part layout.esp_part;
+  format_part layout.boot_part;
+  format_part layout.sys_part
+
 let make_luks ?enc_params
     ?(key = Rand_utils.gen_rand_string ~len:1024 |> Cstruct.to_string)
     ?(version = LuksV2) inner_fs ~mapper_name =
