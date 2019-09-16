@@ -1,6 +1,6 @@
 (executable
  (name installer)
- (libraries base
+ (libraries core_kernel
             sexplib
             re
             nocrypto
