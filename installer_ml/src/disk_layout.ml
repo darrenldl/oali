@@ -60,7 +60,7 @@ type t =
 type layout_choice =
   | Single_disk
   | Sys_part_plus_boot_plus_maybe_EFI
-  | Sys_part_plus_usb_drive
+  (* | Sys_part_plus_usb_drive *)
 [@@deriving sexp]
 
 (* let make_lower ~disk ~part_num = {disk; part_num} *)

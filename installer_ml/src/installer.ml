@@ -50,8 +50,9 @@ let () =
         [ ("single disk", Single_disk)
         ; ( "system partition + boot partition + maybe EFI partition"
           , Sys_part_plus_boot_plus_maybe_EFI )
-        ; ( "system partition + boot stuff on external USB drive"
-          , Sys_part_plus_usb_drive ) ]
+        (* ; ( "system partition + boot stuff on external USB drive"
+         *   , Sys_part_plus_usb_drive ) *)
+        ]
       in
       let choice_num = pick_choice (List.map (fun (x, _) -> x) choices) in
       let choice = (fun (_, y) -> y) (List.nth choices choice_num) in
@@ -243,6 +244,5 @@ let () =
           let sys_part = make_part ~path:sys_part_path (Plain_FS Ext4) in
           let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
           {config with disk_layout = Some disk_layout}
-      | Sys_part_plus_usb_drive ->
-        config);
+    );
   Task_book.run task_book
