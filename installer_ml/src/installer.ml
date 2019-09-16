@@ -60,15 +60,13 @@ let () =
       let open Disk_layout in
       let mapper_name_boot = "crypt_boot" in
       let mapper_name_root = "crypt_root" in
-      let is_efi_mode = Sys.file_exists "/sys/firmware/efi"
-      in
-      (if is_efi_mode then
-         print_boxed_msg
-           "System is in EFI mode, launching EFI partition selection menu"
-       else
-         print_boxed_msg
-           "System is in BIOS mode, EFI partition selection skipped"
-      );
+      let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
+      if is_efi_mode then
+        print_boxed_msg
+          "System is in EFI mode, launching EFI partition selection menu"
+      else
+        print_boxed_msg
+          "System is in BIOS mode, EFI partition selection skipped";
       match Option.get config.disk_layout_choice with
       | Single_disk ->
         let disks = Disk_utils.list_disks () in
@@ -77,8 +75,10 @@ let () =
               let disk_index = pick_choice ~header:"Disks" disks in
               let disk = List.nth disks disk_index in
               ask_yn_end_retry ~ret:disk
-                (Printf.sprintf "Partition table of %s will be wiped if you proceed, is it the right disk?" disk)
-            )
+                (Printf.sprintf
+                   "Partition table of %s will be wiped if you proceed, is \
+                    it the right disk?"
+                   disk))
         in
         (* reset partition table *)
         Printf.printf "Wiping partition table of %s" disk;
@@ -86,14 +86,12 @@ let () =
         (* create partition table *)
         if is_efi_mode then (
           print_endline "Creating GPT partition table";
-          exec (Printf.sprintf "parted %s mklabel gpt" disk)
-        ) else (
+          exec (Printf.sprintf "parted %s mklabel gpt" disk) )
+        else (
           print_endline "Creating MBR partition table";
-          exec (Printf.sprintf "parted %s mklabel msdos" disk)
-        );
+          exec (Printf.sprintf "parted %s mklabel msdos" disk) );
         (* partitioning *)
         let disk_size_MiB = Disk_utils.disk_size disk / 1024 / 1024 in
-
         let boot_part_perc = 25 in
         if is_efi_mode then (
           let esp_part_size_MiB = 550 in
@@ -102,31 +100,24 @@ let () =
           let esp_part_end_perc = esp_part_perc in
           let boot_part_beg_perc = esp_part_end_perc in
           let boot_part_end_perc = boot_part_beg_perc + boot_part_perc in
-          exec (Printf.sprintf
-                  "parted -a optimal %s mkpart primary %d%% %d%%"
-                  disk esp_part_beg_perc esp_part_end_perc
-               );
-          exec (Printf.sprintf
-                  "parted -a optimal %s mkpart primary %d%% %d%%"
-                  disk boot_part_beg_perc boot_part_end_perc
-               );
-          exec (Printf.sprintf
-                  "parted %s set 1 boot on"
-                  disk
-               );
-          config
-        ) else (
-          exec (Printf.sprintf
-                  "parted -a optimal %s mkpart primary 0%% %d%%"
-                  disk boot_part_perc
-               );
-          config
-        )
+          exec
+            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
+               disk esp_part_beg_perc esp_part_end_perc);
+          exec
+            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
+               disk boot_part_beg_perc boot_part_end_perc);
+          exec (Printf.sprintf "parted %s set 1 boot on" disk);
+          config )
+        else (
+          exec
+            (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %d%%"
+               disk boot_part_perc);
+          config )
       | Sys_part_plus_boot_plus_maybe_EFI ->
         let parts = Disk_utils.list_parts () in
         let disk_part_tree = Disk_part_tree.of_parts parts in
         let disk_part_tree, efi_part_path =
-          if is_efi_mode then (
+          if is_efi_mode then
             let disk_index, part_index =
               pick_choice_grouped
                 ~first_header:"Select disk containing the EFI partition"
@@ -136,9 +127,8 @@ let () =
                 disk_part_tree
             , Some
                 (Disk_part_tree.get ~disk_index ~part_index disk_part_tree)
-            ) )
-          else (
-            (disk_part_tree, None) )
+            )
+          else (disk_part_tree, None)
         in
         let disk_part_tree, boot_part_path =
           let disk_index, part_index =

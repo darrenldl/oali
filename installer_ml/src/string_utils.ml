@@ -28,11 +28,7 @@ let get_tail_num s =
 let strip_prefix ~prefix s =
   let prefix_len = String.length prefix in
   let s_len = String.length s in
-  if s_len < prefix_len then
-    s
+  if s_len < prefix_len then s
   else
     let sub = String.sub s 0 prefix_len in
-    if sub = prefix then
-      tail prefix_len s
-    else
-      s
+    if sub = prefix then tail prefix_len s else s
