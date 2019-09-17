@@ -1,0 +1,28 @@
+let filter_map_lines ~file (f : string -> string option) =
+  let rec aux ic oc f =
+    let line =
+      try
+        Some (input_line ic)
+      with
+        End_of_file -> None
+    in
+    match line with
+    | None -> ()
+    | Some s ->
+      match f s with
+      | None -> ()
+      | Some new_s ->
+        output_string oc (new_s ^ "\n");
+        aux ic oc f
+  in
+  let tmp_dir = Filename.get_temp_dir_name () in
+  let (dst_name, dst_oc) = Filename.open_temp_file "installer" file in
+  let src_ic = open_in file in
+  Fun.protect ~finally:(fun () -> close_out dst_oc)
+    (fun () ->
+       Fun.protect ~finally:(fun () -> close_in src_ic)
+         (fun () ->
+            aux src_ic dst_oc f
+         )
+    );
+  Sys.rename (Filename.concat tmp_dir dst_name) file

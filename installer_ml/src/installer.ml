@@ -239,6 +239,16 @@ let () =
       config
     );
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
+      let file = Printf.sprintf "%s/etc/mkinitcpio.conf" Config.sys_mount_point in
+      let fill_in_FILES =
+        let re = "^FILES" |> Re.Posix.re |> Re.compile in
+        (fun s ->
+           match Re.matches re s with
+           | [] -> Some s
+           | _ -> Some (Printf.sprintf "FILES=(/root/%s)" Config.sys_part_keyfile_name)
+          )
+      in
+      File.filter_map_lines ~file fill_in_FILES;
       config
     );
   reg ~name:"Setting up hostname" (fun config ->
