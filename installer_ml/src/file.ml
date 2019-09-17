@@ -1,4 +1,4 @@
-let filter_map_lines ~file (f : string -> string option) =
+let filter_map_lines ~file (f : string -> string list) =
   let rec aux ic oc f =
     let line =
       try
@@ -9,11 +9,11 @@ let filter_map_lines ~file (f : string -> string option) =
     match line with
     | None -> ()
     | Some s ->
-      match f s with
-      | None -> ()
-      | Some new_s ->
-        output_string oc (new_s ^ "\n");
-        aux ic oc f
+      let new_s_s = f s in
+      List.iter (fun new_s ->
+          output_string oc (new_s ^ "\n");
+        ) new_s_s;
+      aux ic oc f
   in
   let tmp_dir = Filename.get_temp_dir_name () in
   let (dst_name, dst_oc) = Filename.open_temp_file "installer" file in

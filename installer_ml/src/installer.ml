@@ -244,11 +244,20 @@ let () =
         let re = "^FILES" |> Re.Posix.re |> Re.compile in
         (fun s ->
            match Re.matches re s with
-           | [] -> Some s
-           | _ -> Some (Printf.sprintf "FILES=(/root/%s)" Config.sys_part_keyfile_name)
+           | [] -> [s]
+           | _ -> [Printf.sprintf "FILES=(/root/%s)" Config.sys_part_keyfile_name]
+          )
+      in
+      let fill_in_HOOKS =
+        let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
+        (fun s ->
+           match Re.matches re s with
+           | [] -> [s]
+           | _ -> ["HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck)"]
           )
       in
       File.filter_map_lines ~file fill_in_FILES;
+      File.filter_map_lines ~file fill_in_HOOKS;
       config
     );
   reg ~name:"Setting up hostname" (fun config ->
