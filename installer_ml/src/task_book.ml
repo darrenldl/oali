@@ -52,7 +52,10 @@ let run task_book =
           print_endline (Proc_utils.report_failure r);
           (false, task_book.config)
         | Failure msg ->
-          Printf.printf "Failure : %s" msg;
+          Printf.printf "Failure : %s\n" msg;
+          (false, task_book.config)
+        | Sys_error msg ->
+          Printf.printf "Sys_error : %s\n" msg;
           (false, task_book.config)
         | _ ->
           print_endline "Unknown failure";

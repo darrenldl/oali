@@ -16,7 +16,8 @@ let filter_map_lines ~file (f : string -> string list) =
       aux ic oc f
   in
   let tmp_dir = Filename.get_temp_dir_name () in
-  let (dst_name, dst_oc) = Filename.open_temp_file "installer" file in
+  let dst_name = "installer" ^ file in
+  let dst_oc = open_out dst_name in
   let src_ic = open_in file in
   Fun.protect ~finally:(fun () -> close_out dst_oc)
     (fun () ->
