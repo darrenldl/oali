@@ -5,4 +5,9 @@ type t =
   ; editor : string option
   ; hostname : string option }
 
-let create () = {disk_layout = None; disk_layout_choice = None; is_efi_mode = None; editor = None; hostname = None }
+let create () =
+  { disk_layout = None
+  ; disk_layout_choice = None
+  ; is_efi_mode = None
+  ; editor = None
+  ; hostname = None }

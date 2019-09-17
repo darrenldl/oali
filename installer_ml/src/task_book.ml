@@ -59,7 +59,9 @@ let run task_book =
           (false, task_book.config)
       in
       if not succeeded then
-        let retry = Misc_utils.ask_yn "Do you want to retry task unit?" = Yes in
+        let retry =
+          Misc_utils.ask_yn "Do you want to retry task unit?" = Yes
+        in
         if retry then aux task_book (Some (name, task))
         else Queue.push (name, task) task_book.failed
       else (

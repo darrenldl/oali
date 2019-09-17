@@ -11,19 +11,27 @@ let list_disk_block_devs () =
 
 let list_parts () =
   list_disk_block_devs ()
-  |> List.filter (fun s -> match String_utils.get_tail_num s with
-      | Some _ -> true
-      | None -> false)
+  |> List.filter (fun s ->
+      match String_utils.get_tail_num s with
+      | Some _ ->
+        true
+      | None ->
+        false)
 
 let part_to_disk s = String_utils.strip_tail_num s
 
 let list_disks () =
   list_disk_block_devs ()
-  |> List.filter (fun s -> match String_utils.get_tail_num s with
-      | Some _ -> false
-      | None -> true)
+  |> List.filter (fun s ->
+      match String_utils.get_tail_num s with
+      | Some _ ->
+        false
+      | None ->
+        true)
 
 let disk_size disk =
-  let res = Proc_utils.exec_ret (Printf.sprintf "blockdev --getsize64 %s" disk) in
+  let res =
+    Proc_utils.exec_ret (Printf.sprintf "blockdev --getsize64 %s" disk)
+  in
   let size_str = List.hd res.stdout in
   int_of_string size_str

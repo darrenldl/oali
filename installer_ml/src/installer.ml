@@ -45,9 +45,10 @@ let () =
    *     config
    *   ); *)
   reg ~name:"Setting hostname" (fun config ->
-      let hostname = ask_string_confirm ~is_valid:(fun x -> x <> "") "Hostname" in
-      { config with hostname = Some hostname}
-    );
+      let hostname =
+        ask_string_confirm ~is_valid:(fun x -> x <> "") "Hostname"
+      in
+      {config with hostname = Some hostname});
   reg ~name:"Pick disk layout choice" (fun config ->
       let open Disk_layout in
       let choices =
@@ -63,8 +64,7 @@ let () =
       {config with disk_layout_choice = Some choice});
   reg ~name:"Checking if in EFI mode" (fun config ->
       let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
-      { config with is_efi_mode = Some is_efi_mode }
-    );
+      {config with is_efi_mode = Some is_efi_mode});
   reg ~name:"Configure disk setup parameters" (fun config ->
       let open Disk_layout in
       let is_efi_mode = Option.get config.is_efi_mode in
@@ -78,7 +78,9 @@ let () =
       | Single_disk ->
         let disks = Disk_utils.list_disks () in
         if List.length disks = 0 then
-          failwith "Not enough disks found, please make sure you have connected at least one disk";
+          failwith
+            "Not enough disks found, please make sure you have connected at \
+             least one disk";
         let disk =
           retry (fun () ->
               let disk_index = pick_choice ~header:"Disks" disks in
@@ -148,10 +150,13 @@ let () =
           {config with disk_layout = Some disk_layout}
       | Sys_part_plus_boot_plus_maybe_EFI ->
         let parts = Disk_utils.list_parts () in
-        if (is_efi_mode && List.length parts < 3)
-        || ((not is_efi_mode) && List.length parts < 2) then (
-            failwith "Not enough partitions found, please make sure partitioning was done correctly";
-        );
+        if
+          (is_efi_mode && List.length parts < 3)
+          || ((not is_efi_mode) && List.length parts < 2)
+        then
+          failwith
+            "Not enough partitions found, please make sure partitioning was \
+             done correctly";
         let disk_part_tree = Disk_part_tree.of_parts parts in
         let disk_part_tree, esp_part_path =
           if is_efi_mode then
@@ -194,50 +199,45 @@ let () =
   reg ~name:"Formatting disk" (fun config ->
       let disk_layout = Option.get config.disk_layout in
       Disk_layout.format disk_layout;
-      config
-    );
+      config);
   reg ~name:"Mounting disk" (fun config ->
       let is_efi_mode = Option.get config.is_efi_mode in
       let disk_layout = Option.get config.disk_layout in
       Disk_layout.mount_sys_part disk_layout;
-      Unix.mkdir "/mnt/boot/" 0o744;
+      Unix.mkdir Config.boot_mount_point 0o744;
       Disk_layout.mount_boot_part disk_layout;
       if is_efi_mode then (
-        Unix.mkdir "/mnt/boot/efi/" 0o744;
-        Disk_layout.mount_esp_part disk_layout;
-      );
-      config
-    );
+        Unix.mkdir Config.esp_mount_point 0o744;
+        Disk_layout.mount_esp_part disk_layout );
+      config);
   (* reg ~name:"Installing key files" (fun config ->
    *     config
    *   ); *)
   reg ~name:"Installing base system (base base-devel)" (fun config ->
-      exec_no_capture "pacstrap /mnt base base-devel";
-      config
-    );
+      exec_no_capture
+        (Printf.sprintf "pacstrap %s base base-devel" Config.sys_mount_point);
+      config);
   reg ~name:"Generating fstab" (fun config ->
-      exec "genfstab -U /mnt >> /mnt/etc/fstab";
-      config
-    );
+      exec
+        (Printf.sprintf "genfstab -U %s >> %s/etc/fstab" Config.sys_mount_point
+           Config.sys_mount_point);
+      config);
   reg ~name:"Setting up hostname" (fun config ->
-      let oc = open_out "/mnt/etc/hostname" in
-      Fun.protect ~finally:(fun () -> close_out oc)
+      let oc =
+        open_out (Printf.sprintf "%s/etc/hostname" Config.sys_mount_point)
+      in
+      Fun.protect
+        ~finally:(fun () -> close_out oc)
         (fun () -> output_string oc (Option.get config.hostname));
-      config
-    );
+      config);
   reg ~name:"Updating package database" (fun config ->
-      Arch_chroot.pacman "-Sy";
-      config
-    );
+      Arch_chroot.pacman "-Sy"; config);
   reg ~name:"Installing wifi-menu" (fun config ->
       Arch_chroot.install ["dialog"; "wpa_supplicant"];
-      config
-    );
+      config);
   reg ~name:"Setting up bootloader" (fun config ->
       Arch_chroot.install ["grub"];
-      if Option.get config.is_efi_mode then (
-        Arch_chroot.install ["efibootmgr"; "efitools"]
-      );
-      config
-    );
+      if Option.get config.is_efi_mode then
+        Arch_chroot.install ["efibootmgr"; "efitools"];
+      config);
   Task_book.run task_book
