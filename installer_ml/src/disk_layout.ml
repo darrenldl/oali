@@ -65,6 +65,10 @@ type layout_choice =
   (* | Sys_part_plus_usb_drive *)
 [@@deriving sexp]
 
+let luks_version_to_int ver = match ver with
+  | LuksV1 -> 1
+  | LuksV2 -> 2
+
 (* let make_lower ~disk ~part_num = {disk; part_num} *)
 
 (* let lower_part_to_cmd_string {disk; part_num} =
@@ -145,7 +149,9 @@ let format_part ({upper; lower; state} as p) =
           ; "--iter-time"
           ; string_of_int enc_params.iter_time_ms
           ; "--key-size"
-          ; string_of_int enc_params.key_size ]
+          ; string_of_int enc_params.key_size
+          ; "--type"
+          ; Printf.sprintf "luks%d" (luks_version_to_int luks.version)]
         |> exec_with_stdin
       in
       output_string stdin luks.key;
