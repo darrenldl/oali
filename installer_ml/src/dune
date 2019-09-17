@@ -1,9 +1,8 @@
 (executable
  (name installer)
  (libraries core_kernel
-            lwt
-            lwt.unix
-            lwt_ppx
-            sexplib)
+            sexplib
+            re)
+ (flags (:standard -ccopt -static))
  (preprocess (pps ppx_sexp_conv
                   lwt_ppx)))

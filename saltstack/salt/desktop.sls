@@ -14,6 +14,7 @@ Desktop environment related:
       - redshift
       - archlinux-wallpaper
       - elementary-icon-theme
+      - termdown
 
 Terminal emulators:
   pkg.installed:
