@@ -51,7 +51,7 @@ let () =
       {config with hostname = Some hostname});
   reg ~name:"Pick whether to encrypt" (fun config ->
       let encrypt = ask_yn "Enable encryption?" = Yes in
-      { config with encrypted = Some encrypt }
+      { config with encrypt = Some encrypt }
     );
   reg ~name:"Pick disk layout choice" (fun config ->
       let open Disk_layout in
@@ -71,7 +71,7 @@ let () =
       {config with is_efi_mode = Some is_efi_mode});
   reg ~name:"Configure disk setup parameters" (fun config ->
       let open Disk_layout in
-      let encrypt = Option.get config.encrypted in
+      let encrypt = Option.get config.encrypt in
       let is_efi_mode = Option.get config.is_efi_mode in
       if is_efi_mode then
         print_boxed_msg
@@ -213,11 +213,6 @@ let () =
         Unix.mkdir Config.esp_mount_point 0o744;
         Disk_layout.mount_esp_part disk_layout );
       config);
-  (* reg ~name:"Installing key files" (fun config ->
-   *     let disk_layout = Option.get config.disk_layout in
-   *     if 
-   *     config
-   *   ); *)
   reg ~name:"Installing base system (base base-devel)" (fun config ->
       exec_no_capture
         (Printf.sprintf "pacstrap %s base base-devel" Config.sys_mount_point);
@@ -227,6 +222,25 @@ let () =
         (Printf.sprintf "genfstab -U %s >> %s/etc/fstab" Config.sys_mount_point
            Config.sys_mount_point);
       config);
+  reg ~name:"Installing keyfile" (fun config ->
+      let encrypt = Option.get config.encrypt in
+      let disk_layout = Option.get config.disk_layout in
+      if encrypt then (
+        let sys_part_luks = match disk_layout.sys_part.upper with
+          | Plain_FS _ -> failwith "Expected LUKS"
+          | Luks luks -> luks
+        in
+        let keyfile_path = (Printf.sprintf "%s/root/%s" Config.sys_mount_point Config.sys_part_keyfile_name) in
+        let oc = open_out keyfile_path in
+        Fun.protect ~finally:(fun () -> close_out oc) (fun () -> output_string oc sys_part_luks.key);
+        Unix.chmod keyfile_path 0o000 ;
+        exec (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
+      );
+      config
+    );
+  reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
+      config
+    );
   reg ~name:"Setting up hostname" (fun config ->
       let oc =
         open_out (Printf.sprintf "%s/etc/hostname" Config.sys_mount_point)
