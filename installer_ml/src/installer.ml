@@ -49,6 +49,10 @@ let () =
         ask_string_confirm ~is_valid:(fun x -> x <> "") "Hostname"
       in
       {config with hostname = Some hostname});
+  reg ~name:"Pick whether to encrypt" (fun config ->
+      let encrypt = ask_yn "Enable encryption?" = Yes in
+      { config with encrypted = Some encrypt }
+    );
   reg ~name:"Pick disk layout choice" (fun config ->
       let open Disk_layout in
       let choices =
@@ -67,6 +71,7 @@ let () =
       {config with is_efi_mode = Some is_efi_mode});
   reg ~name:"Configure disk setup parameters" (fun config ->
       let open Disk_layout in
+      let encrypt = Option.get config.encrypted in
       let is_efi_mode = Option.get config.is_efi_mode in
       if is_efi_mode then
         print_boxed_msg
@@ -101,7 +106,6 @@ let () =
         else (
           print_endline "Creating MBR partition table";
           exec (Printf.sprintf "parted %s mklabel msdos" disk) );
-        let encrypt = ask_yn "Enable encryption?" = Yes in
         (* partitioning *)
         print_endline "Partitioning";
         let disk_size_MiB = Disk_utils.disk_size disk / 1024 / 1024 in
@@ -190,7 +194,6 @@ let () =
           in
           Disk_part_tree.get ~disk_index ~part_index disk_part_tree
         in
-        let encrypt = ask_yn "Enable encryption?" = Yes in
         let esp_part = Option.map make_esp_part esp_part_path in
         let boot_part = make_boot_part encrypt boot_part_path in
         let sys_part = make_sys_part encrypt sys_part_path in
@@ -211,6 +214,8 @@ let () =
         Disk_layout.mount_esp_part disk_layout );
       config);
   (* reg ~name:"Installing key files" (fun config ->
+   *     let disk_layout = Option.get config.disk_layout in
+   *     if 
    *     config
    *   ); *)
   reg ~name:"Installing base system (base base-devel)" (fun config ->
