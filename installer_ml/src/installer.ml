@@ -233,7 +233,7 @@ let () =
         let keyfile_path = (Printf.sprintf "%s/root/%s" Config.sys_mount_point Config.sys_part_keyfile_name) in
         let oc = open_out keyfile_path in
         Fun.protect ~finally:(fun () -> close_out oc) (fun () -> output_string oc sys_part_luks.primary_key);
-        Unix.chmod keyfile_path 0o000 ;
+        Unix.chmod keyfile_path 0o000;
         exec (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
       );
       config
@@ -242,12 +242,19 @@ let () =
       let encrypt = Option.get config.encrypt in
       let disk_layout = Option.get config.disk_layout in
       if encrypt then (
-        let sys_part_luks = match disk_layout.sys_part.upper with
+        let boot_part_luks = match disk_layout.boot_part.upper with
           | Plain_FS _ -> failwith "Expected LUKS"
           | Luks luks -> luks
         in
+        let boot_secondary_key = Option.get boot_part_luks.secondary_key in
+        let keyfile_path = Printf.sprintf "%s/root/%s" Config.sys_mount_point Config.boot_mount_point in
+        let oc = open_out keyfile_path in
+        Fun.protect ~finally:(fun () -> close_out oc) (fun () -> output_string oc boot_secondary_key);
         ()
       );
+      config
+    );
+  reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot" (fun config ->
       config
     );
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
