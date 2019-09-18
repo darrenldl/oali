@@ -297,30 +297,32 @@ let () =
              (fun () -> output_string crypttab_oc line) );
        config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
-      let file =
-        Printf.sprintf "%s/etc/mkinitcpio.conf" Config.sys_mount_point
-      in
-      let fill_in_FILES =
-        let re = "^FILES" |> Re.Posix.re |> Re.compile in
-        fun s ->
-          match Re.matches re s with
-          | [] ->
-            [s]
-          | _ ->
-            [Printf.sprintf "FILES=(/root/%s)" Config.sys_part_keyfile_name]
-      in
-      let fill_in_HOOKS =
-        let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
-        fun s ->
-          match Re.matches re s with
-          | [] ->
-            [s]
-          | _ ->
-            [ "HOOKS=(base udev autodetect keyboard keymap consolefont \
-               modconf block encrypt lvm2 filesystems fsck)" ]
-      in
-      File.filter_map_lines ~file fill_in_FILES;
-      File.filter_map_lines ~file fill_in_HOOKS;
+      let encrypt = Option.get config.encrypt in
+      if encrypt then (
+        let file =
+          Printf.sprintf "%s/etc/mkinitcpio.conf" Config.sys_mount_point
+        in
+        let fill_in_FILES =
+          let re = "^FILES" |> Re.Posix.re |> Re.compile in
+          fun s ->
+            match Re.matches re s with
+            | [] ->
+              [s]
+            | _ ->
+              [Printf.sprintf "FILES=(/root/%s)" Config.sys_part_keyfile_name]
+        in
+        let fill_in_HOOKS =
+          let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
+          fun s ->
+            match Re.matches re s with
+            | [] ->
+              [s]
+            | _ ->
+              [ "HOOKS=(base udev autodetect keyboard keymap consolefont \
+                 modconf block encrypt lvm2 filesystems fsck)" ]
+        in
+        File.filter_map_lines ~file fill_in_FILES;
+        File.filter_map_lines ~file fill_in_HOOKS );
       config);
   reg ~name:"Setting up hostname" (fun config ->
       let oc =
