@@ -222,7 +222,7 @@ let () =
         (Printf.sprintf "genfstab -U %s >> %s/etc/fstab" Config.sys_mount_point
            Config.sys_mount_point);
       config);
-  reg ~name:"Installing keyfile" (fun config ->
+  reg ~name:"Installing keyfile for /" (fun config ->
       let encrypt = Option.get config.encrypt in
       let disk_layout = Option.get config.disk_layout in
       if encrypt then (
@@ -232,9 +232,21 @@ let () =
         in
         let keyfile_path = (Printf.sprintf "%s/root/%s" Config.sys_mount_point Config.sys_part_keyfile_name) in
         let oc = open_out keyfile_path in
-        Fun.protect ~finally:(fun () -> close_out oc) (fun () -> output_string oc sys_part_luks.key);
+        Fun.protect ~finally:(fun () -> close_out oc) (fun () -> output_string oc sys_part_luks.primary_key);
         Unix.chmod keyfile_path 0o000 ;
         exec (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
+      );
+      config
+    );
+  reg ~name:"Installing keyfile for unlocking /boot after boot" (fun config ->
+      let encrypt = Option.get config.encrypt in
+      let disk_layout = Option.get config.disk_layout in
+      if encrypt then (
+        let sys_part_luks = match disk_layout.sys_part.upper with
+          | Plain_FS _ -> failwith "Expected LUKS"
+          | Luks luks -> luks
+        in
+        ()
       );
       config
     );

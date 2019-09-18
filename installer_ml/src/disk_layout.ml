@@ -29,7 +29,8 @@ type luks_state =
 
 type luks =
   { enc_params : enc_params option
-  ; key : string
+  ; primary_key : string
+  ; secondary_key : string option
   ; version : luks_version
   ; inner_fs : fs
   ; mapper_name : string
@@ -88,7 +89,7 @@ let luks_open {lower; upper; _} =
         luks.mapper_name
       |> exec_with_stdin
     in
-    output_string stdin luks.key;
+    output_string stdin luks.primary_key;
     f ();
     luks.state <- Luks_opened
 
@@ -140,24 +141,47 @@ let format_part ({upper; lower; state} as p) =
       format_cmd fs lower.path |> exec
     | Luks luks ->
       let enc_params = Option.get luks.enc_params in
-      let stdin, f =
-        String.concat " "
-          [ "cryptsetup"
-          ; "luksFormat"
-          ; "-y"
-          ; "--key-file=-"
-          ; "--iter-time"
-          ; string_of_int enc_params.iter_time_ms
-          ; "--key-size"
-          ; string_of_int enc_params.key_size
-          ; "--type"
-          ; Printf.sprintf "luks%d" (luks_version_to_int luks.version)]
-        |> exec_with_stdin
-      in
-      output_string stdin luks.key;
-      f ();
+      ( let stdin, f =
+          String.concat " "
+            [ "cryptsetup"
+            ; "luksFormat"
+            ; "-y"
+            ; "--key-file=-"
+            ; "--iter-time"
+            ; string_of_int enc_params.iter_time_ms
+            ; "--key-size"
+            ; string_of_int enc_params.key_size
+            ; "--type"
+            ; Printf.sprintf "luks%d" (luks_version_to_int luks.version)]
+          |> exec_with_stdin
+        in
+        output_string stdin luks.primary_key;
+        f ();
+      );
+      ( match luks.secondary_key with
+        | None -> ()
+        | Some secondary_key ->
+          let tmp_path = Filename.concat (Filename.get_temp_dir_name ()) (Filename.temp_file "installer" "secondary_key") in
+          let tmp_oc = open_out tmp_path in
+          Fun.protect ~finally:(fun () -> close_out tmp_oc) (fun () -> output_string tmp_oc secondary_key);
+          let stdin, f =
+            String.concat " "
+              [ "cryptsetup"
+              ; "luksAddKey"
+              ; "-y"
+              ; "--key-file=-"
+              ; tmp_path
+              ]
+            |> exec_with_stdin
+          in
+          output_string stdin luks.primary_key;
+          f ();
+      );
+      luks_open p;
       let mapper_name = luks_to_mapper_name_cmd_string luks in
-      format_cmd luks.inner_fs mapper_name |> exec );
+      exec (format_cmd luks.inner_fs mapper_name);
+      luks_close p;
+  );
   p.state <- Unmounted
 
 let format layout =
@@ -165,9 +189,10 @@ let format layout =
   format_part layout.boot_part;
   format_part layout.sys_part
 
-let make_luks ?enc_params ?(key = Rand_utils.gen_rand_string ~len:4096)
+let make_luks ?enc_params ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
+    ?(add_secondary_key = false)
     ?(version = LuksV2) inner_fs ~mapper_name =
-  {enc_params; key; version; inner_fs; mapper_name; state = Luks_closed}
+  {enc_params; primary_key; secondary_key = if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:4096) else None; version; inner_fs; mapper_name; state = Luks_closed}
 
 let make_part ~path upper =
   let lower = {path} in
@@ -179,13 +204,13 @@ let make_esp_part path = make_part ~path (Plain_FS Fat32)
 
 let make_boot_part encrypt path =
   if encrypt then
-    let key =
+    let primary_key =
       Misc_utils.ask_string_confirm
         ~is_valid:(fun x -> x <> "")
         "Please enter passphrase for encryption"
     in
     make_part ~path
-      (Luks (make_luks ~key ~version:LuksV1 Ext4 ~mapper_name:mapper_name_boot))
+      (Luks (make_luks ~primary_key ~add_secondary_key:true ~version:LuksV1 Ext4 ~mapper_name:mapper_name_boot))
   else make_part ~path (Plain_FS Ext4)
 
 let make_sys_part encrypt path =
