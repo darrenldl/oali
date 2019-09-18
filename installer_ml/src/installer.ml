@@ -51,8 +51,7 @@ let () =
       {config with hostname = Some hostname});
   reg ~name:"Pick whether to encrypt" (fun config ->
       let encrypt = ask_yn "Enable encryption?" = Yes in
-      { config with encrypt = Some encrypt }
-    );
+      {config with encrypt = Some encrypt});
   reg ~name:"Pick disk layout choice" (fun config ->
       let open Disk_layout in
       let choices =
@@ -226,59 +225,76 @@ let () =
       let encrypt = Option.get config.encrypt in
       let disk_layout = Option.get config.disk_layout in
       if encrypt then (
-        let sys_part_luks = match disk_layout.sys_part.upper with
-          | Plain_FS _ -> failwith "Expected LUKS"
-          | Luks luks -> luks
+        let sys_part_luks =
+          match disk_layout.sys_part.upper with
+          | Plain_FS _ ->
+            failwith "Expected LUKS"
+          | Luks luks ->
+            luks
         in
-        let keyfile_path = (Printf.sprintf "%s/root/%s" Config.sys_mount_point Config.sys_part_keyfile_name) in
+        let keyfile_path =
+          Printf.sprintf "%s/root/%s" Config.sys_mount_point
+            Config.sys_part_keyfile_name
+        in
         let oc = open_out keyfile_path in
-        Fun.protect ~finally:(fun () -> close_out oc) (fun () -> output_string oc sys_part_luks.primary_key);
+        Fun.protect
+          ~finally:(fun () -> close_out oc)
+          (fun () -> output_string oc sys_part_luks.primary_key);
         Unix.chmod keyfile_path 0o000;
-        exec (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
-      );
-      config
-    );
+        exec
+          (Printf.sprintf "chmod 600 %s/initramfs-linux*"
+             Config.boot_mount_point) );
+      config);
   reg ~name:"Installing keyfile for unlocking /boot after boot" (fun config ->
       let encrypt = Option.get config.encrypt in
       let disk_layout = Option.get config.disk_layout in
       if encrypt then (
-        let boot_part_luks = match disk_layout.boot_part.upper with
-          | Plain_FS _ -> failwith "Expected LUKS"
-          | Luks luks -> luks
+        let boot_part_luks =
+          match disk_layout.boot_part.upper with
+          | Plain_FS _ ->
+            failwith "Expected LUKS"
+          | Luks luks ->
+            luks
         in
         let boot_secondary_key = Option.get boot_part_luks.secondary_key in
-        let keyfile_path = Printf.sprintf "%s/root/%s" Config.sys_mount_point Config.boot_mount_point in
+        let keyfile_path =
+          Printf.sprintf "%s/root/%s" Config.sys_mount_point
+            Config.boot_mount_point
+        in
         let oc = open_out keyfile_path in
-        Fun.protect ~finally:(fun () -> close_out oc) (fun () -> output_string oc boot_secondary_key);
-        ()
-      );
-      config
-    );
-  reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot" (fun config ->
-      config
-    );
+        Fun.protect
+          ~finally:(fun () -> close_out oc)
+          (fun () -> output_string oc boot_secondary_key);
+        () );
+      config);
+  reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot"
+    (fun config -> config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
-      let file = Printf.sprintf "%s/etc/mkinitcpio.conf" Config.sys_mount_point in
+      let file =
+        Printf.sprintf "%s/etc/mkinitcpio.conf" Config.sys_mount_point
+      in
       let fill_in_FILES =
         let re = "^FILES" |> Re.Posix.re |> Re.compile in
-        (fun s ->
-           match Re.matches re s with
-           | [] -> [s]
-           | _ -> [Printf.sprintf "FILES=(/root/%s)" Config.sys_part_keyfile_name]
-          )
+        fun s ->
+          match Re.matches re s with
+          | [] ->
+            [s]
+          | _ ->
+            [Printf.sprintf "FILES=(/root/%s)" Config.sys_part_keyfile_name]
       in
       let fill_in_HOOKS =
         let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
-        (fun s ->
-           match Re.matches re s with
-           | [] -> [s]
-           | _ -> ["HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck)"]
-          )
+        fun s ->
+          match Re.matches re s with
+          | [] ->
+            [s]
+          | _ ->
+            [ "HOOKS=(base udev autodetect keyboard keymap consolefont \
+               modconf block encrypt lvm2 filesystems fsck)" ]
       in
       File.filter_map_lines ~file fill_in_FILES;
       File.filter_map_lines ~file fill_in_HOOKS;
-      config
-    );
+      config);
   reg ~name:"Setting up hostname" (fun config ->
       let oc =
         open_out (Printf.sprintf "%s/etc/hostname" Config.sys_mount_point)

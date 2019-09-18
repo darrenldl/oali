@@ -1,6 +1,10 @@
-let tail start s =
-  let len = String.length s in
-  String.sub s start (len - start)
+let tail_w_pos ~pos s =
+  let s_len = String.length s in
+  String.sub s pos (s_len - pos)
+
+let tail_w_len ~len s =
+  let s_len = String.length s in
+  String.sub s (s_len - len) len
 
 let strip_tail_num s =
   let pos = ref None in
@@ -31,4 +35,4 @@ let strip_prefix ~prefix s =
   if s_len < prefix_len then s
   else
     let sub = String.sub s 0 prefix_len in
-    if sub = prefix then tail prefix_len s else s
+    if sub = prefix then String.sub s prefix_len s_len else s

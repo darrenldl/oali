@@ -66,9 +66,7 @@ type layout_choice =
   (* | Sys_part_plus_usb_drive *)
 [@@deriving sexp]
 
-let luks_version_to_int ver = match ver with
-  | LuksV1 -> 1
-  | LuksV2 -> 2
+let luks_version_to_int ver = match ver with LuksV1 -> 1 | LuksV2 -> 2
 
 (* let make_lower ~disk ~part_num = {disk; part_num} *)
 
@@ -141,47 +139,46 @@ let format_part ({upper; lower; state} as p) =
       format_cmd fs lower.path |> exec
     | Luks luks ->
       let enc_params = Option.get luks.enc_params in
-      ( let stdin, f =
-          String.concat " "
-            [ "cryptsetup"
-            ; "luksFormat"
-            ; "-y"
-            ; "--key-file=-"
-            ; "--iter-time"
-            ; string_of_int enc_params.iter_time_ms
-            ; "--key-size"
-            ; string_of_int enc_params.key_size
-            ; "--type"
-            ; Printf.sprintf "luks%d" (luks_version_to_int luks.version)]
-          |> exec_with_stdin
-        in
-        output_string stdin luks.primary_key;
-        f ();
-      );
+      (let stdin, f =
+         String.concat " "
+           [ "cryptsetup"
+           ; "luksFormat"
+           ; "-y"
+           ; "--key-file=-"
+           ; "--iter-time"
+           ; string_of_int enc_params.iter_time_ms
+           ; "--key-size"
+           ; string_of_int enc_params.key_size
+           ; "--type"
+           ; Printf.sprintf "luks%d" (luks_version_to_int luks.version) ]
+         |> exec_with_stdin
+       in
+       output_string stdin luks.primary_key;
+       f ());
       ( match luks.secondary_key with
-        | None -> ()
+        | None ->
+          ()
         | Some secondary_key ->
-          let tmp_path = Filename.concat (Filename.get_temp_dir_name ()) (Filename.temp_file "installer" "secondary_key") in
+          let tmp_path =
+            Filename.concat
+              (Filename.get_temp_dir_name ())
+              (Filename.temp_file "installer" "secondary_key")
+          in
           let tmp_oc = open_out tmp_path in
-          Fun.protect ~finally:(fun () -> close_out tmp_oc) (fun () -> output_string tmp_oc secondary_key);
+          Fun.protect
+            ~finally:(fun () -> close_out tmp_oc)
+            (fun () -> output_string tmp_oc secondary_key);
           let stdin, f =
             String.concat " "
-              [ "cryptsetup"
-              ; "luksAddKey"
-              ; "-y"
-              ; "--key-file=-"
-              ; tmp_path
-              ]
+              ["cryptsetup"; "luksAddKey"; "-y"; "--key-file=-"; tmp_path]
             |> exec_with_stdin
           in
           output_string stdin luks.primary_key;
-          f ();
-      );
+          f () );
       luks_open p;
       let mapper_name = luks_to_mapper_name_cmd_string luks in
       exec (format_cmd luks.inner_fs mapper_name);
-      luks_close p;
-  );
+      luks_close p );
   p.state <- Unmounted
 
 let format layout =
@@ -190,9 +187,16 @@ let format layout =
   format_part layout.sys_part
 
 let make_luks ?enc_params ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
-    ?(add_secondary_key = false)
-    ?(version = LuksV2) inner_fs ~mapper_name =
-  {enc_params; primary_key; secondary_key = if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:4096) else None; version; inner_fs; mapper_name; state = Luks_closed}
+    ?(add_secondary_key = false) ?(version = LuksV2) inner_fs ~mapper_name =
+  { enc_params
+  ; primary_key
+  ; secondary_key =
+      ( if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:4096)
+        else None )
+  ; version
+  ; inner_fs
+  ; mapper_name
+  ; state = Luks_closed }
 
 let make_part ~path upper =
   let lower = {path} in
@@ -210,7 +214,9 @@ let make_boot_part encrypt path =
         "Please enter passphrase for encryption"
     in
     make_part ~path
-      (Luks (make_luks ~primary_key ~add_secondary_key:true ~version:LuksV1 Ext4 ~mapper_name:mapper_name_boot))
+      (Luks
+         (make_luks ~primary_key ~add_secondary_key:true ~version:LuksV1 Ext4
+            ~mapper_name:mapper_name_boot))
   else make_part ~path (Plain_FS Ext4)
 
 let make_sys_part encrypt path =

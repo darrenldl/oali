@@ -4,7 +4,7 @@ let list_disk_block_devs () =
   paths
   |> List.map (fun s -> dir ^ s)
   |> List.map Unix.readlink
-  |> List.map (String_utils.tail 6)
+  |> List.map (String_utils.tail_w_pos ~pos:6)
   |> List.filter (fun s -> String.sub s 0 2 <> "dm")
   |> List.filter (fun s -> String.sub s 0 2 <> "sr")
   |> List.map (fun s -> "/dev/" ^ s)
@@ -35,3 +35,19 @@ let disk_size disk =
   in
   let size_str = List.hd res.stdout in
   int_of_string size_str
+
+let uuid_of_dev dev =
+  let dir = "/dev/disk/by-uuid" in
+  let uuids = Sys.readdir dir |> Array.to_list in
+  let devs =
+    uuids
+    |> List.map (Filename.concat dir)
+    |> List.map Unix.readlink
+    |> List.map (String_utils.tail_w_pos ~pos:6)
+  in
+  List.iter print_endline uuids;
+  List.iter print_endline devs;
+  List.combine devs uuids
+  |> List.filter (fun (s, _) -> s = Filename.basename dev)
+  |> List.hd
+  |> fun (_, uuid) -> uuid
