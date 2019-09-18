@@ -45,8 +45,6 @@ let uuid_of_dev dev =
     |> List.map Unix.readlink
     |> List.map (String_utils.tail_w_pos ~pos:6)
   in
-  List.iter print_endline uuids;
-  List.iter print_endline devs;
   List.combine devs uuids
   |> List.filter (fun (s, _) -> s = Filename.basename dev)
   |> List.hd
