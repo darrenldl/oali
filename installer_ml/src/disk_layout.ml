@@ -168,7 +168,12 @@ let format_part ({upper; lower; state} as p) =
             (fun () -> output_string tmp_oc secondary_key);
           let stdin, f =
             String.concat " "
-              ["cryptsetup"; "luksAddKey"; "-y"; "--key-file=-"; lower.path; tmp_path]
+              [ "cryptsetup"
+              ; "luksAddKey"
+              ; "-y"
+              ; "--key-file=-"
+              ; lower.path
+              ; tmp_path ]
             |> exec_with_stdin
           in
           output_string stdin luks.primary_key;
