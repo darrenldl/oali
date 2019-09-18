@@ -8,6 +8,7 @@ let list_disk_block_devs () =
   |> List.filter (fun s -> String.sub s 0 2 <> "dm")
   |> List.filter (fun s -> String.sub s 0 2 <> "sr")
   |> List.map (fun s -> "/dev/" ^ s)
+  |> List.sort_uniq compare
 
 let list_parts () =
   list_disk_block_devs ()
