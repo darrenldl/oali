@@ -57,9 +57,9 @@ let run task_book =
         | Sys_error msg ->
           Printf.printf "Sys_error : %s\n" msg;
           (false, task_book.config)
-        | _ ->
-          print_endline "Unknown failure";
-          (false, task_book.config)
+          (* | _ ->
+           *   print_endline "Unknown failure";
+           *   (false, task_book.config) *)
       in
       if not succeeded then
         let retry =

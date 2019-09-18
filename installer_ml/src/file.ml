@@ -9,9 +9,7 @@ let filter_map_lines ~file (f : string -> string list) =
       List.iter (fun new_s -> output_string oc (new_s ^ "\n")) new_s_s;
       aux ic oc f
   in
-  let tmp_dir = Filename.get_temp_dir_name () in
-  let dst_name = Filename.temp_file "installer" file in
-  let dst_path = Filename.concat tmp_dir dst_name in
+  let dst_path = Filename.temp_file "installer" file in
   let dst_oc = open_out dst_path in
   let src_ic = open_in file in
   Fun.protect

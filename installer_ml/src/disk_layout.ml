@@ -134,40 +134,36 @@ let format_part ({upper; lower; state} as p) =
     | Plain_FS fs ->
       format_cmd fs lower.path |> exec
     | Luks luks ->
-      let enc_opts = match luks.enc_params with
-        | None -> []
+      let enc_opts =
+        match luks.enc_params with
+        | None ->
+          []
         | Some enc_params ->
-          [
-           "--iter-time"
-           ; string_of_int enc_params.iter_time_ms
-           ; "--key-size"
-           ; string_of_int enc_params.key_size
-          ]
+          [ "--iter-time"
+          ; string_of_int enc_params.iter_time_ms
+          ; "--key-size"
+          ; string_of_int enc_params.key_size ]
       in
       (let stdin, f =
          String.concat " "
-           ([ "cryptsetup"
-           ; "luksFormat"
-           ; "-y"
-           ; "--key-file=-"
-           ; "--type"
-            ; Printf.sprintf "luks%d" (luks_version_to_int luks.version) ]
-            @ enc_opts
-            @ [ lower.path
-            ])
+           ( [ "cryptsetup"
+             ; "luksFormat"
+             ; "-y"
+             ; "--key-file=-"
+             ; "--type"
+             ; Printf.sprintf "luks%d" (luks_version_to_int luks.version) ]
+             @ enc_opts @ [lower.path] )
          |> exec_with_stdin
        in
+       print_endline "Sending luks key via stdin";
        output_string stdin luks.primary_key;
+       print_endline "luks key sent";
        f ());
       ( match luks.secondary_key with
         | None ->
           ()
         | Some secondary_key ->
-          let tmp_path =
-            Filename.concat
-              (Filename.get_temp_dir_name ())
-              (Filename.temp_file "installer" "secondary_key")
-          in
+          let tmp_path = Filename.temp_file "installer" "secondary_key" in
           let tmp_oc = open_out tmp_path in
           Fun.protect
             ~finally:(fun () -> close_out tmp_oc)
