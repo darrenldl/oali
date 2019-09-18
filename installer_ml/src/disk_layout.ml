@@ -134,19 +134,27 @@ let format_part ({upper; lower; state} as p) =
     | Plain_FS fs ->
       format_cmd fs lower.path |> exec
     | Luks luks ->
-      let enc_params = Option.get luks.enc_params in
-      (let stdin, f =
-         String.concat " "
-           [ "cryptsetup"
-           ; "luksFormat"
-           ; "-y"
-           ; "--key-file=-"
-           ; "--iter-time"
+      let enc_opts = match luks.enc_params with
+        | None -> []
+        | Some enc_params ->
+          [
+           "--iter-time"
            ; string_of_int enc_params.iter_time_ms
            ; "--key-size"
            ; string_of_int enc_params.key_size
+          ]
+      in
+      (let stdin, f =
+         String.concat " "
+           ([ "cryptsetup"
+           ; "luksFormat"
+           ; "-y"
+           ; "--key-file=-"
            ; "--type"
-           ; Printf.sprintf "luks%d" (luks_version_to_int luks.version) ]
+            ; Printf.sprintf "luks%d" (luks_version_to_int luks.version) ]
+            @ enc_opts
+            @ [ lower.path
+            ])
          |> exec_with_stdin
        in
        output_string stdin luks.primary_key;
