@@ -236,7 +236,7 @@ let () =
           Printf.sprintf "%s/root/%s" Config.sys_mount_point
             Config.sys_part_keyfile_name
         in
-        let oc = open_out keyfile_path in
+        let oc = open_out_bin keyfile_path in
         Fun.protect
           ~finally:(fun () -> close_out oc)
           (fun () -> output_string oc sys_part_luks.primary_key);
@@ -259,16 +259,43 @@ let () =
         let boot_secondary_key = Option.get boot_part_luks.secondary_key in
         let keyfile_path =
           Printf.sprintf "%s/root/%s" Config.sys_mount_point
-            Config.boot_mount_point
+            Config.boot_part_keyfile_name
         in
-        let oc = open_out keyfile_path in
+        let oc = open_out_bin keyfile_path in
         Fun.protect
           ~finally:(fun () -> close_out oc)
           (fun () -> output_string oc boot_secondary_key);
         () );
       config);
   reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot"
-    (fun config -> config);
+    (fun config ->
+       let encrypt = Option.get config.encrypt in
+       let disk_layout = Option.get config.disk_layout in
+       ( if encrypt then
+           let boot_part_path = disk_layout.boot_part.lower.path in
+           let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
+           let keyfile_path =
+             Printf.sprintf "/root/%s" Config.boot_part_keyfile_name
+           in
+           (* let boot_part_luks = match disk_layout.boot_part.upper with
+            *   | Plain_FS _ -> failwith "Expected LUKS"
+            *   | Luks luks -> luks
+            * in
+            * let boot_part_iter_time_ms = boot_part_luks.enc_params.iter_time_ms *)
+           let line =
+             Printf.sprintf "%s UUID=%s %s %s\n" Config.boot_mapper_name
+               boot_part_uuid keyfile_path
+               (String.concat ","
+                  [Printf.sprintf "x-systemd.device-timeout=%ds" 90])
+           in
+           let crypttab_oc =
+             open_out_gen [Open_append; Open_text] 0o600
+               (Printf.sprintf "%s/etc/crypttab" Config.sys_mount_point)
+           in
+           Fun.protect
+             ~finally:(fun () -> close_out crypttab_oc)
+             (fun () -> output_string crypttab_oc line) );
+       config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
       let file =
         Printf.sprintf "%s/etc/mkinitcpio.conf" Config.sys_mount_point

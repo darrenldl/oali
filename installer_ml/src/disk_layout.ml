@@ -1,10 +1,6 @@
 open Sexplib.Std
 open Proc_utils
 
-let mapper_name_boot = "crypt_boot"
-
-let mapper_name_root = "crypt_root"
-
 type fs =
   | Fat32
   | Ext4
@@ -216,12 +212,13 @@ let make_boot_part encrypt path =
     make_part ~path
       (Luks
          (make_luks ~primary_key ~add_secondary_key:true ~version:LuksV1 Ext4
-            ~mapper_name:mapper_name_boot))
+            ~mapper_name:Config.boot_mapper_name))
   else make_part ~path (Plain_FS Ext4)
 
 let make_sys_part encrypt path =
   if encrypt then
-    make_part ~path (Luks (make_luks Ext4 ~mapper_name:mapper_name_root))
+    make_part ~path
+      (Luks (make_luks Ext4 ~mapper_name:Config.root_mapper_name))
   else make_part ~path (Plain_FS Ext4)
 
 let mount_esp_part layout =
