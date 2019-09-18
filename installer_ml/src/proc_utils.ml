@@ -53,18 +53,12 @@ let exec_ret_with_stdin_no_exn cmd :
   let stdout_chan, stdin_chan, stderr_chan = Unix.open_process_full cmd [||] in
   ( stdin_chan
   , fun () ->
-    print_endline "Closing stdin";
     close_out stdin_chan;
-    print_endline "Gathering stdout, stderr";
     let stdout = input_all_lines stdout_chan in
-    print_endline "stdout gathered";
     let stderr = input_all_lines stderr_chan in
-    print_endline "stderr gathered";
-    print_endline "Closing channels";
     let status =
       Unix.close_process_full (stdout_chan, stdin_chan, stderr_chan)
     in
-    print_endline "Channels closed";
     let res = {cmd; status; stdout; stderr} in
     if exec_result_is_ok res then Ok res else Error res )
 

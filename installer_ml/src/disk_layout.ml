@@ -155,9 +155,7 @@ let format_part ({upper; lower; state} as p) =
              @ enc_opts @ [lower.path] )
          |> exec_with_stdin
        in
-       print_endline "Sending luks key via stdin";
        output_string stdin luks.primary_key;
-       print_endline "luks key sent";
        f ());
       ( match luks.secondary_key with
         | None ->
@@ -170,7 +168,7 @@ let format_part ({upper; lower; state} as p) =
             (fun () -> output_string tmp_oc secondary_key);
           let stdin, f =
             String.concat " "
-              ["cryptsetup"; "luksAddKey"; "-y"; "--key-file=-"; tmp_path]
+              ["cryptsetup"; "luksAddKey"; "-y"; "--key-file=-"; tmp_path; lower.path]
             |> exec_with_stdin
           in
           output_string stdin luks.primary_key;
