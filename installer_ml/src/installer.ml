@@ -320,6 +320,10 @@ let () =
         File.filter_map_lines ~file fill_in_FILES;
         File.filter_map_lines ~file fill_in_HOOKS );
       config);
+  reg ~name:"Recreating images" (fun config ->
+      Arch_chroot.exec "mkinitcpio -p linux";
+      config
+    );
   reg ~name:"Setting up hostname" (fun config ->
       let oc =
         open_out (Printf.sprintf "%s/etc/hostname" Config.sys_mount_point)
@@ -393,7 +397,8 @@ let () =
             | _ ->
               [ Printf.sprintf
                   "%s=\"cryptdevice=UUID=%s:%s \
-                   root=/dev/mapper/%s cryptkey=rootfs:/root/%s\""
+                   cryptkey=rootfs:/root/%s \
+                   root=/dev/mapper/%s \""
                   grub_cmdline_linux sys_part_uuid Config.root_mapper_name
                   Config.root_mapper_name Config.sys_part_keyfile_name ]
           in
