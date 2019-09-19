@@ -36,7 +36,7 @@ let run task_book =
     | None ->
       ()
     | Some (name, task) ->
-      Proc_utils.exec_no_capture "clear";
+      Proc_utils.clear ();
       print_endline name;
       for _ = 0 to String.length name - 1 do
         print_string "="

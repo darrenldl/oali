@@ -85,3 +85,6 @@ let exec_ret_no_capture cmd =
     raise (Exec_fail r)
 
 let exec_no_capture cmd = exec_ret_no_capture cmd |> ignore
+
+let clear () =
+  exec_no_capture "clear"
