@@ -398,9 +398,10 @@ let () =
               [ Printf.sprintf
                   "%s=\"cryptdevice=UUID=%s:%s \
                    cryptkey=rootfs:/root/%s \
-                   root=/dev/mapper/%s \""
+                   root=/dev/mapper/%s\""
                   grub_cmdline_linux sys_part_uuid Config.root_mapper_name
-                  Config.root_mapper_name Config.sys_part_keyfile_name ]
+                  Config.sys_part_keyfile_name
+                  Config.root_mapper_name  ]
           in
           File.filter_map_lines ~file:default_grub_path update_grub_cmdline );
       config);
