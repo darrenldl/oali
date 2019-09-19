@@ -331,6 +331,38 @@ let () =
         ~finally:(fun () -> close_out oc)
         (fun () -> output_string oc (Option.get config.hostname));
       config);
+  reg ~name:"Setting up locale" (fun config ->
+      let en_us = "en_US.UTF-8 UTF-8" in
+      let en_dk = "en_DK.UTF-8 UTF-8" in
+      let uncommet_locales =
+        let re_en_us =
+          Printf.sprintf "^#%s" en_us |> Re.Posix.re |> Re.compile
+        in
+        let re_en_dk =
+          Printf.sprintf "^#%s" en_dk |> Re.Posix.re |> Re.compile
+        in
+        fun s ->
+          match Re.matches re_en_us s with
+          | [] -> (
+              match Re.matches re_en_dk s with [] -> [en_dk] | _ -> [s] )
+          | _ ->
+            [en_us]
+      in
+      File.filter_map_lines
+        ~file:(Printf.sprintf "%s/etc/locale.gen" Config.sys_mount_point)
+        uncommet_locales;
+      let oc =
+        open_out_gen [Open_text; Open_append] 0o600
+          (Printf.sprintf "%s/etc/locale.conf" Config.sys_mount_point)
+      in
+      Fun.protect
+        ~finally:(fun () -> close_out oc)
+        (fun () ->
+           output_string oc (Printf.sprintf "LANG=%s\n" en_us);
+           output_string oc (Printf.sprintf "LC_ALL=%s\n" en_us);
+           output_string oc (Printf.sprintf "LC_TIME=%s\n" en_dk));
+      Arch_chroot.exec "locale-gen";
+      config);
   reg ~name:"Updating package database" (fun config ->
       Arch_chroot.pacman "-Sy"; config);
   reg ~name:"Installing wifi-menu" (fun config ->
