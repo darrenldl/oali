@@ -210,7 +210,7 @@ let () =
       config);
   reg ~name:"Installing base system (base base-devel)" (fun config ->
       exec_no_capture
-        (Printf.sprintf "pacstrap %s base" Config.sys_mount_point);
+        (Printf.sprintf "pacstrap %s base base-devel" Config.sys_mount_point);
       config);
   reg ~name:"Generating fstab" (fun config ->
       exec
