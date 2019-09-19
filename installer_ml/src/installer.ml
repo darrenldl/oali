@@ -453,6 +453,22 @@ let () =
   reg ~name:"Generating GRUB config" (fun config ->
       Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
       config);
+  reg ~name:"Setting up root password" (fun config ->
+      Arch_chroot.exec_no_capture "passwd";
+      config
+    );
+  reg ~name:"Setting up user" (fun config ->
+      let user_name = ask_string_confirm ~is_valid:(fun s -> s <> "") "Please enter user name" in
+
+      print_endline "Adding user";
+
+      Arch_chroot.exec (Printf.sprintf "useradd -m \"%s\" -G users,wheel,rfkill" user_name);
+
+      Printf.printf "Setting password for %s" user_name;
+      Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
+
+      config
+    );
   reg ~name:"Unmounting partitions" (fun config ->
       let disk_layout = Option.get config.disk_layout in
       Disk_layout.unmount disk_layout;
