@@ -468,6 +468,17 @@ let () =
       Printf.printf "Setting password for %s" user_name;
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
       config);
+  (* reg ~name:"Copying useradd helper scripts" (fun config ->
+   *     let cwd = Sys.getcwd () in
+   *     let dst_path = Config.sys_mount_point ^ Config.llsh_files_dir_path in
+   *     FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper1_name] dst_path;
+   *     FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper2_name] dst_path;
+   *     Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper1_name) 0o660;
+   *     config
+   *   );
+   * reg ~name:"Setting up saltstack files" (fun config ->
+   *     config
+   *   ); *)
   reg ~name:"Unmounting partitions" (fun config ->
       let disk_layout = Option.get config.disk_layout in
       Disk_layout.unmount disk_layout;
