@@ -210,7 +210,7 @@ let () =
       config);
   reg ~name:"Installing base system (base base-devel)" (fun config ->
       exec_no_capture
-        (Printf.sprintf "pacstrap %s base base-devel" Config.sys_mount_point);
+        (Printf.sprintf "pacstrap %s base" Config.sys_mount_point);
       config);
   reg ~name:"Generating fstab" (fun config ->
       exec
@@ -347,11 +347,11 @@ let () =
           let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
           let enable_grub_enable_cryptodisk =
             let re_uncommented =
-              Printf.sprintf "^%s" grub_enable_cryptodisk
+              Printf.sprintf "^%s=" grub_enable_cryptodisk
               |> Re.Posix.re |> Re.compile
             in
             let re_commented =
-              Printf.sprintf "^#%s" grub_enable_cryptodisk
+              Printf.sprintf "^#%s=" grub_enable_cryptodisk
               |> Re.Posix.re |> Re.compile
             in
             fun match_count s ->
@@ -384,7 +384,7 @@ let () =
           in
           let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
           let re =
-            Printf.sprintf "^%s" grub_cmdline_linux |> Re.Posix.re |> Re.compile
+            Printf.sprintf "^%s=" grub_cmdline_linux |> Re.Posix.re |> Re.compile
           in
           let update_grub_cmdline s =
             match Re.matches re s with
@@ -393,10 +393,25 @@ let () =
             | _ ->
               [ Printf.sprintf
                   "%s=\"cryptdevice=UUID=%s:%s \
-                   root=/dev/mapper/%scryptkey=rootfs:/root/%s\""
+                   root=/dev/mapper/%s cryptkey=rootfs:/root/%s\""
                   grub_cmdline_linux sys_part_uuid Config.root_mapper_name
                   Config.root_mapper_name Config.sys_part_keyfile_name ]
           in
           File.filter_map_lines ~file:default_grub_path update_grub_cmdline );
       config);
+  reg ~name:"Installing GRUB to disk" (fun config ->
+      let is_efi_mode = Option.get config.is_efi_mode in
+      let disk_layout = Option.get config.disk_layout in
+      if is_efi_mode then (
+        Arch_chroot.exec "grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB --recheck"
+      ) else (
+        let boot_disk = Disk_utils.disk_of_part disk_layout.boot_part.lower.path in
+        Arch_chroot.exec (Printf.sprintf "grub-install --target=i386-pc --boot-directory=/boot --recheck %s" boot_disk)
+      );
+      config
+    );
+  reg ~name:"Generating GRUB config" (fun config ->
+      Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
+      config
+    );
   Task_book.run task_book

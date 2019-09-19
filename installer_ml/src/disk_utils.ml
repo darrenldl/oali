@@ -19,7 +19,7 @@ let list_parts () =
       | None ->
         false)
 
-let part_to_disk s = String_utils.strip_tail_num s
+let disk_of_part s = String_utils.strip_tail_num s
 
 let list_disks () =
   list_disk_block_devs ()

@@ -8,7 +8,7 @@ module DiskPartMap = Map.Make (struct
 
 let of_parts parts =
   parts
-  |> List.map (fun part -> (Disk_utils.part_to_disk part, part))
+  |> List.map (fun part -> (Disk_utils.disk_of_part part, part))
   |> List.fold_left
     (fun tbl (disk, part) ->
        match DiskPartMap.find_opt disk tbl with
