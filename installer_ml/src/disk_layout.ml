@@ -237,7 +237,8 @@ let mount_boot_part layout =
 let mount_sys_part layout =
   mount_part layout.sys_part ~mount_point:Config.sys_mount_point
 
-let unmount_esp_part layout = unmount_part (Option.get layout.esp_part)
+let unmount_esp_part layout =
+  Option.iter unmount_part layout.esp_part
 
 let unmount_boot_part layout = unmount_part layout.boot_part
 
