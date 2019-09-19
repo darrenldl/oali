@@ -322,8 +322,7 @@ let () =
       config);
   reg ~name:"Recreating images" (fun config ->
       Arch_chroot.exec "mkinitcpio -p linux";
-      config
-    );
+      config);
   reg ~name:"Setting up hostname" (fun config ->
       let oc =
         open_out (Printf.sprintf "%s/etc/hostname" Config.sys_mount_point)
@@ -396,28 +395,30 @@ let () =
               [s]
             | _ ->
               [ Printf.sprintf
-                  "%s=\"cryptdevice=UUID=%s:%s \
-                   cryptkey=rootfs:/root/%s \
+                  "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
                    root=/dev/mapper/%s\""
                   grub_cmdline_linux sys_part_uuid Config.root_mapper_name
-                  Config.sys_part_keyfile_name
-                  Config.root_mapper_name  ]
+                  Config.sys_part_keyfile_name Config.root_mapper_name ]
           in
           File.filter_map_lines ~file:default_grub_path update_grub_cmdline );
       config);
   reg ~name:"Installing GRUB to disk" (fun config ->
       let is_efi_mode = Option.get config.is_efi_mode in
       let disk_layout = Option.get config.disk_layout in
-      if is_efi_mode then (
-        Arch_chroot.exec "grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB --recheck"
-      ) else (
-        let boot_disk = Disk_utils.disk_of_part disk_layout.boot_part.lower.path in
-        Arch_chroot.exec (Printf.sprintf "grub-install --target=i386-pc --boot-directory=/boot --recheck %s" boot_disk)
-      );
-      config
-    );
+      ( if is_efi_mode then
+          Arch_chroot.exec
+            "grub-install --target=x86_64-efi --efi-directory=/efi \
+             --bootloader-id=GRUB --recheck"
+        else
+          let boot_disk =
+            Disk_utils.disk_of_part disk_layout.boot_part.lower.path
+          in
+          Arch_chroot.exec
+            (Printf.sprintf
+               "grub-install --target=i386-pc --boot-directory=/boot --recheck %s"
+               boot_disk) );
+      config);
   reg ~name:"Generating GRUB config" (fun config ->
       Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
-      config
-    );
+      config);
   Task_book.run task_book

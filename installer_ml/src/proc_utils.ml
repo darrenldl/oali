@@ -86,5 +86,4 @@ let exec_ret_no_capture cmd =
 
 let exec_no_capture cmd = exec_ret_no_capture cmd |> ignore
 
-let clear () =
-  exec_no_capture "clear"
+let clear () = exec_no_capture "clear"
