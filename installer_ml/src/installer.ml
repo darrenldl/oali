@@ -421,4 +421,8 @@ let () =
   reg ~name:"Generating GRUB config" (fun config ->
       Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
       config);
+  reg ~name:"Unmounting partitions" (fun config ->
+      let disk_layout = Option.get config.disk_layout in
+      Disk_layout.unmount disk_layout;
+      config);
   Task_book.run task_book
