@@ -340,51 +340,63 @@ let () =
       config);
   reg ~name:"Updating grub config: GRUB_ENABLE_CRYPTODISK" (fun config ->
       let encrypt = Option.get config.encrypt in
-      if encrypt then (
-      let default_grub_path = Printf.sprintf "%s/etc/default/grub" Config.sys_mount_point in
-      let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
-      let enable_grub_enable_cryptodisk =
-        let re_uncommented = (Printf.sprintf "^%s" grub_enable_cryptodisk) |> Re.Posix.re |> Re.compile in
-        let re_commented = (Printf.sprintf "^#%s" grub_enable_cryptodisk) |> Re.Posix.re |> Re.compile in
-        (fun match_count s ->
-           match Re.matches re_uncommented s, Re.matches re_commented s with
-           | [], [] -> match_count, [s]
-           | _, _ -> succ match_count, [grub_enable_cryptodisk ^ "=y"]
-        )
-      in
-      let modification_count = File.filter_map_fold_lines ~file:default_grub_path 0 enable_grub_enable_cryptodisk in
-      if modification_count = 0 then (
-        let oc = open_out_gen [Open_text; Open_append] 0o600 default_grub_path in
-        Fun.protect ~finally:(fun () -> close_out oc)
-          (fun () ->
-             output_string oc (grub_enable_cryptodisk ^ "=y\n")
-          )
-      )
-    );
-      config
-    );
+      ( if encrypt then
+          let default_grub_path =
+            Printf.sprintf "%s/etc/default/grub" Config.sys_mount_point
+          in
+          let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
+          let enable_grub_enable_cryptodisk =
+            let re_uncommented =
+              Printf.sprintf "^%s" grub_enable_cryptodisk
+              |> Re.Posix.re |> Re.compile
+            in
+            let re_commented =
+              Printf.sprintf "^#%s" grub_enable_cryptodisk
+              |> Re.Posix.re |> Re.compile
+            in
+            fun match_count s ->
+              match (Re.matches re_uncommented s, Re.matches re_commented s) with
+              | [], [] ->
+                (match_count, [s])
+              | _, _ ->
+                (succ match_count, [grub_enable_cryptodisk ^ "=y"])
+          in
+          let modification_count =
+            File.filter_map_fold_lines ~file:default_grub_path 0
+              enable_grub_enable_cryptodisk
+          in
+          if modification_count = 0 then
+            let oc =
+              open_out_gen [Open_text; Open_append] 0o600 default_grub_path
+            in
+            Fun.protect
+              ~finally:(fun () -> close_out oc)
+              (fun () -> output_string oc (grub_enable_cryptodisk ^ "=y\n")) );
+      config);
   reg ~name:"Updating GRUB config: GRUB_CMDLINE_LINUX" (fun config ->
       let encrypt = Option.get config.encrypt in
       let disk_layout = Option.get config.disk_layout in
-      if encrypt then (
-        let sys_part_path = disk_layout.sys_part.lower.path in
-        let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
-        let default_grub_path = Printf.sprintf "%s/etc/default/grub" Config.sys_mount_point in
-        let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
-        let re = Printf.sprintf "^%s" grub_cmdline_linux |> Re.Posix.re |> Re.compile in
-        let update_grub_cmdline = (fun s ->
+      ( if encrypt then
+          let sys_part_path = disk_layout.sys_part.lower.path in
+          let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
+          let default_grub_path =
+            Printf.sprintf "%s/etc/default/grub" Config.sys_mount_point
+          in
+          let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
+          let re =
+            Printf.sprintf "^%s" grub_cmdline_linux |> Re.Posix.re |> Re.compile
+          in
+          let update_grub_cmdline s =
             match Re.matches re s with
-            | [] -> [s]
-            | _ -> [Printf.sprintf "%s=\"cryptdevice=UUID=%s:%s root=/dev/mapper/%scryptkey=rootfs:/root/%s\"" grub_cmdline_linux
-                      sys_part_uuid
-                      Config.root_mapper_name
-                      Config.root_mapper_name
-                      Config.sys_part_keyfile_name
-                   ]
-          )
-        in
-        File.filter_map_lines ~file:default_grub_path update_grub_cmdline;
-      );
-      config
-    );
+            | [] ->
+              [s]
+            | _ ->
+              [ Printf.sprintf
+                  "%s=\"cryptdevice=UUID=%s:%s \
+                   root=/dev/mapper/%scryptkey=rootfs:/root/%s\""
+                  grub_cmdline_linux sys_part_uuid Config.root_mapper_name
+                  Config.root_mapper_name Config.sys_part_keyfile_name ]
+          in
+          File.filter_map_lines ~file:default_grub_path update_grub_cmdline );
+      config);
   Task_book.run task_book
