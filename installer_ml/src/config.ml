@@ -17,3 +17,5 @@ let llsh_files_dir_path = "/root/llsh_pack"
 let useradd_helper1_name = "useradd_helper_as_powerful.sh"
 
 let useradd_helper2_name = "useradd_helper_restricted.sh"
+
+let repo_url = "https://github.com/darrenldl/linux-laptop-salt-hard"

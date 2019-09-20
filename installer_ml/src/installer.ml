@@ -5,13 +5,18 @@ let () =
   let config = Task_config.create () in
   let task_book = Task_book.make config in
   let reg ~name task = Task_book.register task_book ~name task in
-  reg ~name:"ls" (fun config ->
-      let stdin, f = Proc_utils.exec_ret_with_stdin "ls" in
-      output_string stdin "abcd";
-      let res = f () in
-      print_endline "done";
-      List.iter print_endline res.stdout;
-      config);
+  reg ~name:"Increase size of cow partition" (fun config ->
+      exec "mount -o remount,size=2G /run/archiso/cowspace";
+      config
+    );
+  reg ~name:"Updating pacman database in live CD" (fun config ->
+      exec "pacman -Sy";
+      config
+    );
+  reg ~name:"Installing git" (fun config ->
+      exec "pacman -S git";
+      config
+    );
   reg ~name:"Update time" (fun config ->
       exec "timedatectl set-ntp true";
       config);
@@ -468,6 +473,10 @@ let () =
       Printf.printf "Setting password for %s" user_name;
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
       config);
+  reg ~name:"Git cloning repository into current directory" (fun config ->
+      exec (Printf.sprintf "git clone %s" Config.repo_url);
+      config
+    );
   (* reg ~name:"Copying useradd helper scripts" (fun config ->
    *     let cwd = Sys.getcwd () in
    *     let dst_path = Config.sys_mount_point ^ Config.llsh_files_dir_path in
