@@ -481,10 +481,10 @@ let () =
   reg ~name:"Copying useradd helper scripts" (fun config ->
       let cwd = Sys.getcwd () in
       let dst_path = Config.sys_mount_point ^ Config.llsh_files_dir_path in
-      FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper1_name] dst_path;
-      FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper2_name] dst_path;
-      Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper1_name) 0o660;
-      Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper2_name) 0o660;
+      FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper_as_powerful_name] dst_path;
+      FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper_as_powerful_name] dst_path;
+      Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper_as_powerful_name) 0o660;
+      Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper_restricted_name) 0o660;
       config
     );
   reg ~name:"Ask if set up SaltStack" (fun config ->
