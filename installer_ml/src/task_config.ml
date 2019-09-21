@@ -15,4 +15,5 @@ let create () =
   ; encrypt = None
   ; editor = None
   ; hostname = None
-  ; use_saltstack = None ; user_name = None }
+  ; use_saltstack = None
+  ; user_name = None }

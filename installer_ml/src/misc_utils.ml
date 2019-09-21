@@ -114,6 +114,4 @@ let print_boxed_msg s =
   print_endline line; Printf.printf "| %s |\n" s; print_endline line
 
 let concat_file_names names =
-  List.fold_left (fun acc name ->
-      Filename.concat acc name
-    ) "" names
+  List.fold_left (fun acc name -> Filename.concat acc name) "" names

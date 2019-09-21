@@ -1,6 +1,8 @@
 let gen ~use_saltstack ~use_usb_key =
-  let saltstack_text = if use_saltstack && use_usb_key then (
-      Printf.sprintf {|    %s
+  let saltstack_text =
+    if use_saltstack && use_usb_key then
+      Printf.sprintf
+        {|    %s
         Apply installed local salt states
             NOTE :
               Please mount the USB key first (using %s)
@@ -9,20 +11,22 @@ let gen ~use_saltstack ~use_usb_key =
             in your system already
 
 |}
-        Config.salt_exec_script_name
-        Config.usb_key_mount_script_name
-    ) else if use_saltstack && not use_usb_key then (
-      Printf.sprintf {|    %s
+        Config.salt_exec_script_name Config.usb_key_mount_script_name
+    else if use_saltstack && not use_usb_key then
+      Printf.sprintf
+        {|    %s
         Apply installed local salt states
             Setup should have installed the appropriate salt states
             in your system already
 
 |}
         Config.salt_exec_script_name
-    ) else ""
+    else ""
   in
-  let usb_key_text = if use_usb_key then (
-      Printf.sprintf {|    %s
+  let usb_key_text =
+    if use_usb_key then
+      Printf.sprintf
+        {|    %s
         Mounts USB key to system
             Plug in your USB key and execute this before system update
             or any maintenance
@@ -33,11 +37,8 @@ let gen ~use_saltstack ~use_usb_key =
             or any maintenance
 
 |}
-    Config.usb_key_mount_script_name
-    Config.usb_key_unmount_script_name
-    ) else (
-      ""
-    )
+        Config.usb_key_mount_script_name Config.usb_key_unmount_script_name
+    else ""
   in
   Printf.sprintf
     {|# This file is from %s setup
@@ -56,9 +57,6 @@ The following scripts should be present in /root directory
             Add user in same manner as used by setup.sh
             Add user to groups : users,rfkill
 |}
-    Config.repo_name
-    Config.repo_url
-    saltstack_text
-    usb_key_text
+    Config.repo_name Config.repo_url saltstack_text usb_key_text
     Config.useradd_helper_as_powerful_name
     Config.useradd_helper_restricted_name

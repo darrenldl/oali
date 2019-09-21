@@ -7,16 +7,10 @@ let () =
   let reg ~name task = Task_book.register task_book ~name task in
   reg ~name:"Increase size of cow partition" (fun config ->
       exec "mount -o remount,size=2G /run/archiso/cowspace";
-      config
-    );
+      config);
   reg ~name:"Updating pacman database in live CD" (fun config ->
-      exec "pacman -Sy";
-      config
-    );
-  reg ~name:"Installing git" (fun config ->
-      exec "pacman -S git";
-      config
-    );
+      exec "pacman -Sy"; config);
+  reg ~name:"Installing git" (fun config -> exec "pacman -S git"; config);
   reg ~name:"Update time" (fun config ->
       exec "timedatectl set-ntp true";
       config);
@@ -472,79 +466,88 @@ let () =
         (Printf.sprintf "useradd -m \"%s\" -G users,wheel,rfkill" user_name);
       Printf.printf "Setting password for %s" user_name;
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
-      { config with user_name = Some user_name }
-      );
+      {config with user_name = Some user_name});
   reg ~name:"Git cloning repository into current directory" (fun config ->
       exec (Printf.sprintf "git clone %s" Config.repo_url);
-      config
-    );
+      config);
   reg ~name:"Copying useradd helper scripts" (fun config ->
       let cwd = Sys.getcwd () in
       let dst_path = Config.sys_mount_point ^ Config.llsh_files_dir_path in
-      FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper_as_powerful_name] dst_path;
-      FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper_as_powerful_name] dst_path;
-      Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper_as_powerful_name) 0o660;
-      Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper_restricted_name) 0o660;
-      config
-    );
+      FileUtil.cp
+        [ Printf.sprintf "%s/scripts/%s" cwd
+            Config.useradd_helper_as_powerful_name ]
+        dst_path;
+      FileUtil.cp
+        [ Printf.sprintf "%s/scripts/%s" cwd
+            Config.useradd_helper_as_powerful_name ]
+        dst_path;
+      Unix.chmod
+        (Printf.sprintf "%s/%s" dst_path Config.useradd_helper_as_powerful_name)
+        0o660;
+      Unix.chmod
+        (Printf.sprintf "%s/%s" dst_path Config.useradd_helper_restricted_name)
+        0o660;
+      config);
   reg ~name:"Ask if set up SaltStack" (fun config ->
-      let use_saltstack = ask_yn "Do you want to use SaltStack for package management?" = Yes in
-      { config with use_saltstack = Some use_saltstack }
-    );
+      let use_saltstack =
+        ask_yn "Do you want to use SaltStack for package management?" = Yes
+      in
+      {config with use_saltstack = Some use_saltstack});
   reg ~name:"Installing SaltStack" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
-      if use_saltstack then (
-        Arch_chroot.install ["salt"];
-      );
-      config
-    );
+      if use_saltstack then Arch_chroot.install ["salt"];
+      config);
   reg ~name:"Generating SaltStack execution script" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
-      if use_saltstack then (
-        let dst_path = concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path; Config.salt_exec_script_name] in
-        let script = Salt_exec_script_template.gen_no_usb_key () in
-        let oc = open_out dst_path in
-        Fun.protect ~finally:(fun () -> close_out oc)
-          (fun () ->
-             output_string oc script
-          );
-      );
-      config
-    );
+      ( if use_saltstack then
+          let dst_path =
+            concat_file_names
+              [ Config.sys_mount_point
+              ; Config.llsh_files_dir_path
+              ; Config.salt_exec_script_name ]
+          in
+          let script = Salt_exec_script_template.gen_no_usb_key () in
+          let oc = open_out dst_path in
+          Fun.protect
+            ~finally:(fun () -> close_out oc)
+            (fun () -> output_string oc script) );
+      config);
   reg ~name:"Copying SaltStack files" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
-      if use_saltstack then (
-        let salt_files_path = Filename.concat Config.repo_name "saltstack" in
-        FileUtil.cp ~recurse:true [salt_files_path] (Filename.concat Config.sys_mount_point "srv");
-      );
-      config
-    );
+      ( if use_saltstack then
+          let salt_files_path = Filename.concat Config.repo_name "saltstack" in
+          FileUtil.cp ~recurse:true [salt_files_path]
+            (Filename.concat Config.sys_mount_point "srv") );
+      config);
   reg ~name:"Customising SaltStack files" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
-      if use_saltstack then (
-        let user_name = Option.get config.user_name in
-        let dst_path = concat_file_names [Config.sys_mount_point; "srv"; "pillar"; "user.sls"] in
-        let script = User_sls_template.gen ~user_name in
-        let oc = open_out dst_path in
-        Fun.protect ~finally:(fun () -> close_out oc)
-          (fun () ->
-             output_string oc script
-          );
-      );
-      config
-    );
+      ( if use_saltstack then
+          let user_name = Option.get config.user_name in
+          let dst_path =
+            concat_file_names
+              [Config.sys_mount_point; "srv"; "pillar"; "user.sls"]
+          in
+          let script = User_sls_template.gen ~user_name in
+          let oc = open_out dst_path in
+          Fun.protect
+            ~finally:(fun () -> close_out oc)
+            (fun () -> output_string oc script) );
+      config);
   reg ~name:"Generating setup note" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
       let use_usb_key = false in
-      let dst_path = concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path; Config.llsh_setup_note_name] in
+      let dst_path =
+        concat_file_names
+          [ Config.sys_mount_point
+          ; Config.llsh_files_dir_path
+          ; Config.llsh_setup_note_name ]
+      in
       let note = Llsh_setup_note_template.gen ~use_saltstack ~use_usb_key in
       let oc = open_out dst_path in
-      Fun.protect ~finally:(fun () -> close_out oc)
-        (fun () ->
-           output_string oc note
-        );
-      config
-    );
+      Fun.protect
+        ~finally:(fun () -> close_out oc)
+        (fun () -> output_string oc note);
+      config);
   reg ~name:"Unmounting partitions" (fun config ->
       let disk_layout = Option.get config.disk_layout in
       Disk_layout.unmount disk_layout;
