@@ -472,22 +472,59 @@ let () =
         (Printf.sprintf "useradd -m \"%s\" -G users,wheel,rfkill" user_name);
       Printf.printf "Setting password for %s" user_name;
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
-      config);
+      { config with user_name = Some user_name }
+      );
   reg ~name:"Git cloning repository into current directory" (fun config ->
       exec (Printf.sprintf "git clone %s" Config.repo_url);
       config
     );
-  (* reg ~name:"Copying useradd helper scripts" (fun config ->
-   *     let cwd = Sys.getcwd () in
-   *     let dst_path = Config.sys_mount_point ^ Config.llsh_files_dir_path in
-   *     FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper1_name] dst_path;
-   *     FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper2_name] dst_path;
-   *     Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper1_name) 0o660;
-   *     config
-   *   );
-   * reg ~name:"Setting up saltstack files" (fun config ->
-   *     config
-   *   ); *)
+  reg ~name:"Copying useradd helper scripts" (fun config ->
+      let cwd = Sys.getcwd () in
+      let dst_path = Config.sys_mount_point ^ Config.llsh_files_dir_path in
+      FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper1_name] dst_path;
+      FileUtil.cp [Printf.sprintf "%s/scripts/%s" cwd Config.useradd_helper2_name] dst_path;
+      Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper1_name) 0o660;
+      Unix.chmod (Printf.sprintf "%s/%s" dst_path Config.useradd_helper2_name) 0o660;
+      config
+    );
+  reg ~name:"Ask if set up SaltStack" (fun config ->
+      let use_saltstack = ask_yn "Do you want to use SaltStack for package management?" = Yes in
+      { config with use_saltstack = Some use_saltstack }
+    );
+  reg ~name:"Installing SaltStack" (fun config ->
+      let use_saltstack = Option.get config.use_saltstack in
+      if use_saltstack then (
+        Arch_chroot.install ["salt"];
+      );
+      config
+    );
+  reg ~name:"Generating SaltStack execution script" (fun config ->
+      let use_saltstack = Option.get config.use_saltstack in
+      if use_saltstack then (
+        let dst_path = Filename.concat Config.llsh_files_dir_path Config.salt_exec_script_name in
+        let script = Salt_exec_script_template.gen_no_usb_key () in
+        let oc = open_out dst_path in
+        Fun.protect ~finally:(fun () -> close_out oc)
+          (fun () ->
+             output_string oc script
+          );
+      );
+      config
+    );
+  reg ~name:"Marking SaltStack execution script name in setup note" (fun config ->
+      let use_saltstack = Option.get config.use_saltstack in
+      if use_saltstack then (
+      );
+      config
+    );
+  reg ~name:"Copying SaltStack files" (fun config ->
+      let use_saltstack = Option.get config.use_saltstack in
+      let salt_files_path = Filename.concat Config.repo_name "saltstack" in
+      if use_saltstack then (
+        FileUtil.cp ~recurse:true [salt_files_path] (Filename.concat Config.sys_mount_point "srv");
+      );
+      config
+    );
   reg ~name:"Unmounting partitions" (fun config ->
       let disk_layout = Option.get config.disk_layout in
       Disk_layout.unmount disk_layout;
