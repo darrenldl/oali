@@ -561,20 +561,17 @@ let () =
           Disk_layout.unmount disk_layout );
       config);
   reg ~name:"Asking if shutdown" (fun config ->
-      if Option.get config.do_unmount then (
+      if Option.get config.do_unmount then
         let do_shutdown = ask_yn "Do you want to shutdown?" = Yes in
         {config with do_shutdown = Some do_shutdown}
-      ) else (
+      else (
         print_endline "Shutdown skipped";
-        config
-      )
-    );
+        config ));
   reg ~name:"Shutting down" (fun config ->
-      if Option.get config.do_unmount && Option.value ~default:false config.do_shutdown then (
-        exec "poweroff";
-      ) else (
-        print_endline "Shutdown skipped";
-      );
-      config
-    );
+      if
+        Option.get config.do_unmount
+        && Option.value ~default:false config.do_shutdown
+      then exec "poweroff"
+      else print_endline "Shutdown skipped";
+      config);
   Task_book.run task_book
