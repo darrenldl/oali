@@ -6,7 +6,9 @@ type t =
   ; editor : string option
   ; hostname : string option
   ; use_saltstack : bool option
-  ; user_name : string option }
+  ; user_name : string option
+  ; do_unmount : bool option
+  ; do_shutdown : bool option }
 
 let create () =
   { disk_layout = None
@@ -16,4 +18,6 @@ let create () =
   ; editor = None
   ; hostname = None
   ; use_saltstack = None
-  ; user_name = None }
+  ; user_name = None
+  ; do_unmount = None
+  ; do_shutdown = None }

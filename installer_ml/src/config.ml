@@ -24,8 +24,8 @@ let repo_name = "linux-laptop-salt-hard"
 
 let salt_exec_script_name = "salt_exec.sh"
 
-let usb_key_mount_script_name = "usb_key_access_mount.sh"
+let usb_key_mount_script_name = "usb_key_mount.sh"
 
-let usb_key_unmount_script_name = "usb_key_access_umount.sh"
+let usb_key_unmount_script_name = "usb_key_umount.sh"
 
 let llsh_setup_note_name = "llsh_setup_note"

@@ -470,6 +470,10 @@ let () =
   reg ~name:"Git cloning repository into current directory" (fun config ->
       exec (Printf.sprintf "git clone %s" Config.repo_url);
       config);
+  reg ~name:"Generating USB key mounting and unmounting scripts" (fun config ->
+      let use_usb_key = false in
+      if use_usb_key then ( (* TODO *) );
+      config);
   reg ~name:"Copying useradd helper scripts" (fun config ->
       let cwd = Sys.getcwd () in
       let dst_path = Config.sys_mount_point ^ Config.llsh_files_dir_path in
@@ -548,8 +552,29 @@ let () =
         ~finally:(fun () -> close_out oc)
         (fun () -> output_string oc note);
       config);
+  reg ~name:"Asking if unmount partitions" (fun config ->
+      let do_unmount = ask_yn "Do you want to unmount partitions?" = Yes in
+      {config with do_unmount = Some do_unmount});
   reg ~name:"Unmounting partitions" (fun config ->
-      let disk_layout = Option.get config.disk_layout in
-      Disk_layout.unmount disk_layout;
+      ( if Option.get config.do_unmount then
+          let disk_layout = Option.get config.disk_layout in
+          Disk_layout.unmount disk_layout );
       config);
+  reg ~name:"Asking if shutdown" (fun config ->
+      if Option.get config.do_unmount then (
+        let do_shutdown = ask_yn "Do you want to shutdown?" = Yes in
+        {config with do_shutdown = Some do_shutdown}
+      ) else (
+        print_endline "Shutdown skipped";
+        config
+      )
+    );
+  reg ~name:"Shutting down" (fun config ->
+      if Option.get config.do_unmount && Option.value ~default:false config.do_shutdown then (
+        exec "poweroff";
+      ) else (
+        print_endline "Shutdown skipped";
+      );
+      config
+    );
   Task_book.run task_book
