@@ -112,3 +112,8 @@ let print_boxed_msg s =
   let len = String.length s + 4 in
   let line = String.concat "" ["+"; String.make (len - 2) '-'; "+"] in
   print_endline line; Printf.printf "| %s |\n" s; print_endline line
+
+let concat_file_names names =
+  List.fold_left (fun acc name ->
+      Filename.concat acc name
+    ) "" names

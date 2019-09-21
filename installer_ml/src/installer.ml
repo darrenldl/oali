@@ -501,7 +501,7 @@ let () =
   reg ~name:"Generating SaltStack execution script" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
       if use_saltstack then (
-        let dst_path = Filename.concat Config.llsh_files_dir_path Config.salt_exec_script_name in
+        let dst_path = concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path; Config.salt_exec_script_name] in
         let script = Salt_exec_script_template.gen_no_usb_key () in
         let oc = open_out dst_path in
         Fun.protect ~finally:(fun () -> close_out oc)
@@ -511,18 +511,38 @@ let () =
       );
       config
     );
-  reg ~name:"Marking SaltStack execution script name in setup note" (fun config ->
+  reg ~name:"Copying SaltStack files" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
       if use_saltstack then (
+        let salt_files_path = Filename.concat Config.repo_name "saltstack" in
+        FileUtil.cp ~recurse:true [salt_files_path] (Filename.concat Config.sys_mount_point "srv");
       );
       config
     );
-  reg ~name:"Copying SaltStack files" (fun config ->
+  reg ~name:"Customising SaltStack files" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
-      let salt_files_path = Filename.concat Config.repo_name "saltstack" in
       if use_saltstack then (
-        FileUtil.cp ~recurse:true [salt_files_path] (Filename.concat Config.sys_mount_point "srv");
+        let user_name = Option.get config.user_name in
+        let dst_path = concat_file_names [Config.sys_mount_point; "srv"; "pillar"; "user.sls"] in
+        let script = User_sls_template.gen ~user_name in
+        let oc = open_out dst_path in
+        Fun.protect ~finally:(fun () -> close_out oc)
+          (fun () ->
+             output_string oc script
+          );
       );
+      config
+    );
+  reg ~name:"Generating setup note" (fun config ->
+      let use_saltstack = Option.get config.use_saltstack in
+      let use_usb_key = false in
+      let dst_path = concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path; Config.llsh_setup_note_name] in
+      let note = Llsh_setup_note_template.gen ~use_saltstack ~use_usb_key in
+      let oc = open_out dst_path in
+      Fun.protect ~finally:(fun () -> close_out oc)
+        (fun () ->
+           output_string oc note
+        );
       config
     );
   reg ~name:"Unmounting partitions" (fun config ->
