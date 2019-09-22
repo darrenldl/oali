@@ -113,4 +113,17 @@ let print_boxed_msg s =
   let line = String.concat "" ["+"; String.make (len - 2) '-'; "+"] in
   print_endline line; Printf.printf "| %s |\n" s; print_endline line
 
-let concat_file_names names = String.concat Filename.dir_sep names
+let concat_file_names names =
+  let splits =
+    names
+    |> List.map (fun s ->
+        Core_kernel.String.Escaping.split s ~on:'/' ~escape_char:'\\')
+    |> List.concat
+    |> List.filter (fun s -> s <> "")
+  in
+  let res = String.concat Filename.dir_sep splits in
+  match names with
+  | [] ->
+    res
+  | x :: _ ->
+    if String.sub x 0 1 = "/" then "/" ^ res else res
