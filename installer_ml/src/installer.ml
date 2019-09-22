@@ -627,8 +627,12 @@ let () =
       let use_saltstack = Option.get config.use_saltstack in
       ( if use_saltstack then
           let salt_files_path = Filename.concat Config.repo_name "saltstack" in
-          Sys.readdir salt_files_path
-          FileUtil.cp ~recurse:true [salt_files_path]
+          let folders =
+            Sys.readdir salt_files_path
+            |> Array.to_list
+            |> List.map (fun s -> concat_file_names [salt_files_path; s])
+          in
+          FileUtil.cp ~recurse:true folders
             (Filename.concat Config.sys_mount_point "srv") );
       config);
   reg ~name:"Customising SaltStack files" (fun config ->
