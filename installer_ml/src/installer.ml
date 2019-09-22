@@ -591,9 +591,7 @@ let () =
       let dst_path =
         concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path]
       in
-      FileUtil.mkdir dst_path;
-      config
-    );
+      FileUtil.mkdir dst_path; config);
   reg ~name:"Copying useradd helper scripts" (fun config ->
       let cwd = Sys.getcwd () in
       let dst_path =
@@ -631,20 +629,19 @@ let () =
       config);
   reg ~name:"Generating SaltStack execution script" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
-      ( if use_saltstack then
-          let dst_path =
-            concat_file_names
-              [ Config.sys_mount_point
-              ; Config.llsh_files_dir_path
-              ; Config.salt_exec_script_name ]
-          in
-          let script = Salt_exec_script_template.gen_no_usb_key () in
-          let oc = open_out dst_path in
-          Fun.protect
-            ~finally:(fun () -> close_out oc)
-            (fun () -> output_string oc script);
-          Unix.chmod dst_path 0o600;
-      );
+      if use_saltstack then (
+        let dst_path =
+          concat_file_names
+            [ Config.sys_mount_point
+            ; Config.llsh_files_dir_path
+            ; Config.salt_exec_script_name ]
+        in
+        let script = Salt_exec_script_template.gen_no_usb_key () in
+        let oc = open_out dst_path in
+        Fun.protect
+          ~finally:(fun () -> close_out oc)
+          (fun () -> output_string oc script);
+        Unix.chmod dst_path 0o600 );
       config);
   reg ~name:"Copying SaltStack files" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
