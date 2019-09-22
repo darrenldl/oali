@@ -87,3 +87,7 @@ let exec_ret_no_capture cmd =
 let exec_no_capture cmd = exec_ret_no_capture cmd |> ignore
 
 let clear () = exec_no_capture "clear"
+
+let pacman s = exec_no_capture (Printf.sprintf "pacman --noconfirm %s" s)
+
+let install pkgs = pacman (Printf.sprintf "-S %s" (String.concat " " pkgs))

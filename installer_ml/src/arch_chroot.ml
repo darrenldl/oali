@@ -8,5 +8,4 @@ let exec_no_capture command =
 
 let pacman s = exec_no_capture (Printf.sprintf "pacman --noconfirm %s" s)
 
-let install pkgs =
-  pacman (Printf.sprintf "--noconfirm -S %s" (String.concat " " pkgs))
+let install pkgs = pacman (Printf.sprintf "-S %s" (String.concat " " pkgs))

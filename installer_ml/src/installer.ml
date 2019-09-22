@@ -37,10 +37,9 @@ let () =
           ask_yn_end_retry ~ret:() "Finished editing?");
       config);
   reg ~name:"Updating pacman database in live CD" (fun config ->
-      exec_no_capture "pacman -Sy";
-      config);
+      pacman "-Sy"; config);
   reg ~name:"Installing git" (fun config ->
-      exec_no_capture "pacman -S git";
+      install ["git"];
       config);
   reg ~name:"Setting hostname" (fun config ->
       let hostname =
