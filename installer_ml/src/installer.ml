@@ -438,7 +438,11 @@ let () =
         fun s ->
           match Re.matches re_en_us s with
           | [] -> (
-              match Re.matches re_en_dk s with [] -> [s] | _ -> [en_dk_locale_gen] )
+              match Re.matches re_en_dk s with
+              | [] ->
+                [s]
+              | _ ->
+                [en_dk_locale_gen] )
           | _ ->
             [en_us_locale_gen]
       in
