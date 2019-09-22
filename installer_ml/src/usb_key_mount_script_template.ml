@@ -1,4 +1,4 @@
-let gen ~use_encrypt ~is_efi_mode ~esp_uuid ~boot_uuid =
+let gen ~encrypt ~is_efi_mode ~esp_part_uuid ~boot_part_uuid =
   Printf.sprintf
     {|#!/bin/bash
 encrypt=%b
@@ -65,6 +65,6 @@ fi
 
 echo "USB key mounted successfully"
 |}
-    use_encrypt is_efi_mode
-    (Option.value ~default:"" esp_uuid)
-    boot_uuid Config.boot_mapper_name
+    encrypt is_efi_mode
+    (Option.value ~default:"" esp_part_uuid)
+    boot_part_uuid Config.boot_mapper_name

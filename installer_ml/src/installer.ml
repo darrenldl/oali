@@ -585,7 +585,47 @@ let () =
         Option.get config.disk_layout_choice
         = Disk_layout.Sys_part_plus_usb_drive
       in
-      if use_usb_key then ( (* TODO *) );
+      let disk_layout = Option.get config.disk_layout in
+      if use_usb_key then (
+        let encrypt = Option.get config.encrypt in
+        let is_efi_mode = Option.get config.is_efi_mode in
+        let boot_part_path = disk_layout.boot_part.lower.path in
+        let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
+        let esp_part_path =
+          Option.map
+            (fun part -> Disk_layout.(part.lower.path))
+            disk_layout.esp_part
+        in
+        let esp_part_uuid =
+          Option.map (fun path -> Disk_utils.uuid_of_dev path) esp_part_path
+        in
+        (let dst_path =
+           concat_file_names
+             [ Config.sys_mount_point
+             ; Config.llsh_files_dir_path
+             ; Config.usb_key_mount_script_name ]
+         in
+         let script =
+           Usb_key_mount_script_template.gen ~encrypt ~is_efi_mode
+             ~esp_part_uuid ~boot_part_uuid
+         in
+         let oc = open_out dst_path in
+         Fun.protect
+           ~finally:(fun () -> close_out oc)
+           (fun () -> output_string oc script));
+        let dst_path =
+          concat_file_names
+            [ Config.sys_mount_point
+            ; Config.llsh_files_dir_path
+            ; Config.usb_key_unmount_script_name ]
+        in
+        let script =
+          Usb_key_unmount_script_template.gen ~encrypt ~is_efi_mode
+        in
+        let oc = open_out dst_path in
+        Fun.protect
+          ~finally:(fun () -> close_out oc)
+          (fun () -> output_string oc script) );
       config);
   reg ~name:"Creating llsh files folder" (fun config ->
       let dst_path =

@@ -1,4 +1,4 @@
-let gen ~use_encrypt ~is_efi_mode =
+let gen ~encrypt ~is_efi_mode =
   Printf.sprintf
     {|
 #!/bin/bash
@@ -21,4 +21,4 @@ fi
 
 echo "USB key unmounted successfully"
 |}
-    use_encrypt is_efi_mode Config.boot_mapper_name
+    encrypt is_efi_mode Config.boot_mapper_name
