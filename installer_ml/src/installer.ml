@@ -537,18 +537,26 @@ let () =
   reg ~name:"Installing GRUB to disk" (fun config ->
       let is_efi_mode = Option.get config.is_efi_mode in
       let disk_layout = Option.get config.disk_layout in
+      let use_usb_key =
+        Option.get config.disk_layout_choice
+        = Disk_layout.Sys_part_plus_usb_drive
+      in
+      let removable_flag = if use_usb_key then "--removable" else "" in
       ( if is_efi_mode then
           Arch_chroot.exec
-            "grub-install --target=x86_64-efi --efi-directory=/efi \
-             --bootloader-id=GRUB --recheck"
+            (Printf.sprintf
+               "grub-install %s --target=x86_64-efi --efi-directory=/efi \
+                --bootloader-id=GRUB --recheck"
+               removable_flag)
         else
           let boot_disk =
             Disk_utils.disk_of_part disk_layout.boot_part.lower.path
           in
           Arch_chroot.exec
             (Printf.sprintf
-               "grub-install --target=i386-pc --boot-directory=/boot --recheck %s"
-               boot_disk) );
+               "grub-install %s --target=i386-pc --boot-directory=/boot \
+                --recheck %s"
+               removable_flag boot_disk) );
       config);
   reg ~name:"Generating GRUB config" (fun config ->
       Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
