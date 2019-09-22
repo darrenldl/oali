@@ -45,9 +45,7 @@ let gen ~use_saltstack ~use_usb_key =
 # See %s for details .
 
 The following scripts should be present in /root directory
-%s
-%s
-    %s
+%s%s    %s
         Helper script for using useradd
             Add user in same manner as used by setup.sh
             Add user to groups : users,wheel,rfkill
