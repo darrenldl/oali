@@ -9,8 +9,8 @@ let () =
       exec "mount -o remount,size=2G /run/archiso/cowspace";
       config);
   reg ~name:"Updating pacman database in live CD" (fun config ->
-      exec "pacman -Sy"; config);
-  reg ~name:"Installing git" (fun config -> exec "pacman -S git"; config);
+      exec_no_capture "pacman -Sy"; config);
+  reg ~name:"Installing git" (fun config -> exec_no_capture "pacman -S git"; config);
   reg ~name:"Update time" (fun config ->
       exec "timedatectl set-ntp true";
       config);
