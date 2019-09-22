@@ -587,12 +587,18 @@ let () =
       in
       if use_usb_key then ( (* TODO *) );
       config);
+  reg ~name:"Creating llsh files folder" (fun config ->
+      let dst_path =
+        concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path]
+      in
+      FileUtil.mkdir dst_path;
+      config
+    );
   reg ~name:"Copying useradd helper scripts" (fun config ->
       let cwd = Sys.getcwd () in
       let dst_path =
         concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path]
       in
-      FileUtil.mkdir dst_path;
       FileUtil.cp
         [ concat_file_names
             [ cwd
