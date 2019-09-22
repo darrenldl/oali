@@ -59,7 +59,7 @@ type t =
 type layout_choice =
   | Single_disk
   | Sys_part_plus_boot_plus_maybe_EFI
-  (* | Sys_part_plus_usb_drive *)
+  | Sys_part_plus_usb_drive
 [@@deriving sexp]
 
 let luks_version_to_int ver = match ver with LuksV1 -> 1 | LuksV2 -> 2

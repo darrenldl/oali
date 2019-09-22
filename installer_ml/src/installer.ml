@@ -138,6 +138,7 @@ let () =
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
                disk boot_part_end_perc 50);
+          exec (Printf.sprintf "parted %s set 1 boot on" disk);
           let boot_part_path = Printf.sprintf "%s1" disk in
           let sys_part_path = Printf.sprintf "%s2" disk in
           let boot_part = make_boot_part encrypt boot_part_path in
@@ -188,11 +189,99 @@ let () =
           in
           Disk_part_tree.get ~disk_index ~part_index disk_part_tree
         in
+        begin
+          let boot_disk = Disk_utils.disk_of_part boot_part_path in
+          let boot_part_num = String_utils.get_tail_num boot_part_path |> Option.get in
+          exec (Printf.sprintf "parted %s set %d boot on" boot_disk boot_part_num);
+        end;
         let esp_part = Option.map make_esp_part esp_part_path in
         let boot_part = make_boot_part encrypt boot_part_path in
         let sys_part = make_sys_part encrypt sys_part_path in
         let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
-        {config with disk_layout = Some disk_layout});
+        {config with disk_layout = Some disk_layout}
+      | Sys_part_plus_usb_drive ->
+        let parts = Disk_utils.list_parts () in
+        if
+          List.length parts < 1
+        then
+          failwith
+            "Not enough partitions found, please make sure partitioning was \
+             done correctly";
+        let disk_part_tree = Disk_part_tree.of_parts parts in
+        let sys_part_path =
+          let disk_index, part_index =
+            pick_choice_grouped
+              ~first_header:"Select disk containing the system partition"
+              ~second_header:"Select system partition" disk_part_tree
+          in
+          Disk_part_tree.get ~disk_index ~part_index disk_part_tree
+        in
+        let disks = Disk_utils.list_disks () |> List.filter (fun s -> s <> Disk_utils.disk_of_part sys_part_path) in
+        if
+          List.length disks < 1
+        then
+          failwith
+            "Not enough disks left, please make sure you have attached the USB drive";
+        let usb_key =
+          retry (fun () ->
+              let disk_index = pick_choice ~header:"Select USB drive" disks in
+              let disk = List.nth disks disk_index in
+              ask_yn_end_retry ~ret:disk
+                (Printf.sprintf
+                   "Partition table of %s will be wiped if you proceed, is \
+                    it the right disk?"
+                   disk))
+        in
+        (* reset partition table *)
+        Printf.printf "Wiping partition table of %s" usb_key;
+        exec (Printf.sprintf "dd if=/dev/zero of=%s bs=512 count=2" usb_key);
+        (* create partition table *)
+        if is_efi_mode then (
+          print_endline "Creating GPT partition table";
+          exec (Printf.sprintf "parted %s mklabel gpt" usb_key) )
+        else (
+          print_endline "Creating MBR partition table";
+          exec (Printf.sprintf "parted %s mklabel msdos" usb_key) );
+        (* partitioning USB key *)
+        print_endline "Partitioning";
+        let usb_key_size_MiB = Disk_utils.disk_size usb_key / 1024 / 1024 in
+        let boot_part_size_MiB = 500 in
+        let boot_part_perc = boot_part_size_MiB * 100 / usb_key_size_MiB in
+        if is_efi_mode then (
+          let esp_part_size_MiB = 550 in
+          let esp_part_perc = esp_part_size_MiB * 100 / usb_key_size_MiB in
+          let esp_part_beg_perc = 0 in
+          let esp_part_end_perc = esp_part_perc in
+          let boot_part_beg_perc = esp_part_end_perc in
+          let boot_part_end_perc = boot_part_beg_perc + boot_part_perc in
+          exec
+            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
+               usb_key esp_part_beg_perc esp_part_end_perc);
+          exec
+            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
+               usb_key boot_part_beg_perc boot_part_end_perc);
+          exec (Printf.sprintf "parted %s set 1 boot on" usb_key);
+          let esp_part_path = Printf.sprintf "%s1" usb_key in
+          let boot_part_path = Printf.sprintf "%s2" usb_key in
+          let esp_part = Some (make_esp_part esp_part_path) in
+          let boot_part = make_boot_part encrypt boot_part_path in
+          let sys_part = make_sys_part encrypt sys_part_path in
+          let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
+          {config with disk_layout = Some disk_layout} )
+        else
+          let boot_part_end_perc = boot_part_perc in
+          exec
+            (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %d%%"
+               usb_key boot_part_end_perc);
+          exec (Printf.sprintf "parted %s set 1 boot on" usb_key);
+          let boot_part_path = Printf.sprintf "%s1" usb_key in
+          let boot_part = make_boot_part encrypt boot_part_path in
+          let sys_part = make_sys_part encrypt sys_part_path in
+          let disk_layout =
+            make_layout ~esp_part:None ~boot_part ~sys_part
+          in
+          {config with disk_layout = Some disk_layout}
+    );
   reg ~name:"Formatting disk" (fun config ->
       let disk_layout = Option.get config.disk_layout in
       Disk_layout.format disk_layout;

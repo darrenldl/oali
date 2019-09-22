@@ -7,3 +7,5 @@ val get : disk_index:int -> part_index:int -> t -> string
 val remove_part_by_index : disk_index:int -> part_index:int -> t -> t
 
 val remove_part : string -> t -> t
+
+val remove_disk : string -> t -> t
