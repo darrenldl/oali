@@ -321,8 +321,8 @@ let () =
             luks
         in
         let keyfile_path =
-          Printf.sprintf "%s/root/%s" Config.sys_mount_point
-            Config.sys_part_keyfile_name
+          concat_file_names
+            [Config.sys_mount_point; "root"; Config.sys_part_keyfile_name]
         in
         let oc = open_out_bin keyfile_path in
         Fun.protect
@@ -346,8 +346,8 @@ let () =
         in
         let boot_secondary_key = Option.get boot_part_luks.secondary_key in
         let keyfile_path =
-          Printf.sprintf "%s/root/%s" Config.sys_mount_point
-            Config.boot_part_keyfile_name
+          concat_file_names
+            [Config.sys_mount_point; "root"; Config.boot_part_keyfile_name]
         in
         let oc = open_out_bin keyfile_path in
         Fun.protect
@@ -363,7 +363,7 @@ let () =
            let boot_part_path = disk_layout.boot_part.lower.path in
            let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
            let keyfile_path =
-             Printf.sprintf "/root/%s" Config.boot_part_keyfile_name
+             concat_file_names ["/root"; Config.boot_part_keyfile_name]
            in
            (* let boot_part_luks = match disk_layout.boot_part.upper with
             *   | Plain_FS _ -> failwith "Expected LUKS"
@@ -388,7 +388,7 @@ let () =
       let encrypt = Option.get config.encrypt in
       if encrypt then (
         let file =
-          Printf.sprintf "%s/etc/mkinitcpio.conf" Config.sys_mount_point
+          concat_file_names [Config.sys_mount_point; "/etc/mkinitcpio.conf"]
         in
         let fill_in_FILES =
           let re = "^FILES" |> Re.Posix.re |> Re.compile in
@@ -397,7 +397,9 @@ let () =
             | [] ->
               [s]
             | _ ->
-              [Printf.sprintf "FILES=(/root/%s)" Config.sys_part_keyfile_name]
+              [ Printf.sprintf "FILES=(%s)"
+                  (concat_file_names ["/root"; Config.sys_part_keyfile_name])
+              ]
         in
         let fill_in_HOOKS =
           let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
@@ -417,7 +419,7 @@ let () =
       config);
   reg ~name:"Setting up hostname" (fun config ->
       let oc =
-        open_out (Printf.sprintf "%s/etc/hostname" Config.sys_mount_point)
+        open_out (concat_file_names [Config.sys_mount_point; "/etc/hostname"])
       in
       Fun.protect
         ~finally:(fun () -> close_out oc)
@@ -441,10 +443,11 @@ let () =
             [en_us]
       in
       File.filter_map_lines
-        ~file:(Printf.sprintf "%s/etc/locale.gen" Config.sys_mount_point)
+        ~file:(concat_file_names [Config.sys_mount_point; "/etc/locale.gen"])
         uncommet_locales;
       let oc =
-        open_out (Printf.sprintf "%s/etc/locale.conf" Config.sys_mount_point)
+        open_out
+          (concat_file_names [Config.sys_mount_point; "/etc/locale.conf"])
       in
       Fun.protect
         ~finally:(fun () -> close_out oc)
@@ -468,7 +471,7 @@ let () =
       let encrypt = Option.get config.encrypt in
       ( if encrypt then
           let default_grub_path =
-            Printf.sprintf "%s/etc/default/grub" Config.sys_mount_point
+            concat_file_names [Config.sys_mount_point; "/etc/default/grub"]
           in
           let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
           let enable_grub_enable_cryptodisk =
@@ -506,7 +509,7 @@ let () =
           let sys_part_path = disk_layout.sys_part.lower.path in
           let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
           let default_grub_path =
-            Printf.sprintf "%s/etc/default/grub" Config.sys_mount_point
+            concat_file_names [Config.sys_mount_point; "/etc/default/grub"]
           in
           let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
           let re =
