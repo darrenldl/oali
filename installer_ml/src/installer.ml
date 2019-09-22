@@ -8,9 +8,6 @@ let () =
   reg ~name:"Increase size of cow partition" (fun config ->
       exec "mount -o remount,size=2G /run/archiso/cowspace";
       config);
-  reg ~name:"Updating pacman database in live CD" (fun config ->
-      exec_no_capture "pacman -Sy"; config);
-  reg ~name:"Installing git" (fun config -> exec_no_capture "pacman -S git"; config);
   reg ~name:"Update time" (fun config ->
       exec "timedatectl set-ntp true";
       config);
@@ -38,6 +35,12 @@ let () =
       retry (fun () ->
           exec_no_capture (Printf.sprintf "%s /etc/pacman.d/mirrorlist" editor);
           ask_yn_end_retry ~ret:() "Finished editing?");
+      config);
+  reg ~name:"Updating pacman database in live CD" (fun config ->
+      exec_no_capture "pacman -Sy";
+      config);
+  reg ~name:"Installing git" (fun config ->
+      exec_no_capture "pacman -S git";
       config);
   reg ~name:"Setting hostname" (fun config ->
       let hostname =
