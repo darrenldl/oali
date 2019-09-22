@@ -33,9 +33,15 @@ let ask_yn prompt =
         ask_string (Printf.sprintf "%s y/n" prompt) |> String.lowercase_ascii
       in
       let len = String.length s in
-      let y = String.sub "yes" 0 len in
-      let n = String.sub "no" 0 len in
-      if s = y then Stop Yes else if s = n then Stop No else Retry)
+      let yes = "yes" in
+      let yes_len = String.length yes in
+      let no = "no" in
+      let no_len = String.length no in
+      let y = String.sub yes 0 (min yes_len len) in
+      let n = String.sub no 0 (min no_len len) in
+      if s = y && len <= yes_len then Stop Yes
+      else if s = n && len <= no_len then Stop No
+      else Retry)
 
 let ask_yn_end_retry ~(ret : 'a) prompt =
   match ask_yn prompt with Yes -> Stop ret | No -> Retry

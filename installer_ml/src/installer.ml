@@ -574,6 +574,7 @@ let () =
       let dst_path =
         concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path]
       in
+      FileUtil.mkdir dst_path;
       FileUtil.cp
         [ concat_file_names
             [ cwd
