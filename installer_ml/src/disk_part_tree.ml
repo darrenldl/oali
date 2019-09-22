@@ -35,5 +35,4 @@ let remove_part_by_index ~disk_index ~part_index tree =
 let remove_part part tree =
   List.map (fun (k, l) -> (k, List.filter (fun p -> p <> part) l)) tree
 
-let remove_disk disk tree =
-  List.filter (fun (k, _) -> k <> disk) tree
+let remove_disk disk tree = List.filter (fun (k, _) -> k <> disk) tree

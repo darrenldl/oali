@@ -53,9 +53,8 @@ let () =
         [ ("single disk", Single_disk)
         ; ( "system partition + boot partition + maybe EFI partition"
           , Sys_part_plus_boot_plus_maybe_EFI )
-          (* ; ( "system partition + boot stuff on external USB drive"
-           *   , Sys_part_plus_usb_drive ) *)
-        ]
+        ; ( "system partition + boot stuff on external USB drive"
+          , Sys_part_plus_usb_drive ) ]
       in
       let choice_num = pick_choice (List.map (fun (x, _) -> x) choices) in
       let choice = (fun (_, y) -> y) (List.nth choices choice_num) in
@@ -189,11 +188,12 @@ let () =
           in
           Disk_part_tree.get ~disk_index ~part_index disk_part_tree
         in
-        begin
-          let boot_disk = Disk_utils.disk_of_part boot_part_path in
-          let boot_part_num = String_utils.get_tail_num boot_part_path |> Option.get in
-          exec (Printf.sprintf "parted %s set %d boot on" boot_disk boot_part_num);
-        end;
+        (let boot_disk = Disk_utils.disk_of_part boot_part_path in
+         let boot_part_num =
+           String_utils.get_tail_num boot_part_path |> Option.get
+         in
+         exec
+           (Printf.sprintf "parted %s set %d boot on" boot_disk boot_part_num));
         let esp_part = Option.map make_esp_part esp_part_path in
         let boot_part = make_boot_part encrypt boot_part_path in
         let sys_part = make_sys_part encrypt sys_part_path in
@@ -201,9 +201,7 @@ let () =
         {config with disk_layout = Some disk_layout}
       | Sys_part_plus_usb_drive ->
         let parts = Disk_utils.list_parts () in
-        if
-          List.length parts < 1
-        then
+        if List.length parts < 1 then
           failwith
             "Not enough partitions found, please make sure partitioning was \
              done correctly";
@@ -216,15 +214,20 @@ let () =
           in
           Disk_part_tree.get ~disk_index ~part_index disk_part_tree
         in
-        let disks = Disk_utils.list_disks () |> List.filter (fun s -> s <> Disk_utils.disk_of_part sys_part_path) in
-        if
-          List.length disks < 1
-        then
+        let disks =
+          Disk_utils.list_disks ()
+          |> List.filter (fun s ->
+              s <> Disk_utils.disk_of_part sys_part_path)
+        in
+        if List.length disks < 1 then
           failwith
-            "Not enough disks left, please make sure you have attached the USB drive";
+            "Not enough disks left, please make sure you have attached the \
+             USB drive";
         let usb_key =
           retry (fun () ->
-              let disk_index = pick_choice ~header:"Select USB drive" disks in
+              let disk_index =
+                pick_choice ~header:"Select USB drive" disks
+              in
               let disk = List.nth disks disk_index in
               ask_yn_end_retry ~ret:disk
                 (Printf.sprintf
@@ -280,8 +283,7 @@ let () =
           let disk_layout =
             make_layout ~esp_part:None ~boot_part ~sys_part
           in
-          {config with disk_layout = Some disk_layout}
-    );
+          {config with disk_layout = Some disk_layout});
   reg ~name:"Formatting disk" (fun config ->
       let disk_layout = Option.get config.disk_layout in
       Disk_layout.format disk_layout;
