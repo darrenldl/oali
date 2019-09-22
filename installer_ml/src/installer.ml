@@ -436,7 +436,7 @@ let () =
         fun s ->
           match Re.matches re_en_us s with
           | [] -> (
-              match Re.matches re_en_dk s with [] -> [en_dk] | _ -> [s] )
+              match Re.matches re_en_dk s with [] -> [s] | _ -> [en_dk] )
           | _ ->
             [en_us]
       in
@@ -444,8 +444,7 @@ let () =
         ~file:(Printf.sprintf "%s/etc/locale.gen" Config.sys_mount_point)
         uncommet_locales;
       let oc =
-        open_out_gen [Open_text; Open_append] 0o600
-          (Printf.sprintf "%s/etc/locale.conf" Config.sys_mount_point)
+        open_out (Printf.sprintf "%s/etc/locale.conf" Config.sys_mount_point)
       in
       Fun.protect
         ~finally:(fun () -> close_out oc)
