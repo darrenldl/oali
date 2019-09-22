@@ -580,6 +580,11 @@ let () =
       FileUtil.(rm ~force:Force ~recurse:true [Config.repo_name]);
       exec (Printf.sprintf "git clone %s" Config.repo_url);
       config);
+  reg ~name:"Creating llsh files folder" (fun config ->
+      let dst_path =
+        concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path]
+      in
+      FileUtil.mkdir dst_path; config);
   reg ~name:"Generating USB key mounting and unmounting scripts" (fun config ->
       let use_usb_key =
         Option.get config.disk_layout_choice
@@ -627,11 +632,6 @@ let () =
           ~finally:(fun () -> close_out oc)
           (fun () -> output_string oc script) );
       config);
-  reg ~name:"Creating llsh files folder" (fun config ->
-      let dst_path =
-        concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path]
-      in
-      FileUtil.mkdir dst_path; config);
   reg ~name:"Copying useradd helper scripts" (fun config ->
       let cwd = Sys.getcwd () in
       let dst_path =
