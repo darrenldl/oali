@@ -426,25 +426,27 @@ let () =
         (fun () -> output_string oc (Option.get config.hostname));
       config);
   reg ~name:"Setting up locale" (fun config ->
-      let en_us = "en_US.UTF-8 UTF-8" in
-      let en_dk = "en_DK.UTF-8 UTF-8" in
+      let en_us_locale_gen = "en_US.UTF-8 UTF-8" in
+      let en_dk_locale_gen = "en_DK.UTF-8 UTF-8" in
       let uncommet_locales =
         let re_en_us =
-          Printf.sprintf "^#%s" en_us |> Re.Posix.re |> Re.compile
+          Printf.sprintf "^#%s" en_us_locale_gen |> Re.Posix.re |> Re.compile
         in
         let re_en_dk =
-          Printf.sprintf "^#%s" en_dk |> Re.Posix.re |> Re.compile
+          Printf.sprintf "^#%s" en_dk_locale_gen |> Re.Posix.re |> Re.compile
         in
         fun s ->
           match Re.matches re_en_us s with
           | [] -> (
-              match Re.matches re_en_dk s with [] -> [s] | _ -> [en_dk] )
+              match Re.matches re_en_dk s with [] -> [s] | _ -> [en_dk_locale_gen] )
           | _ ->
-            [en_us]
+            [en_us_locale_gen]
       in
       File.filter_map_lines
         ~file:(concat_file_names [Config.sys_mount_point; "/etc/locale.gen"])
         uncommet_locales;
+      let en_us_locale_conf = "en_US.UTF-8" in
+      let en_dk_locale_conf = "en_DK.UTF-8" in
       let oc =
         open_out
           (concat_file_names [Config.sys_mount_point; "/etc/locale.conf"])
@@ -452,9 +454,9 @@ let () =
       Fun.protect
         ~finally:(fun () -> close_out oc)
         (fun () ->
-           output_string oc (Printf.sprintf "LANG=%s\n" en_us);
-           output_string oc (Printf.sprintf "LC_ALL=%s\n" en_us);
-           output_string oc (Printf.sprintf "LC_TIME=%s\n" en_dk));
+           output_string oc (Printf.sprintf "LANG=%s\n" en_us_locale_conf);
+           output_string oc (Printf.sprintf "LC_ALL=%s\n" en_us_locale_conf);
+           output_string oc (Printf.sprintf "LC_TIME=%s\n" en_dk_locale_conf));
       Arch_chroot.exec "locale-gen";
       config);
   reg ~name:"Updating package database" (fun config ->
@@ -563,6 +565,7 @@ let () =
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
       {config with user_name = Some user_name});
   reg ~name:"Git cloning repository into current directory" (fun config ->
+      FileUtil.(rm ~force:Force ~recurse:true [Config.repo_name]);
       exec (Printf.sprintf "git clone %s" Config.repo_url);
       config);
   reg ~name:"Generating USB key mounting and unmounting scripts" (fun config ->
@@ -624,6 +627,7 @@ let () =
       let use_saltstack = Option.get config.use_saltstack in
       ( if use_saltstack then
           let salt_files_path = Filename.concat Config.repo_name "saltstack" in
+          Sys.readdir salt_files_path
           FileUtil.cp ~recurse:true [salt_files_path]
             (Filename.concat Config.sys_mount_point "srv") );
       config);
