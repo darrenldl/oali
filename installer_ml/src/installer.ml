@@ -445,11 +445,6 @@ let () =
            let keyfile_path =
              concat_file_names ["/root"; Config.boot_part_keyfile_name]
            in
-           (* let boot_part_luks = match disk_layout.boot_part.upper with
-            *   | Plain_FS _ -> failwith "Expected LUKS"
-            *   | Luks luks -> luks
-            * in
-            * let boot_part_iter_time_ms = boot_part_luks.enc_params.iter_time_ms *)
            let line =
              Printf.sprintf "%s UUID=%s %s %s\n" Config.boot_mapper_name
                boot_part_uuid keyfile_path
