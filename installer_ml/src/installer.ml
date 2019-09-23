@@ -49,6 +49,29 @@ let () =
   reg ~name:"Pick whether to encrypt" (fun config ->
       let encrypt = ask_yn "Enable encryption?" = Yes in
       {config with encrypt = Some encrypt});
+  reg ~name:"Adjusting encrypt parameters" (fun config ->
+      if Option.get config.encrypt then
+        let iter_time_ms, key_size_bits =
+          retry (fun () ->
+              let iter_time_ms =
+                if
+                  ask_yn
+                    "Do you want to adjust iteration time of boot partition?"
+                  = Yes
+                then Some (ask_uint "Please enter iteration time in ms")
+                else None
+              in
+              let key_size_bits =
+                if ask_yn "Do you want to adjust key size?" = Yes then
+                  Some (ask_uint "Please enter key size")
+                else None
+              in
+              ask_yn_end_retry
+                ~ret:(iter_time_ms, key_size_bits)
+                "Are the above answers correct?")
+        in
+        {config with enc_params = Some {iter_time_ms; key_size_bits}}
+      else config);
   reg ~name:"Pick disk layout choice" (fun config ->
       let open Disk_layout in
       let choices =

@@ -7,8 +7,8 @@ type fs =
 [@@deriving sexp]
 
 type enc_params =
-  { iter_time_ms : int
-  ; key_size : int }
+  { iter_time_ms : int option
+  ; key_size_bits : int option }
 [@@deriving sexp]
 
 type lower = {path : string} [@@deriving sexp]
@@ -24,7 +24,7 @@ type luks_state =
 [@@deriving sexp]
 
 type luks =
-  { enc_params : enc_params option
+  { enc_params : enc_params
   ; primary_key : string
   ; secondary_key : string option
   ; version : luks_version
@@ -134,15 +134,17 @@ let format_part ({upper; lower; state} as p) =
     | Plain_FS fs ->
       format_cmd fs lower.path |> exec
     | Luks luks ->
-      let enc_opts =
-        match luks.enc_params with
-        | None ->
-          []
-        | Some enc_params ->
-          [ "--iter-time"
-          ; string_of_int enc_params.iter_time_ms
-          ; "--key-size"
-          ; string_of_int enc_params.key_size ]
+      let iter_time_ms_opt =
+        Option.map
+          (fun x -> ["--iter-time"; string_of_int x])
+          luks.enc_params.iter_time_ms
+        |> Option.value ~default:[]
+      in
+      let key_size_bits_opt =
+        Option.map
+          (fun x -> ["--key-size"; string_of_int x])
+          luks.enc_params.key_size_bits
+        |> Option.value ~default:[]
       in
       (let stdin, f =
          String.concat " "
@@ -152,7 +154,7 @@ let format_part ({upper; lower; state} as p) =
              ; "--key-file=-"
              ; "--type"
              ; Printf.sprintf "luks%d" (luks_version_to_int luks.version) ]
-             @ enc_opts @ [lower.path] )
+             @ iter_time_ms_opt @ key_size_bits_opt @ [lower.path] )
          |> exec_with_stdin
        in
        output_string stdin luks.primary_key;
@@ -191,7 +193,10 @@ let format layout =
 
 let make_luks ?enc_params ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
     ?(add_secondary_key = false) ?(version = LuksV2) inner_fs ~mapper_name =
-  { enc_params
+  { enc_params =
+      Option.value
+        ~default:{iter_time_ms = None; key_size_bits = None}
+        enc_params
   ; primary_key
   ; secondary_key =
       ( if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:4096)

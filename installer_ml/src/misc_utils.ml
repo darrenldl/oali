@@ -46,7 +46,7 @@ let ask_yn prompt =
 let ask_yn_end_retry ~(ret : 'a) prompt =
   match ask_yn prompt with Yes -> Stop ret | No -> Retry
 
-let ask_int ?upper_bound_exc prompt =
+let ask_uint ?upper_bound_exc prompt =
   ask_string
     ~is_valid:(fun s ->
         match int_of_string_opt s with
@@ -85,7 +85,7 @@ let pick_choice ?(confirm = true) ?(header = "Options") choices =
         print_endline "Selected the only choice automatically";
         Stop 0 )
       else
-        let choice = ask_int ~upper_bound_exc:choice_count "Enter choice" in
+        let choice = ask_uint ~upper_bound_exc:choice_count "Enter choice" in
         if confirm then confirm_answer_is_correct_end_retry ~ret:choice
         else Stop choice)
 
