@@ -3,7 +3,8 @@ type t =
   ; disk_layout_choice : Disk_layout.layout_choice option
   ; is_efi_mode : bool option
   ; encrypt : bool option
-  ; enc_params : Disk_layout.enc_params option
+  ; boot_part_enc_params : Disk_layout.enc_params option
+  ; sys_part_enc_params : Disk_layout.enc_params option
   ; editor : string option
   ; hostname : string option
   ; use_saltstack : bool option
@@ -16,7 +17,8 @@ let create () =
   ; disk_layout_choice = None
   ; is_efi_mode = None
   ; encrypt = None
-  ; enc_params = None
+  ; boot_part_enc_params = None
+  ; sys_part_enc_params = None
   ; editor = None
   ; hostname = None
   ; use_saltstack = None

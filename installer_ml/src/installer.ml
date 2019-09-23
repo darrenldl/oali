@@ -49,7 +49,7 @@ let () =
   reg ~name:"Pick whether to encrypt" (fun config ->
       let encrypt = ask_yn "Enable encryption?" = Yes in
       {config with encrypt = Some encrypt});
-  reg ~name:"Adjusting encrypt parameters" (fun config ->
+  reg ~name:"Adjusting cryptsetup parameters for boot partition" (fun config ->
       if Option.get config.encrypt then
         let iter_time_ms, key_size_bits =
           retry (fun () ->
@@ -62,15 +62,42 @@ let () =
                 else None
               in
               let key_size_bits =
-                if ask_yn "Do you want to adjust key size?" = Yes then
-                  Some (ask_uint "Please enter key size")
+                if
+                  ask_yn "Do you want to adjust key size of boot partition?"
+                  = Yes
+                then Some (ask_uint "Please enter key size in bits")
                 else None
               in
               ask_yn_end_retry
                 ~ret:(iter_time_ms, key_size_bits)
                 "Are the above answers correct?")
         in
-        {config with enc_params = Some {iter_time_ms; key_size_bits}}
+        {config with boot_part_enc_params = Some {iter_time_ms; key_size_bits}}
+      else config);
+  reg ~name:"Adjusting cryptsetup parameters for root partition" (fun config ->
+      if Option.get config.encrypt then
+        let iter_time_ms, key_size_bits =
+          retry (fun () ->
+              let iter_time_ms =
+                if
+                  ask_yn
+                    "Do you want to adjust iteration time of root partition?"
+                  = Yes
+                then Some (ask_uint "Please enter iteration time in ms")
+                else None
+              in
+              let key_size_bits =
+                if
+                  ask_yn "Do you want to adjust key size of root partition?"
+                  = Yes
+                then Some (ask_uint "Please enter key size in bits")
+                else None
+              in
+              ask_yn_end_retry
+                ~ret:(iter_time_ms, key_size_bits)
+                "Are the above answers correct?")
+        in
+        {config with sys_part_enc_params = Some {iter_time_ms; key_size_bits}}
       else config);
   reg ~name:"Pick disk layout choice" (fun config ->
       let open Disk_layout in
@@ -150,8 +177,14 @@ let () =
           let boot_part_path = Printf.sprintf "%s2" disk in
           let sys_part_path = Printf.sprintf "%s3" disk in
           let esp_part = Some (make_esp_part esp_part_path) in
-          let boot_part = make_boot_part encrypt boot_part_path in
-          let sys_part = make_sys_part encrypt sys_part_path in
+          let boot_part =
+            make_boot_part ~enc_params:config.boot_part_enc_params encrypt
+              boot_part_path
+          in
+          let sys_part =
+            make_sys_part ~enc_params:config.sys_part_enc_params encrypt
+              sys_part_path
+          in
           let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
           {config with disk_layout = Some disk_layout} )
         else
@@ -165,8 +198,14 @@ let () =
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
           let boot_part_path = Printf.sprintf "%s1" disk in
           let sys_part_path = Printf.sprintf "%s2" disk in
-          let boot_part = make_boot_part encrypt boot_part_path in
-          let sys_part = make_sys_part encrypt sys_part_path in
+          let boot_part =
+            make_boot_part ~enc_params:config.boot_part_enc_params encrypt
+              boot_part_path
+          in
+          let sys_part =
+            make_sys_part ~enc_params:config.sys_part_enc_params encrypt
+              sys_part_path
+          in
           let disk_layout =
             make_layout ~esp_part:None ~boot_part ~sys_part
           in
@@ -220,8 +259,14 @@ let () =
          exec
            (Printf.sprintf "parted %s set %d boot on" boot_disk boot_part_num));
         let esp_part = Option.map make_esp_part esp_part_path in
-        let boot_part = make_boot_part encrypt boot_part_path in
-        let sys_part = make_sys_part encrypt sys_part_path in
+        let boot_part =
+          make_boot_part ~enc_params:config.boot_part_enc_params encrypt
+            boot_part_path
+        in
+        let sys_part =
+          make_sys_part ~enc_params:config.sys_part_enc_params encrypt
+            sys_part_path
+        in
         let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
         {config with disk_layout = Some disk_layout}
       | Sys_part_plus_usb_drive ->
@@ -292,8 +337,14 @@ let () =
           let esp_part_path = Printf.sprintf "%s1" usb_key in
           let boot_part_path = Printf.sprintf "%s2" usb_key in
           let esp_part = Some (make_esp_part esp_part_path) in
-          let boot_part = make_boot_part encrypt boot_part_path in
-          let sys_part = make_sys_part encrypt sys_part_path in
+          let boot_part =
+            make_boot_part ~enc_params:config.boot_part_enc_params encrypt
+              boot_part_path
+          in
+          let sys_part =
+            make_sys_part ~enc_params:config.sys_part_enc_params encrypt
+              sys_part_path
+          in
           let disk_layout = make_layout ~esp_part ~boot_part ~sys_part in
           {config with disk_layout = Some disk_layout} )
         else
@@ -303,8 +354,14 @@ let () =
                usb_key boot_part_end_perc);
           exec (Printf.sprintf "parted %s set 1 boot on" usb_key);
           let boot_part_path = Printf.sprintf "%s1" usb_key in
-          let boot_part = make_boot_part encrypt boot_part_path in
-          let sys_part = make_sys_part encrypt sys_part_path in
+          let boot_part =
+            make_boot_part ~enc_params:config.boot_part_enc_params encrypt
+              boot_part_path
+          in
+          let sys_part =
+            make_sys_part ~enc_params:config.sys_part_enc_params encrypt
+              sys_part_path
+          in
           let disk_layout =
             make_layout ~esp_part:None ~boot_part ~sys_part
           in

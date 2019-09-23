@@ -191,7 +191,7 @@ let format layout =
   format_part layout.boot_part;
   format_part layout.sys_part
 
-let make_luks ?enc_params ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
+let make_luks ~enc_params ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
     ?(add_secondary_key = false) ?(version = LuksV2) inner_fs ~mapper_name =
   { enc_params =
       Option.value
@@ -214,7 +214,7 @@ let make_layout ~esp_part ~boot_part ~sys_part = {esp_part; boot_part; sys_part}
 
 let make_esp_part path = make_part ~path (Plain_FS Fat32)
 
-let make_boot_part encrypt path =
+let make_boot_part ~enc_params encrypt path =
   if encrypt then
     let primary_key =
       Misc_utils.ask_string_confirm
@@ -223,14 +223,14 @@ let make_boot_part encrypt path =
     in
     make_part ~path
       (Luks
-         (make_luks ~primary_key ~add_secondary_key:true ~version:LuksV1 Ext4
-            ~mapper_name:Config.boot_mapper_name))
+         (make_luks ~enc_params ~primary_key ~add_secondary_key:true
+            ~version:LuksV1 Ext4 ~mapper_name:Config.boot_mapper_name))
   else make_part ~path (Plain_FS Ext4)
 
-let make_sys_part encrypt path =
+let make_sys_part ~enc_params encrypt path =
   if encrypt then
     make_part ~path
-      (Luks (make_luks Ext4 ~mapper_name:Config.root_mapper_name))
+      (Luks (make_luks Ext4 ~enc_params ~mapper_name:Config.root_mapper_name))
   else make_part ~path (Plain_FS Ext4)
 
 let mount_esp_part layout =
