@@ -30,12 +30,16 @@ let list_disks () =
       | None ->
         true)
 
-let disk_size disk =
+let disk_size_bytes disk =
   let res =
     Proc_utils.exec_ret (Printf.sprintf "blockdev --getsize64 %s" disk)
   in
   let size_str = List.hd res.stdout in
   int_of_string size_str
+
+let disk_size_KiB disk = (disk_size_bytes disk + 1024 - 1) / 1024
+
+let disk_size_MiB disk = (disk_size_KiB disk + 1024 - 1) / 1024
 
 let uuid_of_dev dev =
   let dir = "/dev/disk/by-uuid" in

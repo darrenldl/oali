@@ -1,8 +1,12 @@
 let sys_mount_point = "/mnt"
 
+let esp_part_size_MiB = 550
+
 let efi_dir = "/efi"
 
 let esp_mount_point = Misc_utils.concat_file_names [sys_mount_point; efi_dir]
+
+let boot_part_size_MiB = 500
 
 let boot_dir = "/boot"
 

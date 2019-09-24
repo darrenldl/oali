@@ -153,12 +153,14 @@ let () =
           exec (Printf.sprintf "parted %s mklabel msdos" disk) );
         (* partitioning *)
         print_endline "Partitioning";
-        let disk_size_MiB = Disk_utils.disk_size disk / 1024 / 1024 in
-        let boot_part_size_MiB = 500 in
-        let boot_part_perc = boot_part_size_MiB * 100 / disk_size_MiB in
+        let disk_size_MiB = Disk_utils.disk_size_MiB disk in
+        let boot_part_perc =
+          Config.boot_part_size_MiB * 100 / disk_size_MiB
+        in
         if is_efi_mode then (
-          let esp_part_size_MiB = 550 in
-          let esp_part_perc = esp_part_size_MiB * 100 / disk_size_MiB in
+          let esp_part_perc =
+            Config.esp_part_size_MiB * 100 / disk_size_MiB
+          in
           let esp_part_beg_perc = 0 in
           let esp_part_end_perc = esp_part_perc in
           let boot_part_beg_perc = esp_part_end_perc in
@@ -307,12 +309,14 @@ let () =
           exec (Printf.sprintf "parted %s mklabel msdos" usb_key) );
         (* partitioning USB key *)
         print_endline "Partitioning";
-        let usb_key_size_MiB = Disk_utils.disk_size usb_key / 1024 / 1024 in
-        let boot_part_size_MiB = 500 in
-        let boot_part_perc = boot_part_size_MiB * 100 / usb_key_size_MiB in
+        let usb_key_size_MiB = Disk_utils.disk_size_MiB usb_key in
+        let boot_part_perc =
+          Config.boot_part_size_MiB * 100 / usb_key_size_MiB
+        in
         if is_efi_mode then (
-          let esp_part_size_MiB = 550 in
-          let esp_part_perc = esp_part_size_MiB * 100 / usb_key_size_MiB in
+          let esp_part_perc =
+            Config.esp_part_size_MiB * 100 / usb_key_size_MiB
+          in
           let esp_part_beg_perc = 0 in
           let esp_part_end_perc = esp_part_perc in
           let boot_part_beg_perc = esp_part_end_perc in
