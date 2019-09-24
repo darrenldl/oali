@@ -9,3 +9,13 @@ services:
 
 before_install:
   - docker pull ocaml/opam2:alpine
+  - docker run -td --name installer_builder -v ocaml/opam2:alpine
+  - docker exec installer_builder opam install dune
+  - docker exec installer_builder opam install core_kernel
+  - docker exec installer_builder opam install fileutils
+  - docker exec installer_builder opam install ppx_sexp_conv
+  - docker exec installer_builder opam install re
+  - docker exec installer_builder opam install sexplib
+
+script:
+  - docker exec installer_builder bash -c 'cd ~'
