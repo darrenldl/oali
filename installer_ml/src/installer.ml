@@ -41,11 +41,16 @@ let () =
   reg ~name:"Installing git" (fun config ->
       install ["git"];
       config);
-  reg ~name:"Setting hostname" (fun config ->
+  reg ~name:"Asking for hostname" (fun config ->
       let hostname =
         ask_string_confirm ~is_valid:(fun x -> x <> "") "Hostname"
       in
       {config with hostname = Some hostname});
+  reg ~name:"Asking if install hardened kernel" (fun config ->
+      let add_hardened =
+        ask_yn_confirm "Do you want to install hardened kernel?" = Yes
+      in
+      {config with add_hardened = Some add_hardened});
   reg ~name:"Pick whether to encrypt" (fun config ->
       let encrypt = ask_yn "Enable encryption?" = Yes in
       {config with encrypt = Some encrypt});
