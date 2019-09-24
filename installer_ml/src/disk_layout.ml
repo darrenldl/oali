@@ -210,8 +210,6 @@ let make_part ~path upper =
   let lower = {path} in
   {lower; upper; state = Unformatted}
 
-let make_layout ~esp_part ~boot_part ~sys_part = {esp_part; boot_part; sys_part}
-
 let make_esp_part path = make_part ~path (Plain_FS Fat32)
 
 let make_boot_part ~enc_params encrypt path =
@@ -232,6 +230,17 @@ let make_sys_part ~enc_params encrypt path =
     make_part ~path
       (Luks (make_luks Ext4 ~enc_params ~mapper_name:Config.root_mapper_name))
   else make_part ~path (Plain_FS Ext4)
+
+let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
+    ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt =
+  let esp_part = Option.map (fun p -> make_esp_part p) esp_part_path in
+  let boot_part =
+    make_boot_part ~enc_params:boot_part_enc_params boot_encrypt boot_part_path
+  in
+  let sys_part =
+    make_sys_part ~enc_params:sys_part_enc_params sys_encrypt sys_part_path
+  in
+  {esp_part; boot_part; sys_part}
 
 let mount_esp_part layout =
   mount_part (Option.get layout.esp_part) ~mount_point:Config.esp_mount_point
