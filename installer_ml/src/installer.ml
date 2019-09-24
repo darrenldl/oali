@@ -436,7 +436,7 @@ let () =
            in
            let crypttab_oc =
              open_out_gen [Open_append; Open_text] 0o600
-               (Printf.sprintf "%s/etc/crypttab" Config.sys_mount_point)
+               (concat_file_names [Config.sys_mount_point; "etc"; "crypttab"])
            in
            Fun.protect
              ~finally:(fun () -> close_out crypttab_oc)
@@ -446,7 +446,7 @@ let () =
       let encrypt = Option.get config.encrypt in
       if encrypt then (
         let file =
-          concat_file_names [Config.sys_mount_point; "/etc/mkinitcpio.conf"]
+          concat_file_names [Config.sys_mount_point; "etc"; "mkinitcpio.conf"]
         in
         let fill_in_FILES =
           let re = "^FILES" |> Re.Posix.re |> Re.compile in
@@ -477,7 +477,8 @@ let () =
       config);
   reg ~name:"Setting up hostname" (fun config ->
       let oc =
-        open_out (concat_file_names [Config.sys_mount_point; "/etc/hostname"])
+        open_out
+          (concat_file_names [Config.sys_mount_point; "etc"; "hostname"])
       in
       Fun.protect
         ~finally:(fun () -> close_out oc)
@@ -505,13 +506,14 @@ let () =
              [en_us_locale_gen]
        in
        File.filter_map_lines
-         ~file:(concat_file_names [Config.sys_mount_point; "/etc/locale.gen"])
+         ~file:
+           (concat_file_names [Config.sys_mount_point; "etc"; "locale.gen"])
          uncommet_locales);
       (let en_us_locale_conf = "en_US.UTF-8" in
        let en_dk_locale_conf = "en_DK.UTF-8" in
        let oc =
          open_out
-           (concat_file_names [Config.sys_mount_point; "/etc/locale.conf"])
+           (concat_file_names [Config.sys_mount_point; "etc"; "locale.conf"])
        in
        Fun.protect
          ~finally:(fun () -> close_out oc)
@@ -535,7 +537,7 @@ let () =
       let encrypt = Option.get config.encrypt in
       ( if encrypt then
           let default_grub_path =
-            concat_file_names [Config.sys_mount_point; "/etc/default/grub"]
+            concat_file_names [Config.sys_mount_point; "etc"; "default"; "grub"]
           in
           let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
           let enable_grub_enable_cryptodisk =
@@ -573,7 +575,7 @@ let () =
           let sys_part_path = disk_layout.sys_part.lower.path in
           let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
           let default_grub_path =
-            concat_file_names [Config.sys_mount_point; "/etc/default/grub"]
+            concat_file_names [Config.sys_mount_point; "etc"; "default"; "grub"]
           in
           let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
           let re =
