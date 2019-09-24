@@ -605,18 +605,17 @@ let () =
       ( if is_efi_mode then
           Arch_chroot.exec
             (Printf.sprintf
-               "grub-install %s --target=x86_64-efi --efi-directory=/efi \
+               "grub-install %s --target=x86_64-efi --efi-directory=%s \
                 --bootloader-id=GRUB --recheck"
-               removable_flag)
+               removable_flag Config.efi_dir)
         else
           let boot_disk =
             Disk_utils.disk_of_part disk_layout.boot_part.lower.path
           in
           Arch_chroot.exec
             (Printf.sprintf
-               "grub-install %s --target=i386-pc --boot-directory=/boot \
-                --recheck %s"
-               removable_flag boot_disk) );
+               "grub-install %s --target=i386-pc --boot-directory=%s --recheck %s"
+               removable_flag Config.boot_dir boot_disk) );
       config);
   reg ~name:"Generating GRUB config" (fun config ->
       Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";

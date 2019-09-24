@@ -1,8 +1,12 @@
 let sys_mount_point = "/mnt"
 
-let esp_mount_point = Printf.sprintf "%s/efi" sys_mount_point
+let efi_dir = "/efi"
 
-let boot_mount_point = Printf.sprintf "%s/boot" sys_mount_point
+let esp_mount_point = Misc_utils.concat_file_names [sys_mount_point; efi_dir]
+
+let boot_dir = "/boot"
+
+let boot_mount_point = Misc_utils.concat_file_names [sys_mount_point; boot_dir]
 
 let sys_part_keyfile_name = "sys_part.key"
 
