@@ -648,9 +648,9 @@ let () =
       FileUtil.(rm ~force:Force ~recurse:true [Config.repo_name]);
       exec (Printf.sprintf "git clone %s" Config.repo_url);
       config);
-  reg ~name:"Creating llsh files folder" (fun config ->
+  reg ~name:"Creating oli files folder" (fun config ->
       let dst_path =
-        concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path]
+        concat_file_names [Config.sys_mount_point; Config.oli_files_dir_path]
       in
       FileUtil.mkdir dst_path; config);
   reg ~name:"Generating USB key mounting and unmounting scripts" (fun config ->
@@ -675,7 +675,7 @@ let () =
         (let dst_path =
            concat_file_names
              [ Config.sys_mount_point
-             ; Config.llsh_files_dir_path
+             ; Config.oli_files_dir_path
              ; Config.usb_key_mount_script_name ]
          in
          let script =
@@ -689,7 +689,7 @@ let () =
         let dst_path =
           concat_file_names
             [ Config.sys_mount_point
-            ; Config.llsh_files_dir_path
+            ; Config.oli_files_dir_path
             ; Config.usb_key_unmount_script_name ]
         in
         let script =
@@ -703,7 +703,7 @@ let () =
   reg ~name:"Copying useradd helper scripts" (fun config ->
       let cwd = Sys.getcwd () in
       let dst_path =
-        concat_file_names [Config.sys_mount_point; Config.llsh_files_dir_path]
+        concat_file_names [Config.sys_mount_point; Config.oli_files_dir_path]
       in
       FileUtil.cp
         [ concat_file_names
@@ -741,7 +741,7 @@ let () =
         let dst_path =
           concat_file_names
             [ Config.sys_mount_point
-            ; Config.llsh_files_dir_path
+            ; Config.oli_files_dir_path
             ; Config.salt_exec_script_name ]
         in
         let script = Salt_exec_script_template.gen_no_usb_key () in
@@ -786,8 +786,8 @@ let () =
       let dst_path =
         concat_file_names
           [ Config.sys_mount_point
-          ; Config.llsh_files_dir_path
-          ; Config.llsh_setup_note_name ]
+          ; Config.oli_files_dir_path
+          ; Config.oli_setup_note_name ]
       in
       let note = Llsh_setup_note_template.gen ~use_saltstack ~use_usb_key in
       let oc = open_out dst_path in

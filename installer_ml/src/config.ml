@@ -20,7 +20,7 @@ let boot_mapper_name = "crypt_boot"
 
 let root_mapper_name = "crypt_root"
 
-let llsh_files_dir_path = "/root/llsh_pack"
+let oli_files_dir_path = "/root/oli_pack"
 
 let useradd_helper_as_powerful_name = "useradd_helper_as_powerful.sh"
 
@@ -36,4 +36,4 @@ let usb_key_mount_script_name = "usb_key_mount.sh"
 
 let usb_key_unmount_script_name = "usb_key_umount.sh"
 
-let llsh_setup_note_name = "llsh_setup_note"
+let oli_setup_note_name = "oli_setup_note"

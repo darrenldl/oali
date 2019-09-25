@@ -1,4 +1,4 @@
-# linux-laptop-salt-hard
+# ocaml-linux-installer
 
 ### Description
 This currently sets up an optionally hardened Arch Linux installation with full disk encryption, requiring a USB key to boot and unlock.
