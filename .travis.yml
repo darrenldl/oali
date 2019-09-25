@@ -33,7 +33,7 @@ deploy:
   file: installer.exe
   on:
     tags: true
-    repo: darrenldl/linux-laptop-salt-hard
+    repo: darrenldl/ocaml-linux-installer
   skip_cleanup: true
 
 notifications:
