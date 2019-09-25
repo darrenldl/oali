@@ -9,8 +9,7 @@ services:
 
 before_install:
   - docker pull ocaml/opam2:alpine
-  - chmod a+rwx .
-  - docker run -td --name installer_builder -v $(pwd):/home/opam/installer ocaml/opam2:alpine
+  - docker run -td --name installer_builder -v $(pwd):/home/opam/llsh-master ocaml/opam2:alpine
   - docker exec installer_builder sudo apk add m4
   - docker exec installer_builder opam install dune
   - docker exec installer_builder opam install core_kernel
@@ -21,4 +20,14 @@ before_install:
 
 script:
   - docker exec installer_builder bash -c 'cd ~; ls'
-  - docker exec installer_builder bash -c 'eval $(opam env); cd ~/installer/installer_ml; make'
+  - docker exec installer_builder bash -c 'cp -r ~/llsh-master ~/llsh'
+  - docker exec installer_builder bash -c 'chmod u=rwx ~/llsh'
+  - docker exec installer_builder bash -c 'eval $(opam env); cd ~/llsh/installer_ml; make'
+
+deploy:
+  api_key:
+    secure: 
+
+notifications:
+  email:
+    on_success: never
