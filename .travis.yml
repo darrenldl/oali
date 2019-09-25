@@ -23,7 +23,7 @@ script:
   - docker exec installer_builder bash -c 'cp -r ~/llsh-master ~/llsh'
   - docker exec installer_builder bash -c 'chmod u=rwx ~/llsh'
   - docker exec installer_builder bash -c 'eval $(opam env); cd ~/llsh/installer_ml; make'
-  - docker cp installer_builder:/home/opam/llsh/installer_ml/_build/src/installer.exe .
+  - docker cp installer_builder:/home/opam/llsh/installer_ml/_build/default/src/installer.exe .
 
 deploy:
   api_key:
