@@ -12,15 +12,12 @@ before_install:
   - docker run -td --name installer_builder -v $(pwd):/home/opam/installer ocaml/opam2:alpine
   - docker exec installer_builder sudo apk add m4
   - docker exec installer_builder opam install dune
-  # - docker exec installer_builder opam install core_kernel
-  # - docker exec installer_builder opam install fileutils
-  # - docker exec installer_builder opam install ppx_sexp_conv
-  # - docker exec installer_builder opam install re
-  # - docker exec installer_builder opam install sexplib
-  # - docker exec installer_builder bash -c 'export PATH=$PATH:~/.opam/ocaml-system/bin'
-  - docker exec installer_builder bash -c 'eval $(opam env); echo $PATH'
+  - docker exec installer_builder opam install core_kernel
+  - docker exec installer_builder opam install fileutils
+  - docker exec installer_builder opam install ppx_sexp_conv
+  - docker exec installer_builder opam install re
+  - docker exec installer_builder opam install sexplib
 
 script:
   - docker exec installer_builder bash -c 'cd ~; ls'
-  - docker exec installer_builder bash -c 'echo $PATH'
-  - docker exec installer_builder bash -c 'cd ~/installer/installer_ml; make'
+  - docker exec installer_builder bash -c 'eval $(opam env); cd ~/installer/installer_ml; make'
