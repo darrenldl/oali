@@ -9,7 +9,8 @@ services:
 
 before_install:
   - docker pull ocaml/opam2:alpine
-  - docker run -td --name installer_builder -v .:/home/opam/installer ocaml/opam2:alpine
+  - docker run -td --name installer_builder -v $(pwd):/home/opam/llsh-master ocaml/opam2:alpine
+  - docker exec installer_builder sudo apk add m4
   - docker exec installer_builder opam install dune
   - docker exec installer_builder opam install core_kernel
   - docker exec installer_builder opam install fileutils
@@ -18,5 +19,23 @@ before_install:
   - docker exec installer_builder opam install sexplib
 
 script:
+  - docker exec installer_builder bash -c 'cd ~; echo $(pwd)'
   - docker exec installer_builder bash -c 'cd ~; ls'
-  - docker exec installer_builder bash -c 'ls installer'
+  - docker exec installer_builder bash -c 'cp -r ~/llsh-master ~/llsh'
+  - docker exec installer_builder bash -c 'chmod u=rwx ~/llsh'
+  - docker exec installer_builder bash -c 'eval $(opam env); cd ~/llsh/installer_ml; make'
+  - docker cp installer_builder:/home/opam/llsh/installer_ml/_build/default/src/installer.exe .
+
+deploy:
+  provider: releases
+  api_key:
+    secure: iSx+Ztrz9rI97R3waKGM3Lv8GehszPnjEEdY7U2wePRbOwXrdlTohoIotyGY1TbfyluzOKF51tvctpJbezRWEPUGQb173C+nv35o/fHiN6CGDT77DUzqEtFYEBlb6o4sUPtRTkKaD1qw7Jei7ttk+CDA4zRmyd/fdp/krdNdyFVYzlXklobt3+XRikRxmHioxfI9vd7AJp4VebO+4UmC9Ja7HLu7UiHtwxZOJHvpS0NFaaucN7RsgFIYQLf+pPca6M0RFSuBUS4xCA+D27/sTEjGpQicVu50uI4sMpJx2rzqf4m2OW1IERn+p2tegMofJBTxPqQERG1N1nmzbOGYKp3u9WJsV5/XmbvWrXk9LV5DbkDn7v6lkKSby905FFgqAVKxtE2VXib0rGBIJ/kHcgoz1Bvt3t6uHUMCV4R8azy400NesqpRDZc6ocKFleKEvDkYJQB5INWLUiu9rLpV2wEPjNV56EY7zULgbwlHCedKtVoHT7SCpVb6Gt4onr/GqrKKdC+0jiNWbfyKoYfNbDAonSt/mhgA4GIG/6D5/2O1hkymbtAsiOCkrPyVlh/9p8sTiWg6DxkNANkqHasn+uJPWaXKKjhSSzWuwS516uqdVdyj3xUjiyMNLeIrSvYJwbJKN4zfogsYXvHrwj7WwAqX0DV3otweCGtZt8LpWYU=
+  file: installer.exe
+  on:
+    tags: true
+    repo: darrenldl/linux-laptop-salt-hard
+  skip_cleanup: true
+
+notifications:
+  email:
+    on_success: never
