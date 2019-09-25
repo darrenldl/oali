@@ -23,10 +23,17 @@ script:
   - docker exec installer_builder bash -c 'cp -r ~/llsh-master ~/llsh'
   - docker exec installer_builder bash -c 'chmod u=rwx ~/llsh'
   - docker exec installer_builder bash -c 'eval $(opam env); cd ~/llsh/installer_ml; make'
+  - docker cp installer_builder:/home/opam/llsh/_build/src/installer.exe .
 
 deploy:
   api_key:
-    secure: 
+    secure: "KY8/VQDvqrlMo+KcOGzMpXpoi8I3laQJRwQZHZs3hUGFqwjjTHVpa9LOMIMcmNUzNUKszNghakewcd7+uMDi92u+m9Jg30ptBl3rm7szKxgAQuGvisu6Xd1RJdiJlql+hAbcNTLuX+5TG+/a5WLGcP/IT5t48QaEVpMJbtAyYm2qxWhZzgwB56nibHNyi0DMDWviNdiLVMkgB7wnPx5O+DiITg+1go+mM2Er6Di06SBCoK94reC852UtCWorirxujwcWIYmZzqZZZR1LaNH0l7RwBkBw6bHL43VvsiVcTW3UhQRJ0pSqgQdaqh+z2ZhZj0LmnVDewVfvxMfBUAMOoQi5+0o+4EMnMbcRyRwTC/AaQrCfVSliuk8ljI4canF9M5KSoz0Xj8yvLKJGpm6z65VlRQrtC/C6k1VBzahJ4w4mznEFxIz99rRjuXyDRexwtKagZWu/h07NiBaOLXaUPymTnnBxWartugDP3xo3fZoTtUNmNj3HtRz1y3H6Aqb7hdvaV+ALTguKGjS5tsEpzYBp1YzRLDHvQkVEhZaWZvN0oTdHXm6CP2nqfh1W420n3l9k49jqorCBlXLTdRcMFM2tMlSy3yW5Q0fiA8EwKYDW1IvjlphiQdrJhxxvKATxiUPnUF0NalrAIUlVN9/ETx9iKZG4RE52MuYYWq96q5Y="
+  file_glob: true
+  file: installer.exe
+  on:
+    tags: true
+  provider: releases
+  skip_cleanup: true
 
 notifications:
   email:
