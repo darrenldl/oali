@@ -10,7 +10,7 @@ services:
 before_install:
   - docker pull ocaml/opam2:alpine
   - docker run -td --name installer_builder -v $(pwd):/home/opam/installer ocaml/opam2:alpine
-  - docker exec installer_builder apk add m4
+  - docker exec installer_builder sudo apk add m4
   - docker exec installer_builder opam install dune
   - docker exec installer_builder opam install core_kernel
   - docker exec installer_builder opam install fileutils
