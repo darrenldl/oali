@@ -377,9 +377,44 @@ let () =
         (Printf.sprintf "pacstrap %s base base-devel" Config.sys_mount_point);
       config);
   reg ~name:"Generating fstab" (fun config ->
+      let fstab_path =
+        concat_file_names [Config.sys_mount_point; "etc"; "fstab"]
+      in
       exec
-        (Printf.sprintf "genfstab -U %s >> %s/etc/fstab" Config.sys_mount_point
-           Config.sys_mount_point);
+        (Printf.sprintf "genfstab -U %s >> %s" Config.sys_mount_point
+           fstab_path);
+      ( if
+        Option.get config.disk_layout_choice
+        = Disk_layout.Sys_part_plus_usb_drive
+        then
+          let disk_layout = Option.get config.disk_layout in
+          let boot_part_path = disk_layout.boot_part.lower.path in
+          let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
+          let esp_part_path =
+            Option.map
+              (fun part -> Disk_layout.(part.lower.path))
+              disk_layout.esp_part
+          in
+          let esp_part_uuid =
+            Option.map (fun path -> Disk_utils.uuid_of_dev path) esp_part_path
+          in
+          File.filter_map_lines ~file:fstab_path (fun s ->
+              match
+                Core_kernel.String.substr_index s ~pattern:boot_part_uuid
+              with
+              | Some _ ->
+                []
+              | None -> (
+                  match
+                    Option.map
+                      (fun esp_part_uuid ->
+                         Core_kernel.String.substr_index s ~pattern:esp_part_uuid)
+                      esp_part_uuid
+                  with
+                  | Some _ ->
+                    []
+                  | None ->
+                    [s] )) );
       config);
   reg ~name:"Installing keyfile for /" (fun config ->
       let encrypt = Option.get config.encrypt in
@@ -406,50 +441,58 @@ let () =
              Config.boot_mount_point) );
       config);
   reg ~name:"Installing keyfile for unlocking /boot after boot" (fun config ->
-      let encrypt = Option.get config.encrypt in
-      let disk_layout = Option.get config.disk_layout in
-      if encrypt then (
-        let boot_part_luks =
-          match disk_layout.boot_part.upper with
-          | Plain_FS _ ->
-            failwith "Expected LUKS"
-          | Luks luks ->
-            luks
-        in
-        let boot_secondary_key = Option.get boot_part_luks.secondary_key in
-        let keyfile_path =
-          concat_file_names
-            [Config.sys_mount_point; "root"; Config.boot_part_keyfile_name]
-        in
-        let oc = open_out_bin keyfile_path in
-        Fun.protect
-          ~finally:(fun () -> close_out oc)
-          (fun () -> output_string oc boot_secondary_key);
-        () );
+      ( if
+        Option.get config.disk_layout_choice
+        <> Disk_layout.Sys_part_plus_usb_drive
+        then
+          let encrypt = Option.get config.encrypt in
+          let disk_layout = Option.get config.disk_layout in
+          if encrypt then (
+            let boot_part_luks =
+              match disk_layout.boot_part.upper with
+              | Plain_FS _ ->
+                failwith "Expected LUKS"
+              | Luks luks ->
+                luks
+            in
+            let boot_secondary_key = Option.get boot_part_luks.secondary_key in
+            let keyfile_path =
+              concat_file_names
+                [Config.sys_mount_point; "root"; Config.boot_part_keyfile_name]
+            in
+            let oc = open_out_bin keyfile_path in
+            Fun.protect
+              ~finally:(fun () -> close_out oc)
+              (fun () -> output_string oc boot_secondary_key);
+            () ) );
       config);
   reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot"
     (fun config ->
-       let encrypt = Option.get config.encrypt in
-       let disk_layout = Option.get config.disk_layout in
-       ( if encrypt then
-           let boot_part_path = disk_layout.boot_part.lower.path in
-           let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
-           let keyfile_path =
-             concat_file_names ["/root"; Config.boot_part_keyfile_name]
-           in
-           let line =
-             Printf.sprintf "%s UUID=%s %s %s\n" Config.boot_mapper_name
-               boot_part_uuid keyfile_path
-               (String.concat ","
-                  [Printf.sprintf "x-systemd.device-timeout=%ds" 90])
-           in
-           let crypttab_oc =
-             open_out_gen [Open_append; Open_text] 0o600
-               (concat_file_names [Config.sys_mount_point; "etc"; "crypttab"])
-           in
-           Fun.protect
-             ~finally:(fun () -> close_out crypttab_oc)
-             (fun () -> output_string crypttab_oc line) );
+       ( if
+         Option.get config.disk_layout_choice
+         <> Disk_layout.Sys_part_plus_usb_drive
+         then
+           let encrypt = Option.get config.encrypt in
+           let disk_layout = Option.get config.disk_layout in
+           if encrypt then
+             let boot_part_path = disk_layout.boot_part.lower.path in
+             let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
+             let keyfile_path =
+               concat_file_names ["/root"; Config.boot_part_keyfile_name]
+             in
+             let line =
+               Printf.sprintf "%s UUID=%s %s %s\n" Config.boot_mapper_name
+                 boot_part_uuid keyfile_path
+                 (String.concat ","
+                    [Printf.sprintf "x-systemd.device-timeout=%ds" 90])
+             in
+             let crypttab_oc =
+               open_out_gen [Open_append; Open_text] 0o600
+                 (concat_file_names [Config.sys_mount_point; "etc"; "crypttab"])
+             in
+             Fun.protect
+               ~finally:(fun () -> close_out crypttab_oc)
+               (fun () -> output_string crypttab_oc line) );
        config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
       let encrypt = Option.get config.encrypt in
