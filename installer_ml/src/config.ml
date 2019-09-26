@@ -26,9 +26,9 @@ let useradd_helper_as_powerful_name = "useradd_helper_as_powerful.sh"
 
 let useradd_helper_restricted_name = "useradd_helper_restricted.sh"
 
-let repo_url = "https://github.com/darrenldl/linux-laptop-salt-hard"
+let repo_url = "https://github.com/darrenldl/ocaml-linux-installer"
 
-let repo_name = "linux-laptop-salt-hard"
+let repo_name = "ocaml-linux-installer"
 
 let salt_exec_script_name = "salt_exec.sh"
 
