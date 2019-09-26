@@ -1,45 +1,32 @@
 # ocaml-linux-installer
 
 ### Description
-This currently sets up an optionally hardened Arch Linux installation with full disk encryption, requiring a USB key to boot and unlock.
+The installer written in OCaml sets up a Arch Linux installation with following variations
+- 3 disk layouts
+  - Single system disk (installer does partitioning for you)
+  - You pick the partitions for `/boot` `/` etc manually 
+  - Single system partition (you pick an existing partition on a disk) + USB key (partitioned by installer)
+- Optional full disk encryption
+- Optional `linux-hardened` kernel installation
 
-The script builds your USB key depending on whether the liveCD is running in UEFI mode or BIOS mode. After installation, the USB key needs to be booted from the mode your were on during installation.
-
-### Hardening specifics
-Outside of strict firewall that is suitable for normal user machine
-
-setup.sh allows optional installation of linux-hardened package for Arch Linux
+The installer aims to be smart and hassle free, so following features are included as a result
+- Automatic adjustment of dialogues and settings based on whether the live CD is running in UEFI or BIOS mode
 
 ### Encryption specifics
-Main system partition on computer drive is protected by a keyfile provided by user or generated from /dev/urandom (1MiB in size) by setup.sh.
+In all disk layouts, system partition (i.e. `/`) is protected by a keyfile
 
-**It is recommended that the user generates the keyfile on a trusted system with high level of entropy available prior to the installation.**
-
-The keyfile is stored in the encrypted boot partition on USB key.
-
-The encrypted boot partition on USB key is passphrase protected.
+The keyfile is stored in within the initramfs in boot partition, which is protected by a user provided passphrase
 
 LUKS setup is used for all encrypted partitions.
 
 If in UEFI mode, the ESP partition will be present but is not (and cannot be) encrypted.
 
-### Notes
-Note that this setup aims to move the weak point from the laptop drive to your USB key, that is, the laptop drive is better protected than your USB key in terms of encryption.
-
-The implication then is that you should keep your USB key better protected physically (e.g. carried with you) than the laptop drive.
-
-Also, you need to enter the passphrase of the boot partition twice during booting.
-
-This setup does not store the keyfile in the kernel ram image, which may or may not be a benefit depending on your threat model.
-
-It is **HIGHLY RECOMMENDED** that you leave salt execution to post-install phase using script provided (see below)
-
 ### Post-install notes
 After installation, several files will be present in `/root/llsh_pack` (all of the files are to be accessed/executed by root)
-- `salt_exec.sh`(present only if you answered yes to using saltstack for your further setup) allows you start the saltstack setup
-- `llsh_setup_note` contains description of the files
-- `usb_key_access_mount.sh` allows you to mount your USB key easily and reliably
-- `usb_key_access_umount.sh` allows you to unmount your USB key easily and reliably
+- `salt_exec.sh` allows you start the saltstack setup, present only if you answered yes to using saltstack for your further setup
+- `oli_setup_note` contains description of the files
+- `usb_key_mount.sh` allows you to mount your USB key easily and reliably
+- `usb_key_umount.sh` allows you to unmount your USB key easily and reliably
 - `useradd_helper_restructed.sh` and `useradd_helper_as_powerful.sh` allow you to add more users in the same manner as used by setup.sh
 
 ### Misc. notes
@@ -52,22 +39,17 @@ Saltstack files related
 - USB key (data will be lost)
 
 ### Space requirement
-- USB key
+- USB key (if you intend to use disk layout that utilises a USB key)
   - 1 GiB USB drive will be very sufficient
 - System drive
   - Current salt states download/install around 10 GiB of data
 
 ### Instructions
-#### Get the setup files
-#### With Git
-- Update package database and install git : `pacman -Sy git`
-- Get the files : `git clone https://github.com/darrenldl/linux-laptop-salt-hard.git`
+The OCaml code is not self contained, thus if you choose to compile it yourself, you will need to install various dependencies.
 
-#### Without Git
-- `wget https://github.com/darrenldl/linux-laptop-salt-hard/archive/master.tar.gz -O - | tar xz`
+For deployment purposes, it is recommended that you use the static binaries provided, which you can download via [GitHub releases](https://github.com/darrenldl/ocaml-linux-installer/releases)
 
-#### Start the setup
-- `cd linux-laptop-salt-hard/scripts; ./setup.sh`
+The static binaries of the installer are built via Travis CI using `ocaml/opam2:alpine` Docker image, and should be able to run on Arch Linux live CD without any further setup
 
 ### License
-Unlicense - https://unlicense.org/
+MIT
