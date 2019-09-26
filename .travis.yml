@@ -2,7 +2,7 @@ language: c
 sudo: required
 branches:
   except:
-    - master
+    - dev
 
 services:
   - docker
