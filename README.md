@@ -1,4 +1,5 @@
 # ocaml-linux-installer
+[![Build Status](https://travis-ci.org/darrenldl/ocaml-linux-installer.svg?branch=master)](https://travis-ci.org/darrenldl/ocaml-linux-installer)
 
 ### Description
 The installer written in OCaml sets up a Arch Linux installation with following variations
