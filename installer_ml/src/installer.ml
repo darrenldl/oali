@@ -50,7 +50,16 @@ let () =
       let add_hardened =
         ask_yn_confirm "Do you want to install hardened kernel?" = Yes
       in
-      {config with add_hardened = Some add_hardened});
+      let hardened_as_default =
+        add_hardened
+        && ask_yn_confirm
+          "Do you want to set the GRUB default boot entry to the hardened \
+           kernel?"
+           = Yes
+      in
+      { config with
+        add_hardened = Some add_hardened
+      ; hardened_as_default = Some hardened_as_default });
   reg ~name:"Pick whether to encrypt" (fun config ->
       let encrypt = ask_yn "Enable encryption?" = Yes in
       {config with encrypt = Some encrypt});
@@ -526,6 +535,33 @@ let () =
       config);
   reg ~name:"Recreating images" (fun config ->
       Arch_chroot.exec "mkinitcpio -p linux";
+      config);
+  reg ~name:"Installing hardened kernel" (fun config ->
+      if Option.get config.add_hardened then
+        Arch_chroot.install ["linux-hardened"; "linux-hardened-headers"];
+      config);
+  reg ~name:"Setting hardened kernel as default boot entry" (fun config ->
+      let file =
+        concat_file_names [Config.sys_mount_point; "etc"; "default"; "grub"]
+      in
+      ( if Option.get config.hardened_as_default then
+          let update_grub_default =
+            let grub_default = "GRUB_DEFAULT" in
+            let entry_str =
+              "Advanced options for Arch Linux>Arch Linux, with Linux \
+               linux-hardened"
+            in
+            let re =
+              Printf.sprintf "^%s" grub_default |> Re.Posix.re |> Re.compile
+            in
+            fun s ->
+              match Re.matches re s with
+              | [] ->
+                [s]
+              | _ ->
+                [Printf.sprintf "%s=\"%s\"" grub_default entry_str]
+          in
+          File.filter_map_lines ~file update_grub_default );
       config);
   reg ~name:"Setting up hostname" (fun config ->
       let oc =
