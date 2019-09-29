@@ -408,7 +408,7 @@ let () =
             | None, None ->
               [s]
             | _, _ ->
-              []);
+              ["# " ^ s]);
       config);
   reg ~name:"Installing keyfile for /" (fun config ->
       let encrypt = Option.get config.encrypt in
