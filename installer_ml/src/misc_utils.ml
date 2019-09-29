@@ -139,4 +139,4 @@ let concat_file_names names =
   | x :: _ ->
     if String.sub x 0 1 = "/" then "/" ^ res else res
 
-let calc_perc ~value ~max = min (value * 100 / max) max
+let calc_perc ~value ~max = min (value * 100 / max) 100
