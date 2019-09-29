@@ -396,38 +396,19 @@ let () =
       exec
         (Printf.sprintf "genfstab -U %s >> %s" Config.sys_mount_point
            fstab_path);
-      ( if
+      if
         Option.get config.disk_layout_choice
         = Disk_layout.Sys_part_plus_usb_drive
-        then
-          let disk_layout = Option.get config.disk_layout in
-          let boot_part_path = disk_layout.boot_part.lower.path in
-          let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
-          let esp_part_path =
-            Option.map
-              (fun part -> Disk_layout.(part.lower.path))
-              disk_layout.esp_part
-          in
-          let esp_part_uuid =
-            Option.map (fun path -> Disk_utils.uuid_of_dev path) esp_part_path
-          in
-          File.filter_map_lines ~file:fstab_path (fun s ->
-              match
-                Core_kernel.String.substr_index s ~pattern:boot_part_uuid
-              with
-              | Some _ ->
-                []
-              | None -> (
-                  match
-                    Option.map
-                      (fun esp_part_uuid ->
-                         Core_kernel.String.substr_index s ~pattern:esp_part_uuid)
-                      esp_part_uuid
-                  with
-                  | Some _ ->
-                    []
-                  | None ->
-                    [s] )) );
+      then
+        File.filter_map_lines ~file:fstab_path (fun s ->
+            match
+              ( Core_kernel.String.substr_index s ~pattern:Config.boot_dir
+              , Core_kernel.String.substr_index s ~pattern:Config.efi_dir )
+            with
+            | None, None ->
+              [s]
+            | _, _ ->
+              []);
       config);
   reg ~name:"Installing keyfile for /" (fun config ->
       let encrypt = Option.get config.encrypt in
