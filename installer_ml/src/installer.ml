@@ -698,7 +698,7 @@ let () =
   reg ~name:"Setting up root password" (fun config ->
       Arch_chroot.exec_no_capture "passwd";
       config);
-  reg ~name:"Setting up user" (fun config ->
+  reg ~name:"Setting user account" (fun config ->
       let user_name =
         ask_string_confirm
           ~is_valid:(fun s -> s <> "")
@@ -707,9 +707,13 @@ let () =
       print_endline "Adding user";
       Arch_chroot.exec
         (Printf.sprintf "useradd -m \"%s\" -G users,wheel,rfkill" user_name);
+      {config with user_name = Some user_name});
+  reg ~name:"Setting user password" (fun config ->
+      let user_name = Option.get config.user_name in
       Printf.printf "Setting password for %s" user_name;
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
-      {config with user_name = Some user_name});
+      config
+    );
   reg ~name:"Git cloning repository into current directory" (fun config ->
       FileUtil.(rm ~force:Force ~recurse:true [Config.repo_name]);
       exec (Printf.sprintf "git clone %s" Config.repo_url);
