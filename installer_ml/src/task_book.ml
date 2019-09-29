@@ -4,6 +4,11 @@ type task = Task_config.t -> Task_config.t
 
 type progress = {finished : string list} [@@deriving sexp]
 
+type task_fail_choice =
+  | Retry
+  | Skip
+  | End_install
+
 type t =
   { mutable config : Task_config.t
   ; to_run : (string * task) Queue.t
@@ -62,11 +67,22 @@ let run task_book =
            *   (false, task_book.config) *)
       in
       if not succeeded then
-        let retry =
-          Misc_utils.ask_yn "Do you want to retry task unit?" = Yes
+        let choices =
+          [("retry", Retry); ("skip", Skip); ("end install", End_install)]
         in
-        if retry then aux task_book (Some (name, task))
-        else Queue.push (name, task) task_book.failed
+        let choice_index =
+          Misc_utils.pick_choice ~confirm:true
+            (List.map (fun (x, _) -> x) choices)
+        in
+        let choice = List.nth choices choice_index |> fun (_, x) -> x in
+        match choice with
+        | Retry ->
+          aux task_book (Some (name, task))
+        | Skip ->
+          Queue.push (name, task) task_book.failed;
+          aux task_book None
+        | End_install ->
+          Queue.push (name, task) task_book.failed
       else (
         task_book.config <- new_config;
         Queue.push (name, task) task_book.finished;

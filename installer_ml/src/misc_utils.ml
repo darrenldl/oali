@@ -53,7 +53,7 @@ let ask_uint ?upper_bound_exc prompt =
         | None ->
           false
         | Some x -> (
-            match upper_bound_exc with None -> true | Some ub -> x < ub ))
+            match upper_bound_exc with None -> x >= 0 | Some ub -> x < ub ))
     prompt
   |> int_of_string
 
@@ -138,3 +138,8 @@ let concat_file_names names =
     res
   | x :: _ ->
     if String.sub x 0 1 = "/" then "/" ^ res else res
+
+let calc_perc ~max_perc ~value ~total =
+  assert (max_perc >= 0);
+  assert (max_perc <= 100);
+  min (value * 100 / total) max_perc

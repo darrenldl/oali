@@ -4,7 +4,8 @@ type t =
   ; is_efi_mode : bool option
   ; add_hardened : bool option
   ; hardened_as_default : bool option
-  ; encrypt : bool option
+  ; encrypt_boot : bool option
+  ; encrypt_sys : bool option
   ; boot_part_enc_params : Disk_layout.enc_params option
   ; sys_part_enc_params : Disk_layout.enc_params option
   ; editor : string option
@@ -20,7 +21,8 @@ let create () =
   ; is_efi_mode = None
   ; add_hardened = None
   ; hardened_as_default = None
-  ; encrypt = None
+  ; encrypt_boot = None
+  ; encrypt_sys = None
   ; boot_part_enc_params = None
   ; sys_part_enc_params = None
   ; editor = None
