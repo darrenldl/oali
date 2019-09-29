@@ -10,7 +10,7 @@ let esp_mount_point = Misc_utils.concat_file_names [sys_mount_point; efi_dir]
 
 let boot_part_size_MiB = 500
 
-let boot_part_max_perc = 50
+let boot_part_max_perc = 75
 
 let boot_dir = "/boot"
 
