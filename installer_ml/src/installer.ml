@@ -712,8 +712,7 @@ let () =
       let user_name = Option.get config.user_name in
       Printf.printf "Setting password for %s" user_name;
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
-      config
-    );
+      config);
   reg ~name:"Git cloning repository into current directory" (fun config ->
       FileUtil.(rm ~force:Force ~recurse:true [Config.repo_name]);
       exec (Printf.sprintf "git clone %s" Config.repo_url);
