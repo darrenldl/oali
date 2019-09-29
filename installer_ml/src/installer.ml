@@ -544,29 +544,6 @@ let () =
       if Option.get config.add_hardened then
         Arch_chroot.install ["linux-hardened"; "linux-hardened-headers"];
       config);
-  reg ~name:"Setting hardened kernel as default boot entry" (fun config ->
-      let file =
-        concat_file_names [Config.sys_mount_point; "etc"; "default"; "grub"]
-      in
-      ( if Option.get config.hardened_as_default then
-          let update_grub_default =
-            let grub_default = "GRUB_DEFAULT" in
-            let entry_str =
-              "Advanced options for Arch Linux>Arch Linux, with Linux \
-               linux-hardened"
-            in
-            let re =
-              Printf.sprintf "^%s" grub_default |> Re.Posix.re |> Re.compile
-            in
-            fun s ->
-              match Re.matches re s with
-              | [] ->
-                [s]
-              | _ ->
-                [Printf.sprintf "%s=\"%s\"" grub_default entry_str]
-          in
-          File.filter_map_lines ~file update_grub_default );
-      config);
   reg ~name:"Setting up hostname" (fun config ->
       let oc =
         open_out
@@ -685,6 +662,29 @@ let () =
                   Config.sys_part_keyfile_name Config.root_mapper_name ]
           in
           File.filter_map_lines ~file:default_grub_path update_grub_cmdline );
+      config);
+  reg ~name:"Setting hardened kernel as default boot entry" (fun config ->
+      let file =
+        concat_file_names [Config.sys_mount_point; "etc"; "default"; "grub"]
+      in
+      ( if Option.get config.hardened_as_default then
+          let update_grub_default =
+            let grub_default = "GRUB_DEFAULT" in
+            let entry_str =
+              "Advanced options for Arch Linux>Arch Linux, with Linux \
+               linux-hardened"
+            in
+            let re =
+              Printf.sprintf "^%s" grub_default |> Re.Posix.re |> Re.compile
+            in
+            fun s ->
+              match Re.matches re s with
+              | [] ->
+                [s]
+              | _ ->
+                [Printf.sprintf "%s=\"%s\"" grub_default entry_str]
+          in
+          File.filter_map_lines ~file update_grub_default );
       config);
   reg ~name:"Installing GRUB to disk" (fun config ->
       let is_efi_mode = Option.get config.is_efi_mode in
