@@ -169,11 +169,13 @@ let () =
         print_endline "Partitioning";
         let disk_size_MiB = Disk_utils.disk_size_MiB disk in
         let boot_part_perc =
-          calc_perc ~value:Config.boot_part_size_MiB ~max:disk_size_MiB
+          calc_perc ~max_perc:Config.boot_part_max_perc
+            ~value:Config.boot_part_size_MiB ~total:disk_size_MiB
         in
         if is_efi_mode then (
           let esp_part_perc =
-            calc_perc ~value:Config.esp_part_size_MiB ~max:disk_size_MiB
+            calc_perc ~max_perc:Config.esp_part_max_perc
+              ~value:Config.esp_part_size_MiB ~total:disk_size_MiB
           in
           let esp_part_beg_perc = 0 in
           let esp_part_end_perc = esp_part_perc in
@@ -325,11 +327,13 @@ let () =
         print_endline "Partitioning";
         let usb_key_size_MiB = Disk_utils.disk_size_MiB usb_key in
         let boot_part_perc =
-          calc_perc ~value:Config.boot_part_size_MiB ~max:usb_key_size_MiB
+          calc_perc ~max_perc:Config.boot_part_max_perc
+            ~value:Config.boot_part_size_MiB ~total:usb_key_size_MiB
         in
         if is_efi_mode then (
           let esp_part_perc =
-            calc_perc ~value:Config.esp_part_size_MiB ~max:usb_key_size_MiB
+            calc_perc ~max_perc:Config.esp_part_max_perc
+              ~value:Config.esp_part_size_MiB ~total:usb_key_size_MiB
           in
           let esp_part_beg_perc = 0 in
           let esp_part_end_perc = esp_part_perc in
