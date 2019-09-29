@@ -505,7 +505,9 @@ let () =
              in
              Fun.protect
                ~finally:(fun () -> close_out crypttab_oc)
-               (fun () -> output_string crypttab_oc line) );
+               (fun () ->
+                  output_string crypttab_oc "\n";
+                  output_string crypttab_oc line) );
        config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
       let encrypt = Option.get config.encrypt in
