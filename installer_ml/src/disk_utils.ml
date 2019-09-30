@@ -1,34 +1,51 @@
 let list_disk_block_devs () =
   let dir = "/dev/disk/by-path/" in
   let paths = Sys.readdir dir |> Array.to_list in
-  paths
-  |> List.map (fun s -> dir ^ s)
-  |> List.map Unix.readlink
-  |> List.map (String_utils.tail_w_pos ~pos:6)
-  |> List.filter (fun s -> String.sub s 0 2 <> "dm")
-  |> List.filter (fun s -> String.sub s 0 2 <> "sr")
-  |> List.map (fun s -> "/dev/" ^ s)
+  let dsts =
+    paths
+    |> List.map (fun s -> dir ^ s)
+    |> List.map Unix.readlink
+    |> List.map (String_utils.tail_w_pos ~pos:6)
+  in
+  List.combine paths dsts
+  |> List.filter (fun (_path, dst) ->
+      Core_kernel.String.substr_index dst ~pattern:"dm" <> Some 0)
+  |> List.filter (fun (_path, dst) ->
+      Core_kernel.String.substr_index dst ~pattern:"sr" <> Some 0)
+  |> List.map (fun (path, dst) -> (path, "/dev/" ^ dst))
   |> List.sort_uniq compare
 
 let list_parts () =
   list_disk_block_devs ()
-  |> List.filter (fun s ->
-      match String_utils.get_tail_num s with
+  |> List.filter (fun (path, _dst) ->
+      let last_part = List.hd (List.rev (String.split_on_char '-' path)) in
+      match Core_kernel.String.substr_index last_part ~pattern:"part" with
       | Some _ ->
         true
       | None ->
         false)
+  |> List.map (fun (_, dst) -> dst)
 
-let disk_of_part s = String_utils.strip_tail_num s
+let disk_of_part part =
+  let devs = list_disk_block_devs () in
+  let part_path, _ = List.find (fun (_path, dst) -> dst = part) devs in
+  let disk_path =
+    part_path |> String.split_on_char '-' |> List.rev |> List.tl |> List.rev
+    |> String.concat "-"
+  in
+  let _, disk_name = List.find (fun (path, _dst) -> path = disk_path) devs in
+  disk_name
 
 let list_disks () =
   list_disk_block_devs ()
-  |> List.filter (fun s ->
-      match String_utils.get_tail_num s with
+  |> List.filter (fun (path, _dst) ->
+      let last_part = List.hd (List.rev (String.split_on_char '-' path)) in
+      match Core_kernel.String.substr_index last_part ~pattern:"part" with
       | Some _ ->
         false
       | None ->
         true)
+  |> List.map (fun (_, dst) -> dst)
 
 let disk_size_bytes disk =
   let res =
