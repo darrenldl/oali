@@ -162,7 +162,7 @@ let () =
                    disk))
         in
         (* reset partition table *)
-        Printf.printf "Wiping partition table of %s" disk;
+        Printf.printf "Wiping partition table of %s\n" disk;
         exec (Printf.sprintf "dd if=/dev/zero of=%s bs=512 count=2" disk);
         (* create partition table *)
         if is_efi_mode then (
@@ -183,10 +183,14 @@ let () =
             calc_perc ~max_perc:Config.esp_part_max_perc
               ~value:Config.esp_part_size_MiB ~total:disk_size_MiB
           in
-          let esp_part_beg_perc = 0 in
+          let esp_part_beg_perc = 0.0 in
           let esp_part_end_perc = esp_part_perc in
           let boot_part_beg_perc = esp_part_end_perc in
-          let boot_part_end_perc = boot_part_beg_perc + boot_part_perc in
+          let boot_part_end_perc = boot_part_beg_perc +. boot_part_perc in
+          let esp_part_beg_perc = int_of_float esp_part_beg_perc in
+          let esp_part_end_perc = int_of_float esp_part_end_perc in
+          let boot_part_beg_perc = int_of_float boot_part_beg_perc in
+          let boot_part_end_perc = int_of_float boot_part_end_perc in
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
                disk esp_part_beg_perc esp_part_end_perc);
@@ -209,6 +213,7 @@ let () =
           {config with disk_layout = Some disk_layout} )
         else
           let boot_part_end_perc = boot_part_perc in
+          let boot_part_end_perc = int_of_float boot_part_end_perc in
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %d%%"
                disk boot_part_end_perc);
@@ -338,10 +343,14 @@ let () =
             calc_perc ~max_perc:Config.esp_part_max_perc
               ~value:Config.esp_part_size_MiB ~total:usb_key_size_MiB
           in
-          let esp_part_beg_perc = 0 in
+          let esp_part_beg_perc = 0.0 in
           let esp_part_end_perc = esp_part_perc in
           let boot_part_beg_perc = esp_part_end_perc in
-          let boot_part_end_perc = boot_part_beg_perc + boot_part_perc in
+          let boot_part_end_perc = boot_part_beg_perc +. boot_part_perc in
+          let esp_part_beg_perc = int_of_float esp_part_beg_perc in
+          let esp_part_end_perc = int_of_float esp_part_end_perc in
+          let boot_part_beg_perc = int_of_float boot_part_beg_perc in
+          let boot_part_end_perc = int_of_float boot_part_end_perc in
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
                usb_key esp_part_beg_perc esp_part_end_perc);
@@ -359,7 +368,7 @@ let () =
           in
           {config with disk_layout = Some disk_layout} )
         else
-          let boot_part_end_perc = boot_part_perc in
+          let boot_part_end_perc = int_of_float boot_part_perc in
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %d%%"
                usb_key boot_part_end_perc);

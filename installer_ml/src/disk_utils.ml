@@ -54,9 +54,9 @@ let disk_size_bytes disk =
   let size_str = List.hd res.stdout in
   int_of_string size_str
 
-let disk_size_KiB disk = (disk_size_bytes disk + 1024 - 1) / 1024
+let disk_size_KiB disk : float = float_of_int (disk_size_bytes disk) /. 1024.0
 
-let disk_size_MiB disk = (disk_size_KiB disk + 1024 - 1) / 1024
+let disk_size_MiB disk : float = disk_size_KiB disk /. 1024.0
 
 let uuid_of_dev dev =
   let dir = "/dev/disk/by-uuid" in
