@@ -7,6 +7,7 @@
 - Fixed fstab cleaning code which deals with disk layout with USB key
 - Fixed partition size calculation logic in partitioning code
 - Moved task unit of hardened kernel setup to after boot loader related task unit
+- Updated disk and partition discovery/look up code to be more robust
 
 # 0.0.1
 - Base version
