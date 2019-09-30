@@ -1,5 +1,6 @@
 # 0.0.3
 - Fixed boot partition cryptsetup parameters adjustment task unit
+- Fixed partition size percentage calculation
 
 # 0.0.2
 - Added following user options when task unit fails
