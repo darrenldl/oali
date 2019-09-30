@@ -25,6 +25,7 @@ let list_parts () =
       | None ->
         false)
   |> List.map (fun (_, dst) -> dst)
+  |> List.sort_uniq compare
 
 let disk_of_part part =
   let devs = list_disk_block_devs () in
@@ -36,6 +37,11 @@ let disk_of_part part =
   let _, disk_name = List.find (fun (path, _dst) -> path = disk_path) devs in
   disk_name
 
+let parts_of_disk disk =
+  let len = String.length disk in
+  list_parts ()
+  |> List.filter (fun part -> Core_kernel.String.prefix part len = disk)
+
 let list_disks () =
   list_disk_block_devs ()
   |> List.filter (fun (path, _dst) ->
@@ -46,6 +52,7 @@ let list_disks () =
       | None ->
         true)
   |> List.map (fun (_, dst) -> dst)
+  |> List.sort_uniq compare
 
 let disk_size_bytes disk =
   let res =

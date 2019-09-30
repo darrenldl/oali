@@ -208,9 +208,10 @@ let () =
                disk boot_part_end_MB
                (int_of_float Config.total_disk_usage_perc));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
-          let esp_part_path = Printf.sprintf "%s1" disk |> Option.some in
-          let boot_part_path = Printf.sprintf "%s2" disk in
-          let sys_part_path = Printf.sprintf "%s3" disk in
+          let parts = Disk_utils.parts_of_disk disk in
+          let esp_part_path = List.nth parts 0 |> Option.some in
+          let boot_part_path = List.nth parts 1 in
+          let sys_part_path = List.nth parts 2 in
           let disk_layout =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
@@ -231,8 +232,9 @@ let () =
                disk boot_part_end_MB
                (int_of_float Config.total_disk_usage_perc));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
-          let boot_part_path = Printf.sprintf "%s1" disk in
-          let sys_part_path = Printf.sprintf "%s2" disk in
+          let parts = Disk_utils.parts_of_disk disk in
+          let boot_part_path = List.nth parts 0 in
+          let sys_part_path = List.nth parts 1 in
           let disk_layout =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
@@ -374,8 +376,9 @@ let () =
             (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %dMB"
                usb_key boot_part_beg_MB boot_part_end_MB);
           exec (Printf.sprintf "parted %s set 1 boot on" usb_key);
-          let esp_part_path = Printf.sprintf "%s1" usb_key |> Option.some in
-          let boot_part_path = Printf.sprintf "%s2" usb_key in
+          let parts = Disk_utils.parts_of_disk usb_key in
+          let esp_part_path = List.nth parts 0 |> Option.some in
+          let boot_part_path = List.nth parts 1 in
           let disk_layout =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
@@ -392,7 +395,8 @@ let () =
             (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
                usb_key boot_part_end_MB);
           exec (Printf.sprintf "parted %s set 1 boot on" usb_key);
-          let boot_part_path = Printf.sprintf "%s1" usb_key in
+          let parts = Disk_utils.parts_of_disk usb_key in
+          let boot_part_path = List.nth parts 0 in
           let disk_layout =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
