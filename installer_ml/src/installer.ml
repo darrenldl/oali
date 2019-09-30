@@ -174,19 +174,19 @@ let () =
         (* partitioning *)
         print_endline "Partitioning";
         let disk_size_MiB = Disk_utils.disk_size_MiB disk in
-        let boot_part_perc =
-          calc_perc ~max_perc:Config.boot_part_max_perc
+        let boot_part_frac =
+          calc_frac ~max_frac:Config.boot_part_max_frac
             ~value:Config.boot_part_size_MiB ~total:disk_size_MiB
         in
         if is_efi_mode then (
-          let esp_part_perc =
-            calc_perc ~max_perc:Config.esp_part_max_perc
+          let esp_part_frac =
+            calc_frac ~max_frac:Config.esp_part_max_frac
               ~value:Config.esp_part_size_MiB ~total:disk_size_MiB
           in
-          let esp_part_end_MiB = disk_size_MiB *. esp_part_perc in
+          let esp_part_end_MiB = disk_size_MiB *. esp_part_frac in
           let boot_part_beg_MiB = esp_part_end_MiB in
           let boot_part_end_MiB =
-            boot_part_beg_MiB +. (disk_size_MiB *. boot_part_perc)
+            boot_part_beg_MiB +. (disk_size_MiB *. boot_part_frac)
           in
           let esp_part_end_MB =
             esp_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
@@ -206,7 +206,7 @@ let () =
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %d%%"
                disk boot_part_end_MB
-               (int_of_float Config.total_disk_usage_perc));
+               (int_of_float Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
           let parts = Disk_utils.parts_of_disk disk in
           let esp_part_path = List.nth parts 0 |> Option.some in
@@ -220,7 +220,7 @@ let () =
           in
           {config with disk_layout = Some disk_layout} )
         else
-          let boot_part_end_MiB = disk_size_MiB *. boot_part_perc in
+          let boot_part_end_MiB = disk_size_MiB *. boot_part_frac in
           let boot_part_end_MB =
             boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
           in
@@ -230,7 +230,7 @@ let () =
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %dMB"
                disk boot_part_end_MB
-               (int_of_float Config.total_disk_usage_perc));
+               (int_of_float Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
           let parts = Disk_utils.parts_of_disk disk in
           let boot_part_path = List.nth parts 0 in
@@ -346,19 +346,19 @@ let () =
         (* partitioning USB key *)
         print_endline "Partitioning";
         let usb_key_size_MiB = Disk_utils.disk_size_MiB usb_key in
-        let boot_part_perc =
-          calc_perc ~max_perc:Config.boot_part_max_perc
+        let boot_part_frac =
+          calc_frac ~max_frac:Config.boot_part_max_frac
             ~value:Config.boot_part_size_MiB ~total:usb_key_size_MiB
         in
         if is_efi_mode then (
           let esp_part_perc =
-            calc_perc ~max_perc:Config.esp_part_max_perc
+            calc_frac ~max_frac:Config.esp_part_max_frac
               ~value:Config.esp_part_size_MiB ~total:usb_key_size_MiB
           in
           let esp_part_end_MiB = usb_key_size_MiB *. esp_part_perc in
           let boot_part_beg_MiB = esp_part_end_MiB in
           let boot_part_end_MiB =
-            boot_part_beg_MiB +. (usb_key_size_MiB *. boot_part_perc)
+            boot_part_beg_MiB +. (usb_key_size_MiB *. boot_part_frac)
           in
           let esp_part_end_MB =
             esp_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
@@ -387,7 +387,7 @@ let () =
           in
           {config with disk_layout = Some disk_layout} )
         else
-          let boot_part_end_MiB = usb_key_size_MiB *. boot_part_perc in
+          let boot_part_end_MiB = usb_key_size_MiB *. boot_part_frac in
           let boot_part_end_MB =
             boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
           in
