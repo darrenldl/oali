@@ -12,6 +12,8 @@ let boot_part_size_MiB = 500.0
 
 let boot_part_max_perc = 75.0
 
+let total_disk_usage_perc = 75.0
+
 let boot_dir = "/boot"
 
 let boot_mount_point = Misc_utils.concat_file_names [sys_mount_point; boot_dir]
