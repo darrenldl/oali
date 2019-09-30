@@ -66,7 +66,7 @@ let () =
       in
       {config with encrypt_boot = Some encrypt});
   reg ~name:"Adjusting cryptsetup parameters for boot partition" (fun config ->
-      if Option.get config.encrypt_sys then
+      if Option.get config.encrypt_boot then
         let iter_time_ms, key_size_bits =
           retry (fun () ->
               let iter_time_ms =
