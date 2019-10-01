@@ -899,15 +899,19 @@ let () =
       config);
   reg ~name:"Setting up SSH key directory" (fun config ->
       let user_name = Option.get config.user_name in
+      let user_ssh_dir_path =
+        concat_file_names [Config.sys_mount_point; "home"; user_name; ".ssh"]
+      in
+      FileUtil.mkdir user_ssh_dir_path;
       let user_ssh_authorized_keys_path =
-        concat_file_names [Config.sys_mount_point; "home"; user_name]
+        concat_file_names [user_ssh_dir_path; "authorized_keys"]
       in
       { config with
         user_ssh_authorized_keys_path = Some user_ssh_authorized_keys_path });
   reg ~name:"Transferring SSH public keys" (fun config ->
+      let ip = Net_utils.get_internet_facing_ip () in
       retry (fun () ->
           let otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
-          let ip = Net_utils.get_internet_facing_ip () in
           let port = 10000 + Random.int 10000 in
           let recv_dst_path = Filename.temp_file "installer" "ssh_pub_key" in
           let decrypted_dst_path =
