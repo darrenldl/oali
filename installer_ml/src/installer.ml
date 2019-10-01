@@ -892,16 +892,34 @@ let () =
       {config with enable_ssh_server = Some enable_ssh_server});
   reg ~name:"Enabling SSH server" (fun config ->
       Arch_chroot.exec "systemctl enable sshd";
-      config
-    );
+      config);
   reg ~name:"Copying sshd_config over" (fun config ->
       FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
-      config
-    );
+      config);
   reg ~name:"Transferring SSH public keys" (fun config ->
-      let _otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
-      config
-    );
+      retry (fun () ->
+          let otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
+          let ip = Net_utils.get_internet_facing_ip () in
+          let port = 10000 + Random.int 10000 in
+          let dst_path = Filename.temp_file "installer" "ssh_pub_key" in
+          print_endline
+            "Transfer the PUBLIC key to the server using one of the following \
+             commands";
+          Printf.printf
+            "    cat PUBKEY | gpg -c | ncat %s %d # enter passphrase %s when \
+             prompted\n"
+            ip port otp;
+          print_endline "or";
+          Printf.printf
+            "cat PUBKEY | gpg --batch --yes --passphrase %s -c | ncat %s %d\n"
+            otp ip port;
+          exec (Printf.sprintf "ncat -lp %d > %s" port dst_path);
+          match ask_yn "Do you want to add another SSH key?" with
+          | Yes ->
+            Retry
+          | No ->
+            Stop ());
+      config);
   reg ~name:"Ask if set up SaltStack" (fun config ->
       let use_saltstack =
         ask_yn "Do you want to use SaltStack for package management?" = Yes
