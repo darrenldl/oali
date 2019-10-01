@@ -29,6 +29,9 @@ let root_mapper_name = "crypt_root"
 let livecd_mirrorlist_path =
   Misc_utils.concat_file_names ["/etc"; "pacman.d"; "mirrorlist"]
 
+let etc_ssh_dir_path =
+  Misc_utils.concat_file_names [sys_mount_point; "etc"; "ssh"]
+
 let oli_files_dir_path = Misc_utils.concat_file_names ["/root"; "oli_pack"]
 
 let useradd_helper_as_powerful_name = "useradd_helper_as_powerful.sh"
@@ -46,3 +49,6 @@ let usb_key_mount_script_name = "usb_key_mount.sh"
 let usb_key_unmount_script_name = "usb_key_umount.sh"
 
 let oli_setup_note_name = "oli_setup_note"
+
+let sshd_config_path_in_repo =
+  Misc_utils.concat_file_names [repo_name; "saltstack"; "salt"; "sshd_config"]

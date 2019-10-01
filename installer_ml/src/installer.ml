@@ -885,6 +885,19 @@ let () =
         (concat_file_names [dst_path; Config.useradd_helper_restricted_name])
         0o660;
       config);
+  reg ~name:"Ask if enable SSH server" (fun config ->
+      let enable_ssh_server =
+        ask_yn "Do you want to enable SSH server?" = Yes
+      in
+      {config with enable_ssh_server = Some enable_ssh_server});
+  reg ~name:"Enabling SSH server" (fun config ->
+      Arch_chroot.exec "systemctl enable sshd";
+      config
+    );
+  reg ~name:"Copying sshd_config over" (fun config ->
+      FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
+      config
+    );
   reg ~name:"Ask if set up SaltStack" (fun config ->
       let use_saltstack =
         ask_yn "Do you want to use SaltStack for package management?" = Yes
