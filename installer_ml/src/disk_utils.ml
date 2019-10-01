@@ -78,3 +78,5 @@ let uuid_of_dev dev =
   |> List.filter (fun (s, _) -> s = Filename.basename dev)
   |> List.hd
   |> fun (_, uuid) -> uuid
+
+let sync () = Proc_utils.exec "sync"
