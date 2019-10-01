@@ -1,5 +1,5 @@
 # OCaml Arch Linux Installer
-[![Build Status](https://travis-ci.org/darrenldl/ocaml-linux-installer.svg?branch=master)](https://travis-ci.org/darrenldl/ocaml-linux-installer)
+[![Build Status](https://travis-ci.org/darrenldl/oali.svg?branch=master)](https://travis-ci.org/darrenldl/oali)
 
 ### Description
 Oali is an installer written in OCaml which sets up a Arch Linux installation with following variations
