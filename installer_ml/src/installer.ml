@@ -538,20 +538,23 @@ let () =
       config);
   reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot"
     (fun config ->
-       if
-         Option.get config.disk_layout_choice
-         <> Disk_layout.Sys_part_plus_usb_drive
-       then
-         if Option.get config.encrypt_boot then
+       ( if Option.get config.encrypt_boot then
            let disk_layout = Option.get config.disk_layout in
            let boot_part_path = disk_layout.boot_part.lower.path in
            let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
            let keyfile_path =
              concat_file_names ["/root"; Config.boot_part_keyfile_name]
            in
+           let comment_str =
+             if
+               Option.get config.disk_layout_choice
+               = Disk_layout.Sys_part_plus_usb_drive
+             then "# "
+             else ""
+           in
            let line =
-             Printf.sprintf "%s UUID=%s %s %s\n" Config.boot_mapper_name
-               boot_part_uuid keyfile_path
+             Printf.sprintf "%s%s UUID=%s %s %s\n" Config.boot_mapper_name
+               comment_str boot_part_uuid keyfile_path
                (String.concat ","
                   [Printf.sprintf "x-systemd.device-timeout=%ds" 90])
            in
@@ -563,8 +566,7 @@ let () =
              ~finally:(fun () -> close_out crypttab_oc)
              (fun () ->
                 output_string crypttab_oc "\n";
-                output_string crypttab_oc line)
-         else print_endline "Skipped";
+                output_string crypttab_oc line) );
        config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
       if Option.get config.encrypt_sys then (
