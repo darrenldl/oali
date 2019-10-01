@@ -50,12 +50,14 @@ let () =
         in
         let dst_path = Filename.temp_file "installer" "mirrorlist" in
         let reflector_cmd =
-          ["reflector"; "--sort"; "rate"; "--save"; dst_path]
+          ["reflector"; "--verbose"; "--sort"; "rate"; "--save"; dst_path]
           @ List.map (fun s -> "--country " ^ s) countries
           |> String.concat " "
         in
-        Printf.printf "Computed reflector command : %s" reflector_cmd;
-        exec reflector_cmd;
+        Printf.printf "Computed reflector command : %s\n" reflector_cmd;
+        print_newline ();
+        exec_no_capture reflector_cmd;
+        print_newline ();
         Printf.printf
           "%s will be used for viewing/editing the mirrorlist generated\n"
           editor;
