@@ -12,6 +12,7 @@ type t =
   ; use_reflector : bool option
   ; hostname : string option
   ; enable_ssh_server : bool option
+  ; user_ssh_authorized_keys_path : string option
   ; use_saltstack : bool option
   ; user_name : string option
   ; do_unmount : bool option
@@ -31,6 +32,7 @@ let create () =
   ; use_reflector = None
   ; hostname = None
   ; enable_ssh_server = None
+  ; user_ssh_authorized_keys_path = None
   ; use_saltstack = None
   ; user_name = None
   ; do_unmount = None

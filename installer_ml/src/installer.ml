@@ -577,7 +577,8 @@ let () =
              ~finally:(fun () -> close_out crypttab_oc)
              (fun () ->
                 output_string crypttab_oc "\n";
-                output_string crypttab_oc line) );
+                output_string crypttab_oc line;
+                output_string crypttab_oc "\n") );
        config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
       if Option.get config.encrypt_sys then (
@@ -896,12 +897,22 @@ let () =
   reg ~name:"Copying sshd_config over" (fun config ->
       FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
       config);
+  reg ~name:"Setting up SSH key directory" (fun config ->
+      let user_name = Option.get config.user_name in
+      let user_ssh_authorized_keys_path =
+        concat_file_names [Config.sys_mount_point; "home"; user_name]
+      in
+      { config with
+        user_ssh_authorized_keys_path = Some user_ssh_authorized_keys_path });
   reg ~name:"Transferring SSH public keys" (fun config ->
       retry (fun () ->
           let otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
           let ip = Net_utils.get_internet_facing_ip () in
           let port = 10000 + Random.int 10000 in
-          let dst_path = Filename.temp_file "installer" "ssh_pub_key" in
+          let recv_dst_path = Filename.temp_file "installer" "ssh_pub_key" in
+          let decrypted_dst_path =
+            Filename.temp_file "installer" "decrypted_ssh_pub_key"
+          in
           print_endline
             "Transfer the PUBLIC key to the server using one of the following \
              commands";
@@ -913,12 +924,67 @@ let () =
           Printf.printf
             "cat PUBKEY | gpg --batch --yes --passphrase %s -c | ncat %s %d\n"
             otp ip port;
-          exec (Printf.sprintf "ncat -lp %d > %s" port dst_path);
-          match ask_yn "Do you want to add another SSH key?" with
-          | Yes ->
-            Retry
-          | No ->
-            Stop ());
+          exec (Printf.sprintf "ncat -lp %d > %s" port recv_dst_path);
+          print_newline ();
+          print_endline "File received";
+          print_endline "Decrypting file";
+          try
+            exec
+              (Printf.sprintf
+                 "gpg --batch --yes --passphrase %s -o %s --decrypt %s" otp
+                 decrypted_dst_path recv_dst_path);
+            let decrypted_file_hash =
+              let res =
+                exec_ret (Printf.sprintf "sha256sum %s" decrypted_dst_path)
+              in
+              res.stdout |> List.hd |> String.split_on_char ' ' |> List.hd
+            in
+            Printf.printf "SHA256 hash of the decrypted file : %s\n"
+              decrypted_file_hash;
+            match
+              ask_yn "Does the hash match the hash of the original file?"
+            with
+            | Yes -> (
+                let user_name = Option.get config.user_name in
+                let user_ssh_authorized_keys_path =
+                  Option.get config.user_ssh_authorized_keys_path
+                in
+                Printf.printf "Installing SSH key for user : %s\n" user_name;
+                let key_line =
+                  let ic = open_in decrypted_file_hash in
+                  Fun.protect
+                    ~finally:(fun () -> close_in ic)
+                    (fun () -> input_line ic)
+                in
+                let user_ssh_authorized_keys_oc =
+                  open_out_gen [Open_append; Open_text] 0o600
+                    user_ssh_authorized_keys_path
+                in
+                Fun.protect
+                  ~finally:(fun () -> close_out user_ssh_authorized_keys_oc)
+                  (fun () ->
+                     output_string user_ssh_authorized_keys_oc "\n";
+                     output_string user_ssh_authorized_keys_oc key_line;
+                     output_string user_ssh_authorized_keys_oc "\n");
+                match ask_yn "Do you want to add another SSH key?" with
+                | Yes ->
+                  Retry
+                | No ->
+                  Stop () )
+            | No -> (
+                print_endline "Incorrect file received";
+                match ask_yn "Do you want to retry?" with
+                | Yes ->
+                  Retry
+                | No ->
+                  Stop () )
+          with Exec_fail _ -> (
+              print_endline "Decryption failed";
+              match ask_yn "Do you want to retry?" with
+              | Yes ->
+                Retry
+              | No ->
+                Stop () ));
       config);
   reg ~name:"Ask if set up SaltStack" (fun config ->
       let use_saltstack =
