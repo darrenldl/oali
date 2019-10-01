@@ -9,7 +9,7 @@ services:
 
 before_install:
   - docker pull ocaml/opam2:alpine
-  - docker run -td --name installer_builder -v $(pwd):/home/opam/llsh-master ocaml/opam2:alpine
+  - docker run -td --name installer_builder -v $(pwd):/home/opam/oali-master ocaml/opam2:alpine
   - docker exec installer_builder sudo apk add m4
   - docker exec installer_builder opam install dune
   - docker exec installer_builder opam install core_kernel
@@ -21,10 +21,10 @@ before_install:
 script:
   - docker exec installer_builder bash -c 'cd ~; echo $(pwd)'
   - docker exec installer_builder bash -c 'cd ~; ls'
-  - docker exec installer_builder bash -c 'cp -r ~/llsh-master ~/llsh'
+  - docker exec installer_builder bash -c 'cp -r ~/oali-master ~/oali'
   - docker exec installer_builder bash -c 'chmod u=rwx ~/llsh'
-  - docker exec installer_builder bash -c 'eval $(opam env); cd ~/llsh/installer_ml; make'
-  - docker cp installer_builder:/home/opam/llsh/installer_ml/_build/default/src/installer.exe ./installer
+  - docker exec installer_builder bash -c 'eval $(opam env); cd ~/oali/installer_ml; make'
+  - docker cp installer_builder:/home/opam/oali/installer_ml/_build/default/src/installer.exe ./installer
   - strip installer
 
 deploy:
@@ -34,7 +34,7 @@ deploy:
   file: installer
   on:
     tags: true
-    repo: darrenldl/ocaml-linux-installer
+    repo: darrenldl/oali
   skip_cleanup: true
 
 notifications:
