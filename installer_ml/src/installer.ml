@@ -898,6 +898,10 @@ let () =
       FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
       config
     );
+  reg ~name:"Transferring SSH public keys" (fun config ->
+      let _otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
+      config
+    );
   reg ~name:"Ask if set up SaltStack" (fun config ->
       let use_saltstack =
         ask_yn "Do you want to use SaltStack for package management?" = Yes
