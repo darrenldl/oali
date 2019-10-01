@@ -130,7 +130,18 @@ let () =
         {config with boot_part_enc_params = Some {iter_time_ms; key_size_bits}}
       else config);
   reg ~name:"Pick whether to encrypt ROOT partition" (fun config ->
-      let encrypt = ask_yn "Enable encryption for ROOT (/) partition?" = Yes in
+      let encrypt_boot = Option.get config.encrypt_boot in
+      let encrypt =
+        retry (fun () ->
+            let encrypt_sys =
+              ask_yn "Enable encryption for ROOT (/) partition?" = Yes
+            in
+            if encrypt_boot && not encrypt_sys then
+              print_boxed_msg
+                "WARNING : boot was configured to be encrypted, but you \
+                 selected to not encrypt root";
+            confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
+      in
       {config with encrypt_sys = Some encrypt});
   reg ~name:"Adjusting cryptsetup parameters for root partition" (fun config ->
       if Option.get config.encrypt_sys then
