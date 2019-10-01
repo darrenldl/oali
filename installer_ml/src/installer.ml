@@ -15,9 +15,7 @@ let () =
       let editor =
         retry (fun () ->
             let editor =
-              ask_string
-                ~is_valid:(fun s -> s <> "")
-                "Please enter editor command"
+              ask_string ~is_valid:not_empty "Please enter editor command"
             in
             try
               exec (Printf.sprintf "hash %s" editor);
@@ -28,23 +26,62 @@ let () =
               Retry)
       in
       {config with editor = Some editor});
-  reg ~name:"Configure mirrorlist" (fun config ->
-      let editor = Option.get config.editor in
-      Printf.printf "Editor %s will be used for editing mirror list\n" editor;
-      tell_press_enter ();
-      retry (fun () ->
-          exec_no_capture (Printf.sprintf "%s /etc/pacman.d/mirrorlist" editor);
-          ask_yn_end_retry ~ret:() "Finished editing?");
-      config);
   reg ~name:"Updating pacman database in live CD" (fun config ->
       pacman "-Sy"; config);
+  reg ~name:"Asking if want to use reflector" (fun config ->
+      let use_reflector =
+        ask_yn
+          "Do you want to use reflector to automatically sort mirrorlist by \
+           rate"
+        = Yes
+      in
+      {config with use_reflector = Some use_reflector});
+  reg ~name:"Installing reflector" (fun config ->
+      if Option.get config.use_reflector then pacman "-S reflector";
+      config);
+  reg ~name:"Automatic configuration of mirrorlist" (fun config ->
+      if Option.get config.use_reflector then (
+        let editor = Option.get config.editor in
+        let countries =
+          ask_string_confirm ~is_valid:not_empty
+            "Please enter a comma separated list of countries you would like \
+             to provide to reflector"
+          |> String.split_on_char ','
+        in
+        let dst_path = Filename.temp_file "installer" "mirrorlist" in
+        let reflector_cmd =
+          ["reflector"; "--sort"; "rate"; "--save"; dst_path]
+          @ List.map (fun s -> "--country " ^ s) countries
+          |> String.concat " "
+        in
+        Printf.printf "Computed reflector command : %s" reflector_cmd;
+        exec reflector_cmd;
+        Printf.printf
+          "%s will be used for viewing/editing the mirrorlist generated\n"
+          editor;
+        tell_press_enter ();
+        retry (fun () ->
+            exec_no_capture (Printf.sprintf "%s %s" editor dst_path);
+            ask_yn_end_retry ~ret:() "Finished viewing/editing?");
+        if
+          ask_yn_confirm "Do you want to copy this mirrorlist over to live CD?"
+          = Yes
+        then FileUtil.mv dst_path Config.livecd_mirrorlist_path );
+      config);
+  reg ~name:"Manual configuration of mirrorlist" (fun config ->
+      let editor = Option.get config.editor in
+      Printf.printf "%s will be used for editing mirrorlist\n" editor;
+      tell_press_enter ();
+      retry (fun () ->
+          exec_no_capture
+            (Printf.sprintf "%s %s" editor Config.livecd_mirrorlist_path);
+          ask_yn_end_retry ~ret:() "Finished editing?");
+      config);
   reg ~name:"Installing git" (fun config ->
       install ["git"];
       config);
   reg ~name:"Asking for hostname" (fun config ->
-      let hostname =
-        ask_string_confirm ~is_valid:(fun x -> x <> "") "Hostname"
-      in
+      let hostname = ask_string_confirm ~is_valid:not_empty "Hostname" in
       {config with hostname = Some hostname});
   reg ~name:"Asking if install hardened kernel" (fun config ->
       let add_hardened =
@@ -735,9 +772,7 @@ let () =
       config);
   reg ~name:"Setting user account" (fun config ->
       let user_name =
-        ask_string_confirm
-          ~is_valid:(fun s -> s <> "")
-          "Please enter user name"
+        ask_string_confirm ~is_valid:not_empty "Please enter user name"
       in
       print_endline "Adding user";
       Arch_chroot.exec

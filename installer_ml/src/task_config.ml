@@ -9,6 +9,7 @@ type t =
   ; boot_part_enc_params : Disk_layout.enc_params option
   ; sys_part_enc_params : Disk_layout.enc_params option
   ; editor : string option
+  ; use_reflector : bool option
   ; hostname : string option
   ; use_saltstack : bool option
   ; user_name : string option
@@ -26,6 +27,7 @@ let create () =
   ; boot_part_enc_params = None
   ; sys_part_enc_params = None
   ; editor = None
+  ; use_reflector = None
   ; hostname = None
   ; use_saltstack = None
   ; user_name = None

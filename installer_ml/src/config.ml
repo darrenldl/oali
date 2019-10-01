@@ -26,6 +26,9 @@ let boot_mapper_name = "crypt_boot"
 
 let root_mapper_name = "crypt_root"
 
+let livecd_mirrorlist_path =
+  Misc_utils.concat_file_names ["etc"; "pacman.d"; "mirrorlist"]
+
 let oli_files_dir_path = "/root/oli_pack"
 
 let useradd_helper_as_powerful_name = "useradd_helper_as_powerful.sh"
