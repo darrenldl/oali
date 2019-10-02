@@ -1053,7 +1053,7 @@ let () =
           ; Config.oali_files_dir_path
           ; Config.oali_setup_note_name ]
       in
-      let note = Llsh_setup_note_template.gen ~use_saltstack ~use_usb_key in
+      let note = Oali_setup_note_template.gen ~use_saltstack ~use_usb_key in
       let oc = open_out dst_path in
       Fun.protect
         ~finally:(fun () -> close_out oc)
