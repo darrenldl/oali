@@ -1,8 +1,8 @@
-# ocaml-linux-installer
-[![Build Status](https://travis-ci.org/darrenldl/ocaml-linux-installer.svg?branch=master)](https://travis-ci.org/darrenldl/ocaml-linux-installer)
+# OCaml Arch Linux Installer
+[![Build Status](https://travis-ci.org/darrenldl/oali.svg?branch=master)](https://travis-ci.org/darrenldl/oali)
 
 ### Description
-The installer written in OCaml sets up a Arch Linux installation with following variations
+Oali is an installer written in OCaml which sets up a Arch Linux installation with following variations
 - 3 disk layouts
   - Single system disk (installer does partitioning for you)
   - You pick the partitions for `/boot` `/` etc manually 
@@ -10,7 +10,7 @@ The installer written in OCaml sets up a Arch Linux installation with following 
 - Optional full disk encryption
 - Optional `linux-hardened` kernel installation
 
-The installer aims to be smart and hassle free, so following features are included as a result
+Oali aims to be smart and hassle free, so following features are included as a result
 - Automatic adjustment of dialogues and settings based on whether the live CD is running in UEFI or BIOS mode
 
 ### Encryption specifics

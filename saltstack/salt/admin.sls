@@ -111,3 +111,8 @@ Package management:
   pkg.installed:
     - pkgs:
       - pacman-contrib
+
+Mirrorlist:
+  pkg.installed:
+    - pkgs:
+      - reflector

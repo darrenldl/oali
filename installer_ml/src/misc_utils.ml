@@ -124,13 +124,14 @@ let print_boxed_msg s =
   let line = String.concat "" ["+"; String.make (len - 2) '-'; "+"] in
   print_endline line; Printf.printf "| %s |\n" s; print_endline line
 
+let not_empty s = s <> ""
+
 let concat_file_names names =
   let splits =
     names
     |> List.map (fun s ->
         Core_kernel.String.Escaping.split s ~on:'/' ~escape_char:'\\')
-    |> List.concat
-    |> List.filter (fun s -> s <> "")
+    |> List.concat |> List.filter not_empty
   in
   let res = String.concat Filename.dir_sep splits in
   match names with
@@ -139,7 +140,7 @@ let concat_file_names names =
   | x :: _ ->
     if String.sub x 0 1 = "/" then "/" ^ res else res
 
-let calc_perc ~max_perc ~value ~total =
-  assert (max_perc >= 0);
-  assert (max_perc <= 100);
-  min (value * 100 / total) max_perc
+let calc_frac ~max_frac ~value ~total =
+  assert (max_frac >= 0.0);
+  assert (max_frac <= 1.0);
+  min (value /. total) max_frac

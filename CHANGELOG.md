@@ -1,3 +1,11 @@
+# 0.0.3
+- Fixed boot partition cryptsetup parameters adjustment task unit
+- Fixed partition size percentage calculation
+- Fixed partition name computation code
+  - Previously partition name may not be correctly deduced during formatting
+- Added task unit for using `reflector` to generate more optimised mirrorlist
+- Added SSH server setup and SSH keys transfer code
+
 # 0.0.2
 - Added following user options when task unit fails
   - Skip

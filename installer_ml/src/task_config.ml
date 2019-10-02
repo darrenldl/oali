@@ -9,7 +9,10 @@ type t =
   ; boot_part_enc_params : Disk_layout.enc_params option
   ; sys_part_enc_params : Disk_layout.enc_params option
   ; editor : string option
+  ; use_reflector : bool option
   ; hostname : string option
+  ; enable_ssh_server : bool option
+  ; user_ssh_authorized_keys_path : string option
   ; use_saltstack : bool option
   ; user_name : string option
   ; do_unmount : bool option
@@ -26,7 +29,10 @@ let create () =
   ; boot_part_enc_params = None
   ; sys_part_enc_params = None
   ; editor = None
+  ; use_reflector = None
   ; hostname = None
+  ; enable_ssh_server = None
+  ; user_ssh_authorized_keys_path = None
   ; use_saltstack = None
   ; user_name = None
   ; do_unmount = None

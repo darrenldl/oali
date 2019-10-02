@@ -19,8 +19,11 @@ let process_status_to_string s =
     Printf.sprintf "stopped %d" i
 
 let report_failure res =
-  Printf.sprintf "Exec failed : %s, status : %s" res.cmd
+  Printf.sprintf "Exec failed : %s, status : %s\nstdout :\n%s\nstderr :\n%s"
+    res.cmd
     (process_status_to_string res.status)
+    (String.concat "\n" res.stdout)
+    (String.concat "\n" res.stderr)
 
 let exec_result_is_ok res = res.status = WEXITED 0
 

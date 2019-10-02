@@ -15,9 +15,7 @@ let () =
       let editor =
         retry (fun () ->
             let editor =
-              ask_string
-                ~is_valid:(fun s -> s <> "")
-                "Please enter editor command"
+              ask_string ~is_valid:not_empty "Please enter editor command"
             in
             try
               exec (Printf.sprintf "hash %s" editor);
@@ -28,23 +26,64 @@ let () =
               Retry)
       in
       {config with editor = Some editor});
-  reg ~name:"Configure mirrorlist" (fun config ->
-      let editor = Option.get config.editor in
-      Printf.printf "Editor %s will be used for editing mirror list\n" editor;
-      tell_press_enter ();
-      retry (fun () ->
-          exec_no_capture (Printf.sprintf "%s /etc/pacman.d/mirrorlist" editor);
-          ask_yn_end_retry ~ret:() "Finished editing?");
-      config);
   reg ~name:"Updating pacman database in live CD" (fun config ->
       pacman "-Sy"; config);
+  reg ~name:"Asking if want to use reflector" (fun config ->
+      let use_reflector =
+        ask_yn
+          "Do you want to use reflector to automatically sort mirrorlist by \
+           rate"
+        = Yes
+      in
+      {config with use_reflector = Some use_reflector});
+  reg ~name:"Installing reflector" (fun config ->
+      if Option.get config.use_reflector then pacman "-S reflector";
+      config);
+  reg ~name:"Automatic configuration of mirrorlist" (fun config ->
+      if Option.get config.use_reflector then (
+        let editor = Option.get config.editor in
+        let countries =
+          ask_string_confirm ~is_valid:not_empty
+            "Please enter a comma separated list of countries you would like \
+             to provide to reflector"
+          |> String.split_on_char ','
+        in
+        let dst_path = Filename.temp_file "installer" "mirrorlist" in
+        let reflector_cmd =
+          ["reflector"; "--verbose"; "--sort"; "rate"; "--save"; dst_path]
+          @ List.map (fun s -> "--country " ^ s) countries
+          |> String.concat " "
+        in
+        Printf.printf "Computed reflector command : %s\n" reflector_cmd;
+        print_newline ();
+        exec_no_capture reflector_cmd;
+        print_newline ();
+        Printf.printf
+          "%s will be used for viewing/editing the mirrorlist generated\n"
+          editor;
+        tell_press_enter ();
+        retry (fun () ->
+            exec_no_capture (Printf.sprintf "%s %s" editor dst_path);
+            ask_yn_end_retry ~ret:() "Finished viewing/editing?");
+        if
+          ask_yn_confirm "Do you want to copy this mirrorlist over to live CD?"
+          = Yes
+        then FileUtil.mv dst_path Config.livecd_mirrorlist_path );
+      config);
+  reg ~name:"Manual configuration of mirrorlist" (fun config ->
+      let editor = Option.get config.editor in
+      Printf.printf "%s will be used for editing mirrorlist\n" editor;
+      tell_press_enter ();
+      retry (fun () ->
+          exec_no_capture
+            (Printf.sprintf "%s %s" editor Config.livecd_mirrorlist_path);
+          ask_yn_end_retry ~ret:() "Finished editing?");
+      config);
   reg ~name:"Installing git" (fun config ->
       install ["git"];
       config);
   reg ~name:"Asking for hostname" (fun config ->
-      let hostname =
-        ask_string_confirm ~is_valid:(fun x -> x <> "") "Hostname"
-      in
+      let hostname = ask_string_confirm ~is_valid:not_empty "Hostname" in
       {config with hostname = Some hostname});
   reg ~name:"Asking if install hardened kernel" (fun config ->
       let add_hardened =
@@ -66,7 +105,7 @@ let () =
       in
       {config with encrypt_boot = Some encrypt});
   reg ~name:"Adjusting cryptsetup parameters for boot partition" (fun config ->
-      if Option.get config.encrypt_sys then
+      if Option.get config.encrypt_boot then
         let iter_time_ms, key_size_bits =
           retry (fun () ->
               let iter_time_ms =
@@ -91,7 +130,18 @@ let () =
         {config with boot_part_enc_params = Some {iter_time_ms; key_size_bits}}
       else config);
   reg ~name:"Pick whether to encrypt ROOT partition" (fun config ->
-      let encrypt = ask_yn "Enable encryption for ROOT (/) partition?" = Yes in
+      let encrypt_boot = Option.get config.encrypt_boot in
+      let encrypt =
+        retry (fun () ->
+            let encrypt_sys =
+              ask_yn "Enable encryption for ROOT (/) partition?" = Yes
+            in
+            if encrypt_boot && not encrypt_sys then
+              print_boxed_msg
+                "WARNING : boot was configured to be encrypted, but you \
+                 selected to not encrypt root";
+            confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
+      in
       {config with encrypt_sys = Some encrypt});
   reg ~name:"Adjusting cryptsetup parameters for root partition" (fun config ->
       if Option.get config.encrypt_sys then
@@ -162,7 +212,7 @@ let () =
                    disk))
         in
         (* reset partition table *)
-        Printf.printf "Wiping partition table of %s" disk;
+        Printf.printf "Wiping partition table of %s\n" disk;
         exec (Printf.sprintf "dd if=/dev/zero of=%s bs=512 count=2" disk);
         (* create partition table *)
         if is_efi_mode then (
@@ -174,32 +224,45 @@ let () =
         (* partitioning *)
         print_endline "Partitioning";
         let disk_size_MiB = Disk_utils.disk_size_MiB disk in
-        let boot_part_perc =
-          calc_perc ~max_perc:Config.boot_part_max_perc
+        let boot_part_frac =
+          calc_frac ~max_frac:Config.boot_part_max_frac
             ~value:Config.boot_part_size_MiB ~total:disk_size_MiB
         in
         if is_efi_mode then (
-          let esp_part_perc =
-            calc_perc ~max_perc:Config.esp_part_max_perc
+          let esp_part_frac =
+            calc_frac ~max_frac:Config.esp_part_max_frac
               ~value:Config.esp_part_size_MiB ~total:disk_size_MiB
           in
-          let esp_part_beg_perc = 0 in
-          let esp_part_end_perc = esp_part_perc in
-          let boot_part_beg_perc = esp_part_end_perc in
-          let boot_part_end_perc = boot_part_beg_perc + boot_part_perc in
+          let esp_part_end_MiB = disk_size_MiB *. esp_part_frac in
+          let boot_part_beg_MiB = esp_part_end_MiB in
+          let boot_part_end_MiB =
+            boot_part_beg_MiB +. (disk_size_MiB *. boot_part_frac)
+          in
+          let esp_part_end_MB =
+            esp_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
+          in
+          let boot_part_beg_MB =
+            boot_part_beg_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
+          in
+          let boot_part_end_MB =
+            boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
+          in
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
-               disk esp_part_beg_perc esp_part_end_perc);
+            (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
+               disk esp_part_end_MB);
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
-               disk boot_part_beg_perc boot_part_end_perc);
+            (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %dMB"
+               disk boot_part_beg_MB boot_part_end_MB);
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
-               disk boot_part_end_perc 50);
+            (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %d%%"
+               disk boot_part_end_MB
+               (int_of_float Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
-          let esp_part_path = Printf.sprintf "%s1" disk |> Option.some in
-          let boot_part_path = Printf.sprintf "%s2" disk in
-          let sys_part_path = Printf.sprintf "%s3" disk in
+          Disk_utils.sync ();
+          let parts = Disk_utils.parts_of_disk disk in
+          let esp_part_path = List.nth parts 0 |> Option.some in
+          let boot_part_path = List.nth parts 1 in
+          let sys_part_path = List.nth parts 2 in
           let disk_layout =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
@@ -208,16 +271,22 @@ let () =
           in
           {config with disk_layout = Some disk_layout} )
         else
-          let boot_part_end_perc = boot_part_perc in
+          let boot_part_end_MiB = disk_size_MiB *. boot_part_frac in
+          let boot_part_end_MB =
+            boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
+          in
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %d%%"
-               disk boot_part_end_perc);
+            (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
+               disk boot_part_end_MB);
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
-               disk boot_part_end_perc 50);
+            (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %dMB"
+               disk boot_part_end_MB
+               (int_of_float Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
-          let boot_part_path = Printf.sprintf "%s1" disk in
-          let sys_part_path = Printf.sprintf "%s2" disk in
+          Disk_utils.sync ();
+          let parts = Disk_utils.parts_of_disk disk in
+          let boot_part_path = List.nth parts 0 in
+          let sys_part_path = List.nth parts 1 in
           let disk_layout =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
@@ -317,7 +386,7 @@ let () =
                    disk))
         in
         (* reset partition table *)
-        Printf.printf "Wiping partition table of %s" usb_key;
+        Printf.printf "Wiping partition table of %s\n" usb_key;
         exec (Printf.sprintf "dd if=/dev/zero of=%s bs=512 count=2" usb_key);
         (* create partition table *)
         if is_efi_mode then (
@@ -329,28 +398,40 @@ let () =
         (* partitioning USB key *)
         print_endline "Partitioning";
         let usb_key_size_MiB = Disk_utils.disk_size_MiB usb_key in
-        let boot_part_perc =
-          calc_perc ~max_perc:Config.boot_part_max_perc
+        let boot_part_frac =
+          calc_frac ~max_frac:Config.boot_part_max_frac
             ~value:Config.boot_part_size_MiB ~total:usb_key_size_MiB
         in
         if is_efi_mode then (
           let esp_part_perc =
-            calc_perc ~max_perc:Config.esp_part_max_perc
+            calc_frac ~max_frac:Config.esp_part_max_frac
               ~value:Config.esp_part_size_MiB ~total:usb_key_size_MiB
           in
-          let esp_part_beg_perc = 0 in
-          let esp_part_end_perc = esp_part_perc in
-          let boot_part_beg_perc = esp_part_end_perc in
-          let boot_part_end_perc = boot_part_beg_perc + boot_part_perc in
+          let esp_part_end_MiB = usb_key_size_MiB *. esp_part_perc in
+          let boot_part_beg_MiB = esp_part_end_MiB in
+          let boot_part_end_MiB =
+            boot_part_beg_MiB +. (usb_key_size_MiB *. boot_part_frac)
+          in
+          let esp_part_end_MB =
+            esp_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
+          in
+          let boot_part_beg_MB =
+            boot_part_beg_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
+          in
+          let boot_part_end_MB =
+            boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
+          in
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
-               usb_key esp_part_beg_perc esp_part_end_perc);
+            (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
+               usb_key esp_part_end_MB);
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary %d%% %d%%"
-               usb_key boot_part_beg_perc boot_part_end_perc);
+            (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %dMB"
+               usb_key boot_part_beg_MB boot_part_end_MB);
           exec (Printf.sprintf "parted %s set 1 boot on" usb_key);
-          let esp_part_path = Printf.sprintf "%s1" usb_key |> Option.some in
-          let boot_part_path = Printf.sprintf "%s2" usb_key in
+          Disk_utils.sync ();
+          let parts = Disk_utils.parts_of_disk usb_key in
+          let esp_part_path = List.nth parts 0 |> Option.some in
+          let boot_part_path = List.nth parts 1 in
           let disk_layout =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
@@ -359,12 +440,17 @@ let () =
           in
           {config with disk_layout = Some disk_layout} )
         else
-          let boot_part_end_perc = boot_part_perc in
+          let boot_part_end_MiB = usb_key_size_MiB *. boot_part_frac in
+          let boot_part_end_MB =
+            boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
+          in
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %d%%"
-               usb_key boot_part_end_perc);
+            (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
+               usb_key boot_part_end_MB);
           exec (Printf.sprintf "parted %s set 1 boot on" usb_key);
-          let boot_part_path = Printf.sprintf "%s1" usb_key in
+          Disk_utils.sync ();
+          let parts = Disk_utils.parts_of_disk usb_key in
+          let boot_part_path = List.nth parts 0 in
           let disk_layout =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
@@ -463,20 +549,23 @@ let () =
       config);
   reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot"
     (fun config ->
-       if
-         Option.get config.disk_layout_choice
-         <> Disk_layout.Sys_part_plus_usb_drive
-       then
-         if Option.get config.encrypt_boot then
+       ( if Option.get config.encrypt_boot then
            let disk_layout = Option.get config.disk_layout in
            let boot_part_path = disk_layout.boot_part.lower.path in
            let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
            let keyfile_path =
              concat_file_names ["/root"; Config.boot_part_keyfile_name]
            in
+           let comment_str =
+             if
+               Option.get config.disk_layout_choice
+               = Disk_layout.Sys_part_plus_usb_drive
+             then "# "
+             else ""
+           in
            let line =
-             Printf.sprintf "%s UUID=%s %s %s\n" Config.boot_mapper_name
-               boot_part_uuid keyfile_path
+             Printf.sprintf "%s%s UUID=%s %s %s\n" Config.boot_mapper_name
+               comment_str boot_part_uuid keyfile_path
                (String.concat ","
                   [Printf.sprintf "x-systemd.device-timeout=%ds" 90])
            in
@@ -488,8 +577,8 @@ let () =
              ~finally:(fun () -> close_out crypttab_oc)
              (fun () ->
                 output_string crypttab_oc "\n";
-                output_string crypttab_oc line)
-         else print_endline "Skipped";
+                output_string crypttab_oc line;
+                output_string crypttab_oc "\n") );
        config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun config ->
       if Option.get config.encrypt_sys then (
@@ -703,9 +792,7 @@ let () =
       config);
   reg ~name:"Setting user account" (fun config ->
       let user_name =
-        ask_string_confirm
-          ~is_valid:(fun s -> s <> "")
-          "Please enter user name"
+        ask_string_confirm ~is_valid:not_empty "Please enter user name"
       in
       print_endline "Adding user";
       Arch_chroot.exec
@@ -720,9 +807,9 @@ let () =
       FileUtil.(rm ~force:Force ~recurse:true [Config.repo_name]);
       exec (Printf.sprintf "git clone %s" Config.repo_url);
       config);
-  reg ~name:"Creating oli files folder" (fun config ->
+  reg ~name:"Creating oali files folder" (fun config ->
       let dst_path =
-        concat_file_names [Config.sys_mount_point; Config.oli_files_dir_path]
+        concat_file_names [Config.sys_mount_point; Config.oali_files_dir_path]
       in
       FileUtil.mkdir dst_path; config);
   reg ~name:"Generating USB key mounting and unmounting scripts" (fun config ->
@@ -747,7 +834,7 @@ let () =
         (let dst_path =
            concat_file_names
              [ Config.sys_mount_point
-             ; Config.oli_files_dir_path
+             ; Config.oali_files_dir_path
              ; Config.usb_key_mount_script_name ]
          in
          let script =
@@ -761,7 +848,7 @@ let () =
         let dst_path =
           concat_file_names
             [ Config.sys_mount_point
-            ; Config.oli_files_dir_path
+            ; Config.oali_files_dir_path
             ; Config.usb_key_unmount_script_name ]
         in
         let script =
@@ -776,7 +863,7 @@ let () =
   reg ~name:"Copying useradd helper scripts" (fun config ->
       let cwd = Sys.getcwd () in
       let dst_path =
-        concat_file_names [Config.sys_mount_point; Config.oli_files_dir_path]
+        concat_file_names [Config.sys_mount_point; Config.oali_files_dir_path]
       in
       FileUtil.cp
         [ concat_file_names
@@ -799,6 +886,110 @@ let () =
         (concat_file_names [dst_path; Config.useradd_helper_restricted_name])
         0o660;
       config);
+  reg ~name:"Ask if enable SSH server" (fun config ->
+      let enable_ssh_server =
+        ask_yn "Do you want to enable SSH server?" = Yes
+      in
+      {config with enable_ssh_server = Some enable_ssh_server});
+  reg ~name:"Enabling SSH server" (fun config ->
+      Arch_chroot.exec "systemctl enable sshd";
+      config);
+  reg ~name:"Copying sshd_config over" (fun config ->
+      FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
+      config);
+  reg ~name:"Setting up SSH key directory" (fun config ->
+      let user_name = Option.get config.user_name in
+      let user_ssh_dir_path =
+        concat_file_names [Config.sys_mount_point; "home"; user_name; ".ssh"]
+      in
+      FileUtil.mkdir user_ssh_dir_path;
+      let user_ssh_authorized_keys_path =
+        concat_file_names [user_ssh_dir_path; "authorized_keys"]
+      in
+      { config with
+        user_ssh_authorized_keys_path = Some user_ssh_authorized_keys_path });
+  reg ~name:"Transferring SSH public keys" (fun config ->
+      let ip = Net_utils.get_internet_facing_ip () in
+      retry (fun () ->
+          let otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
+          let port = 10000 + Random.int 10000 in
+          let recv_dst_path = Filename.temp_file "installer" "ssh_pub_key" in
+          let decrypted_dst_path =
+            Filename.temp_file "installer" "decrypted_ssh_pub_key"
+          in
+          print_endline
+            "Transfer the PUBLIC key to the server using one of the following \
+             commands";
+          Printf.printf
+            "    cat PUBKEY | gpg -c | ncat %s %d # enter passphrase %s when \
+             prompted\n"
+            ip port otp;
+          print_endline "or";
+          Printf.printf
+            "cat PUBKEY | gpg --batch --yes --passphrase %s -c | ncat %s %d\n"
+            otp ip port;
+          exec (Printf.sprintf "ncat -lp %d > %s" port recv_dst_path);
+          print_newline ();
+          print_endline "File received";
+          print_endline "Decrypting file";
+          try
+            exec
+              (Printf.sprintf
+                 "gpg --batch --yes --passphrase %s -o %s --decrypt %s" otp
+                 decrypted_dst_path recv_dst_path);
+            let decrypted_file_hash =
+              let res =
+                exec_ret (Printf.sprintf "sha256sum %s" decrypted_dst_path)
+              in
+              res.stdout |> List.hd |> String.split_on_char ' ' |> List.hd
+            in
+            Printf.printf "SHA256 hash of the decrypted file : %s\n"
+              decrypted_file_hash;
+            match
+              ask_yn "Does the hash match the hash of the original file?"
+            with
+            | Yes -> (
+                let user_name = Option.get config.user_name in
+                let user_ssh_authorized_keys_path =
+                  Option.get config.user_ssh_authorized_keys_path
+                in
+                Printf.printf "Installing SSH key for user : %s\n" user_name;
+                let key_line =
+                  let ic = open_in decrypted_file_hash in
+                  Fun.protect
+                    ~finally:(fun () -> close_in ic)
+                    (fun () -> input_line ic)
+                in
+                let user_ssh_authorized_keys_oc =
+                  open_out_gen [Open_append; Open_text] 0o600
+                    user_ssh_authorized_keys_path
+                in
+                Fun.protect
+                  ~finally:(fun () -> close_out user_ssh_authorized_keys_oc)
+                  (fun () ->
+                     output_string user_ssh_authorized_keys_oc "\n";
+                     output_string user_ssh_authorized_keys_oc key_line;
+                     output_string user_ssh_authorized_keys_oc "\n");
+                match ask_yn "Do you want to add another SSH key?" with
+                | Yes ->
+                  Retry
+                | No ->
+                  Stop () )
+            | No -> (
+                print_endline "Incorrect file received";
+                match ask_yn "Do you want to retry?" with
+                | Yes ->
+                  Retry
+                | No ->
+                  Stop () )
+          with Exec_fail _ -> (
+              print_endline "Decryption failed";
+              match ask_yn "Do you want to retry?" with
+              | Yes ->
+                Retry
+              | No ->
+                Stop () ));
+      config);
   reg ~name:"Ask if set up SaltStack" (fun config ->
       let use_saltstack =
         ask_yn "Do you want to use SaltStack for package management?" = Yes
@@ -814,7 +1005,7 @@ let () =
         let dst_path =
           concat_file_names
             [ Config.sys_mount_point
-            ; Config.oli_files_dir_path
+            ; Config.oali_files_dir_path
             ; Config.salt_exec_script_name ]
         in
         let script = Salt_exec_script_template.gen_no_usb_key () in
@@ -859,10 +1050,10 @@ let () =
       let dst_path =
         concat_file_names
           [ Config.sys_mount_point
-          ; Config.oli_files_dir_path
-          ; Config.oli_setup_note_name ]
+          ; Config.oali_files_dir_path
+          ; Config.oali_setup_note_name ]
       in
-      let note = Llsh_setup_note_template.gen ~use_saltstack ~use_usb_key in
+      let note = Oali_setup_note_template.gen ~use_saltstack ~use_usb_key in
       let oc = open_out dst_path in
       Fun.protect
         ~finally:(fun () -> close_out oc)
