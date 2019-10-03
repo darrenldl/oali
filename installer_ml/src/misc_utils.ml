@@ -144,3 +144,5 @@ let calc_frac ~max_frac ~value ~total =
   assert (max_frac >= 0.0);
   assert (max_frac <= 1.0);
   min (value /. total) max_frac
+
+let frac_to_perc frac : int = int_of_float (Float.round (frac *. 100.0))

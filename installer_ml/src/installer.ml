@@ -256,7 +256,7 @@ let () =
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %d%%"
                disk boot_part_end_MB
-               (int_of_float Config.total_disk_usage_frac));
+               (frac_to_perc Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
           Disk_utils.sync ();
           let parts = Disk_utils.parts_of_disk disk in
@@ -279,9 +279,9 @@ let () =
             (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
                disk boot_part_end_MB);
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %dMB"
+            (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %d%%"
                disk boot_part_end_MB
-               (int_of_float Config.total_disk_usage_frac));
+               (frac_to_perc Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
           Disk_utils.sync ();
           let parts = Disk_utils.parts_of_disk disk in
