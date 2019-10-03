@@ -14,6 +14,8 @@ type yn =
   | Yes
   | No
 
+let not_empty s = s <> ""
+
 let retry (f : unit -> 'a retry) : 'a =
   let rec aux f = match f () with Stop x -> x | Retry -> aux f in
   aux f
@@ -30,7 +32,8 @@ let ask_string ?(is_valid = fun _ -> true) prompt =
 let ask_yn prompt =
   retry (fun () ->
       let s =
-        ask_string (Printf.sprintf "%s y/n" prompt) |> String.lowercase_ascii
+        ask_string ~is_valid:not_empty (Printf.sprintf "%s y/n" prompt)
+        |> String.lowercase_ascii
       in
       let len = String.length s in
       let yes = "yes" in
@@ -124,8 +127,6 @@ let print_boxed_msg s =
   let line = String.concat "" ["+"; String.make (len - 2) '-'; "+"] in
   print_endline line; Printf.printf "| %s |\n" s; print_endline line
 
-let not_empty s = s <> ""
-
 let concat_file_names names =
   let splits =
     names
@@ -144,3 +145,5 @@ let calc_frac ~max_frac ~value ~total =
   assert (max_frac >= 0.0);
   assert (max_frac <= 1.0);
   min (value /. total) max_frac
+
+let frac_to_perc frac : int = int_of_float (Float.round (frac *. 100.0))

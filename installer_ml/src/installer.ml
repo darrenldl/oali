@@ -256,7 +256,7 @@ let () =
           exec
             (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %d%%"
                disk boot_part_end_MB
-               (int_of_float Config.total_disk_usage_frac));
+               (frac_to_perc Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
           Disk_utils.sync ();
           let parts = Disk_utils.parts_of_disk disk in
@@ -279,9 +279,9 @@ let () =
             (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
                disk boot_part_end_MB);
           exec
-            (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %dMB"
+            (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %d%%"
                disk boot_part_end_MB
-               (int_of_float Config.total_disk_usage_frac));
+               (frac_to_perc Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
           Disk_utils.sync ();
           let parts = Disk_utils.parts_of_disk disk in
@@ -891,11 +891,15 @@ let () =
         ask_yn "Do you want to enable SSH server?" = Yes
       in
       {config with enable_ssh_server = Some enable_ssh_server});
-  reg ~name:"Enabling SSH server" (fun config ->
-      Arch_chroot.exec "systemctl enable sshd";
-      config);
+  reg ~name:"Installing SSH server" (fun config ->
+      Arch_chroot.install ["openssh"];
+      config
+    );
   reg ~name:"Copying sshd_config over" (fun config ->
       FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
+      config);
+  reg ~name:"Enabling SSH server" (fun config ->
+      Arch_chroot.exec "systemctl enable sshd";
       config);
   reg ~name:"Setting up SSH key directory" (fun config ->
       let user_name = Option.get config.user_name in
