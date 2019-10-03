@@ -15,7 +15,7 @@ Oali is an installer written in OCaml which sets up a Arch Linux installation wi
   - You pick the partitions for `/boot` `/` etc manually 
   - Single system partition (you pick an existing partition on a disk) + USB key (partitioned by installer)
 - Optional full disk encryption
-- Optional `linux-hardened** kernel installation
+- Optional `linux-hardened` kernel installation
 
 Oali aims to be smart and hassle free, so following features are included as a result
 - Automatic adjustment of dialogues and settings based on whether the live CD is running in UEFI or BIOS mode
