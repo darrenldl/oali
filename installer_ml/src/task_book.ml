@@ -2,6 +2,20 @@ open Sexplib.Std
 
 type task = Task_config.t -> Task_config.t
 
+type task_result =
+  | Not_run
+  | Okay
+  | Failed
+
+type stats =
+  { result : task_result
+  ; exec_count : int }
+
+type task_record =
+  { name : string
+  ; task : task
+  ; stats : stats }
+
 type progress = {finished : string list} [@@deriving sexp]
 
 type task_fail_choice =
@@ -11,22 +25,13 @@ type task_fail_choice =
 
 type t =
   { mutable config : Task_config.t
-  ; to_run : (string * task) Queue.t
-  ; failed : (string * task) Queue.t
-  ; finished : (string * task) Queue.t }
+  ; mutable tasks : task_record list }
 
-let make config =
-  { config
-  ; to_run = Queue.create ()
-  ; failed = Queue.create ()
-  ; finished = Queue.create () }
+let make config = {config; tasks = []}
 
-let to_progress task_book =
-  let acc = ref [] in
-  Queue.iter (fun x -> acc := x :: !acc) task_book.finished;
-  List.rev !acc
-
-let register task_book ~name task = Queue.push (name, task) task_book.to_run
+let register task_book ~name task =
+  task_book.tasks <-
+    {name; task; stats = {result = Not_run; exec_count = 0}} :: task_book.tasks
 
 let run task_book =
   let rec aux task_book (retry : (string * task) option) =
