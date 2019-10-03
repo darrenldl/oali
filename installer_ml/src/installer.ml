@@ -891,11 +891,15 @@ let () =
         ask_yn "Do you want to enable SSH server?" = Yes
       in
       {config with enable_ssh_server = Some enable_ssh_server});
-  reg ~name:"Enabling SSH server" (fun config ->
-      Arch_chroot.exec "systemctl enable sshd";
-      config);
+  reg ~name:"Installing SSH server" (fun config ->
+      Arch_chroot.install ["openssh"];
+      config
+    );
   reg ~name:"Copying sshd_config over" (fun config ->
       FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
+      config);
+  reg ~name:"Enabling SSH server" (fun config ->
+      Arch_chroot.exec "systemctl enable sshd";
       config);
   reg ~name:"Setting up SSH key directory" (fun config ->
       let user_name = Option.get config.user_name in
