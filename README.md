@@ -17,28 +17,37 @@ Oali is an installer written in OCaml which sets up a Arch Linux installation wi
 - Optional full disk encryption
 - Optional `linux-hardened` kernel installation
 
-## Goal
-Oali aims to be snappy, minimal, smart, and hassle free
+Overall oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below for more information.
 
-See **Specifics** section below for more information
-
-## Prerequisites
+## Getting started
+#### Prerequisites
 - Working internet connection
 - Partitioning done for system partition
 - USB key (data will be lost)
 
-## Space requirement
+#### Space requirement
 - USB key (if you intend to use disk layout that utilises a USB key)
   - 1 GiB USB drive will be very sufficient
 - System drive
   - Current salt states download/install around 10 GiB of data
 
-## Instructions
+#### Instructions
 The OCaml code is not self contained, thus if you choose to compile it yourself, you will need to install various dependencies.
 
 For deployment purposes, it is recommended that you use the static binaries provided, which you can download via [GitHub releases](https://github.com/darrenldl/ocaml-linux-installer/releases)
 
 The static binaries of the installer are built via Travis CI using `ocaml/opam2:alpine` Docker image, and should be able to run on Arch Linux live CD without any further setup
+
+## Answers to some "Why?" questions
+- Why make an installer to begin with?
+  - Mildly complex FDE setups are really laborious and error prone to set up, and unfortunately you can't really afford human errors during these set ups depending on the nature of installation
+  - A lot of decisions are based on information processing and very mechanical - no point in having a human devoted to repeating deterministic steps
+- Why not bash?
+  - The previous iteration of this installer was written in bash actually (see `scripts/setup.sh`), but it only supported one disk layout and always have encryption
+  - Adding a lot of decision making code and information handling code to bash code was really tedious and difficult
+- Why OCaml?
+  - I know I can do OCaml/Rust reasonably fast, but slow to a crawl with dynamically typed langs
+  - Here is mostly a lot of handling of immutable information (e.g. processing of system information), where Rust doesn't carry a significant advantage over OCaml, and the overhead didn't seem worth it to me
 
 ## Specifics
 #### EFI/BIOS
