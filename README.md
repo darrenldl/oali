@@ -17,8 +17,10 @@ Oali is an installer written in OCaml which sets up a Arch Linux installation wi
 - Optional full disk encryption
 - Optional `linux-hardened` kernel installation
 
-Oali aims to be smart and hassle free, so following features are included as a result
-- Automatic adjustment of dialogues and settings based on whether the live CD is running in UEFI or BIOS mode
+## Goal
+Oali aims to be snappy, minimal, smart, and hassle free
+
+See **Specifics** section below for more information
 
 ## Prerequisites
 - Working internet connection
@@ -39,6 +41,8 @@ For deployment purposes, it is recommended that you use the static binaries prov
 The static binaries of the installer are built via Travis CI using `ocaml/opam2:alpine` Docker image, and should be able to run on Arch Linux live CD without any further setup
 
 ## Specifics
+#### EFI/BIOS
+Oali automatically adjusts dialogues and settings based on whether the live CD is running in UEFI or BIOS mode
 
 #### Disk layout choices
 **Single system disk** - Oali slices the disks into ESP (if in EFI mode), boot and root partitions automatically
