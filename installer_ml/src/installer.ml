@@ -893,8 +893,7 @@ let () =
       {config with enable_ssh_server = Some enable_ssh_server});
   reg ~name:"Installing SSH server" (fun config ->
       Arch_chroot.install ["openssh"];
-      config
-    );
+      config);
   reg ~name:"Copying sshd_config over" (fun config ->
       FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
       config);
