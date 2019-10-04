@@ -4,6 +4,16 @@ type task = Task_config.t -> Task_config.t
 
 exception End_install
 
+type installer_state =
+  | Fresh
+  | Repeat
+  | Terminating
+
+type installation_action =
+  | Run_everything
+  | Run_skip_to_task
+  | Terminate
+
 type task_result =
   | Not_run
   | Okay
@@ -115,19 +125,55 @@ let rec run_single_task task_book task_record : unit =
       raise End_install )
   else task_book.config <- new_config
 
+let pick_installer_action () =
+  let choices =
+    [ ("Run all tasks", Run_everything)
+    ; ("Run, skip to task", Run_skip_to_task)
+    ; ("Terminate", Terminate) ]
+  in
+  let choice_index =
+    Misc_utils.pick_choice ~header:"Actions"
+      (List.map (fun (x, _) -> x) choices)
+  in
+  let _, x = List.nth choices choice_index in
+  x
+
+let pick_tasks_to_run task_book =
+  let tasks = Option.get task_book.tasks_to_run in
+  let task_count = Array.length tasks in
+  match pick_installer_action () with
+  | Run_everything ->
+    Some tasks
+  | Run_skip_to_task ->
+    let skip_to = pick_task task_book in
+    Some (Array.sub tasks skip_to (task_count - skip_to))
+  | Terminate ->
+    None
+
 let run task_book =
+  let rec aux task_book =
+    match pick_tasks_to_run task_book with
+    | None ->
+      ()
+    | Some tasks -> (
+        Sys.set_signal Sys.sigint
+          (Sys.Signal_handle
+             (fun _ ->
+                print_endline "Interrupted received";
+                print_endline "Terminating installation";
+                raise End_install));
+        try
+          Array.iteri
+            (fun cur_task task_record ->
+               task_book.cur_task <- Some cur_task;
+               run_single_task task_book task_record)
+            tasks;
+          print_endline "All tasks were executed successfully"
+        with End_install ->
+          print_endline
+            "Installation ended as requested, returning to main menu";
+          aux task_book )
+  in
   finalize task_book;
-  let tasks_to_run = Option.get task_book.tasks_to_run in
-  Sys.set_signal Sys.sigint
-    (Sys.Signal_handle
-       (fun _ ->
-          print_endline "Interrupted received";
-          print_endline "Terminating installation";
-          raise End_install));
-  try
-    Array.iteri
-      (fun cur_task task_record ->
-         task_book.cur_task <- Some cur_task;
-         run_single_task task_book task_record)
-      tasks_to_run
-  with End_install -> print_endline "Installation ended as requested"
+  print_endline "Welcome to oali - OCaml Arch Linux Installer";
+  aux task_book
