@@ -1,4 +1,7 @@
+let sync () = Proc_utils.exec "sync"
+
 let list_disk_block_devs () =
+  sync ();
   let dir = "/dev/disk/by-path/" in
   let paths = Sys.readdir dir |> Array.to_list in
   let dsts =
@@ -78,5 +81,3 @@ let uuid_of_dev dev =
   |> List.filter (fun (s, _) -> s = Filename.basename dev)
   |> List.hd
   |> fun (_, uuid) -> uuid
-
-let sync () = Proc_utils.exec "sync"

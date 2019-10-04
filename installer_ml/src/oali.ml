@@ -258,7 +258,6 @@ let () =
                disk boot_part_end_MB
                (frac_to_perc Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
-          Disk_utils.sync ();
           let parts = Disk_utils.parts_of_disk disk in
           let esp_part_path = List.nth parts 0 |> Option.some in
           let boot_part_path = List.nth parts 1 in
@@ -283,7 +282,6 @@ let () =
                disk boot_part_end_MB
                (frac_to_perc Config.total_disk_usage_frac));
           exec (Printf.sprintf "parted %s set 1 boot on" disk);
-          Disk_utils.sync ();
           let parts = Disk_utils.parts_of_disk disk in
           let boot_part_path = List.nth parts 0 in
           let sys_part_path = List.nth parts 1 in
@@ -428,7 +426,6 @@ let () =
             (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %dMB"
                usb_key boot_part_beg_MB boot_part_end_MB);
           exec (Printf.sprintf "parted %s set 1 boot on" usb_key);
-          Disk_utils.sync ();
           let parts = Disk_utils.parts_of_disk usb_key in
           let esp_part_path = List.nth parts 0 |> Option.some in
           let boot_part_path = List.nth parts 1 in
@@ -448,7 +445,6 @@ let () =
             (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
                usb_key boot_part_end_MB);
           exec (Printf.sprintf "parted %s set 1 boot on" usb_key);
-          Disk_utils.sync ();
           let parts = Disk_utils.parts_of_disk usb_key in
           let boot_part_path = List.nth parts 0 in
           let disk_layout =
@@ -893,8 +889,7 @@ let () =
       {config with enable_ssh_server = Some enable_ssh_server});
   reg ~name:"Installing SSH server" (fun config ->
       Arch_chroot.install ["openssh"];
-      config
-    );
+      config);
   reg ~name:"Copying sshd_config over" (fun config ->
       FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
       config);
@@ -930,8 +925,9 @@ let () =
             ip port otp;
           print_endline "or";
           Printf.printf
-            "cat PUBKEY | gpg --batch --yes --passphrase %s -c | ncat %s %d\n"
+            "    cat PUBKEY | gpg --batch --yes --passphrase %s -c | ncat %s %d\n"
             otp ip port;
+          print_newline ();
           exec (Printf.sprintf "ncat -lp %d > %s" port recv_dst_path);
           print_newline ();
           print_endline "File received";
