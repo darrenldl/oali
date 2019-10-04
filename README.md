@@ -36,6 +36,8 @@ The OCaml code is not self contained, thus if you choose to compile it yourself,
 
 For deployment purposes, it is recommended that you use the static binaries provided, which you can download via [GitHub releases](https://github.com/darrenldl/ocaml-linux-installer/releases)
 
+Simply run the downloaded binary (i.e. oali) in live CD to get started
+
 The static binaries of the installer are built via Travis CI using `ocaml/opam2:alpine` Docker image, and should be able to run on Arch Linux live CD without any further setup
 
 ## Answers to some "Why?" questions
