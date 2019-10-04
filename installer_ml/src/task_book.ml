@@ -63,7 +63,8 @@ let register task_book ~name task =
 
 let finalize task_book =
   assert (task_book.tasks_to_run = None);
-  task_book.tasks_to_run <- Some (Array.of_list task_book.task_queue)
+  task_book.tasks_to_run <-
+    Some (Array.of_list (List.rev task_book.task_queue))
 
 let print_task_list task_book =
   let tasks_to_run = Option.get task_book.tasks_to_run in
