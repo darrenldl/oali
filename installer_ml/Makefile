@@ -22,7 +22,7 @@ all : exe
 
 .PHONY: exe
 exe:
-	dune build src/installer.exe
+	dune build src/oali.exe
 
 .PHONY: format
 format :
