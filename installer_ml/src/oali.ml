@@ -890,107 +890,115 @@ let () =
       in
       {config with enable_ssh_server = Some enable_ssh_server});
   reg ~name:"Installing SSH server" (fun config ->
-      Arch_chroot.install ["openssh"];
+      if Option.get config.enable_ssh_server then
+        Arch_chroot.install ["openssh"];
       config);
   reg ~name:"Copying sshd_config over" (fun config ->
-      FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
+      if Option.get config.enable_ssh_server then
+        FileUtil.cp [Config.sshd_config_path_in_repo] Config.etc_ssh_dir_path;
       config);
   reg ~name:"Enabling SSH server" (fun config ->
-      Arch_chroot.exec "systemctl enable sshd";
+      if Option.get config.enable_ssh_server then
+        Arch_chroot.exec "systemctl enable sshd";
       config);
   reg ~name:"Setting up SSH key directory" (fun config ->
-      let user_name = Option.get config.user_name in
-      let user_ssh_dir_path =
-        concat_file_names [Config.sys_mount_point; "home"; user_name; ".ssh"]
-      in
-      FileUtil.mkdir user_ssh_dir_path;
-      let user_ssh_authorized_keys_path =
-        concat_file_names [user_ssh_dir_path; "authorized_keys"]
-      in
-      { config with
-        user_ssh_authorized_keys_path = Some user_ssh_authorized_keys_path });
+      if Option.get config.enable_ssh_server then (
+        let user_name = Option.get config.user_name in
+        let user_ssh_dir_path =
+          concat_file_names [Config.sys_mount_point; "home"; user_name; ".ssh"]
+        in
+        FileUtil.mkdir user_ssh_dir_path;
+        let user_ssh_authorized_keys_path =
+          concat_file_names [user_ssh_dir_path; "authorized_keys"]
+        in
+        { config with
+          user_ssh_authorized_keys_path = Some user_ssh_authorized_keys_path }
+      )
+      else config);
   reg ~name:"Transferring SSH public keys" (fun config ->
-      let ip = Net_utils.get_internet_facing_ip () in
-      retry (fun () ->
-          let otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
-          let port = 10000 + Random.int 10000 in
-          let recv_dst_path = Filename.temp_file "installer" "ssh_pub_key" in
-          let decrypted_dst_path =
-            Filename.temp_file "installer" "decrypted_ssh_pub_key"
-          in
-          print_endline
-            "Transfer the PUBLIC key to the server using one of the following \
-             commands";
-          Printf.printf
-            "    cat PUBKEY | gpg -c | ncat %s %d # enter passphrase %s when \
-             prompted\n"
-            ip port otp;
-          print_endline "or";
-          Printf.printf
-            "    cat PUBKEY | gpg --batch --yes --passphrase %s -c | ncat %s %d\n"
-            otp ip port;
-          print_newline ();
-          exec (Printf.sprintf "ncat -lp %d > %s" port recv_dst_path);
-          print_newline ();
-          print_endline "File received";
-          print_endline "Decrypting file";
-          try
-            exec
-              (Printf.sprintf
-                 "gpg --batch --yes --passphrase %s -o %s --decrypt %s" otp
-                 decrypted_dst_path recv_dst_path);
-            let decrypted_file_hash =
-              let res =
-                exec_ret (Printf.sprintf "sha256sum %s" decrypted_dst_path)
+      ( if Option.get config.enable_ssh_server then
+          let ip = Net_utils.get_internet_facing_ip () in
+          retry (fun () ->
+              let otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
+              let port = 10000 + Random.int 10000 in
+              let recv_dst_path = Filename.temp_file "installer" "ssh_pub_key" in
+              let decrypted_dst_path =
+                Filename.temp_file "installer" "decrypted_ssh_pub_key"
               in
-              res.stdout |> List.hd |> String.split_on_char ' ' |> List.hd
-            in
-            Printf.printf "SHA256 hash of the decrypted file : %s\n"
-              decrypted_file_hash;
-            match
-              ask_yn "Does the hash match the hash of the original file?"
-            with
-            | Yes -> (
-                let user_name = Option.get config.user_name in
-                let user_ssh_authorized_keys_path =
-                  Option.get config.user_ssh_authorized_keys_path
+              print_endline
+                "Transfer the PUBLIC key to the server using one of the \
+                 following commands";
+              Printf.printf
+                "    cat PUBKEY | gpg -c | ncat %s %d # enter passphrase %s \
+                 when prompted\n"
+                ip port otp;
+              print_endline "or";
+              Printf.printf
+                "    cat PUBKEY | gpg --batch --yes --passphrase %s -c | ncat \
+                 %s %d\n"
+                otp ip port;
+              print_newline ();
+              exec (Printf.sprintf "ncat -lp %d > %s" port recv_dst_path);
+              print_newline ();
+              print_endline "File received";
+              print_endline "Decrypting file";
+              try
+                exec
+                  (Printf.sprintf
+                     "gpg --batch --yes --passphrase %s -o %s --decrypt %s" otp
+                     decrypted_dst_path recv_dst_path);
+                let decrypted_file_hash =
+                  let res =
+                    exec_ret (Printf.sprintf "sha256sum %s" decrypted_dst_path)
+                  in
+                  res.stdout |> List.hd |> String.split_on_char ' ' |> List.hd
                 in
-                Printf.printf "Installing SSH key for user : %s\n" user_name;
-                let key_line =
-                  let ic = open_in decrypted_file_hash in
-                  Fun.protect
-                    ~finally:(fun () -> close_in ic)
-                    (fun () -> input_line ic)
-                in
-                let user_ssh_authorized_keys_oc =
-                  open_out_gen [Open_append; Open_text] 0o600
-                    user_ssh_authorized_keys_path
-                in
-                Fun.protect
-                  ~finally:(fun () -> close_out user_ssh_authorized_keys_oc)
-                  (fun () ->
-                     output_string user_ssh_authorized_keys_oc "\n";
-                     output_string user_ssh_authorized_keys_oc key_line;
-                     output_string user_ssh_authorized_keys_oc "\n");
-                match ask_yn "Do you want to add another SSH key?" with
-                | Yes ->
-                  Retry
-                | No ->
-                  Stop () )
-            | No -> (
-                print_endline "Incorrect file received";
-                match ask_yn "Do you want to retry?" with
-                | Yes ->
-                  Retry
-                | No ->
-                  Stop () )
-          with Exec_fail _ -> (
-              print_endline "Decryption failed";
-              match ask_yn "Do you want to retry?" with
-              | Yes ->
-                Retry
-              | No ->
-                Stop () ));
+                Printf.printf "SHA256 hash of the decrypted file : %s\n"
+                  decrypted_file_hash;
+                match
+                  ask_yn "Does the hash match the hash of the original file?"
+                with
+                | Yes -> (
+                    let user_name = Option.get config.user_name in
+                    let user_ssh_authorized_keys_path =
+                      Option.get config.user_ssh_authorized_keys_path
+                    in
+                    Printf.printf "Installing SSH key for user : %s\n" user_name;
+                    let key_line =
+                      let ic = open_in decrypted_file_hash in
+                      Fun.protect
+                        ~finally:(fun () -> close_in ic)
+                        (fun () -> input_line ic)
+                    in
+                    let user_ssh_authorized_keys_oc =
+                      open_out_gen [Open_append; Open_text] 0o600
+                        user_ssh_authorized_keys_path
+                    in
+                    Fun.protect
+                      ~finally:(fun () -> close_out user_ssh_authorized_keys_oc)
+                      (fun () ->
+                         output_string user_ssh_authorized_keys_oc "\n";
+                         output_string user_ssh_authorized_keys_oc key_line;
+                         output_string user_ssh_authorized_keys_oc "\n");
+                    match ask_yn "Do you want to add another SSH key?" with
+                    | Yes ->
+                      Retry
+                    | No ->
+                      Stop () )
+                | No -> (
+                    print_endline "Incorrect file received";
+                    match ask_yn "Do you want to retry?" with
+                    | Yes ->
+                      Retry
+                    | No ->
+                      Stop () )
+              with Exec_fail _ -> (
+                  print_endline "Decryption failed";
+                  match ask_yn "Do you want to retry?" with
+                  | Yes ->
+                    Retry
+                  | No ->
+                    Stop () )) );
       config);
   reg ~name:"Ask if set up SaltStack" (fun config ->
       let use_saltstack =
