@@ -1,7 +1,9 @@
 let sync () = Proc_utils.exec "sync"
 
 let list_disk_block_devs () =
+  Unix.sleepf 0.2;
   sync ();
+  Unix.sleepf 0.2;
   let dir = "/dev/disk/by-path/" in
   let paths = Sys.readdir dir |> Array.to_list in
   let dsts =
