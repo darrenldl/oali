@@ -597,8 +597,8 @@ let () =
             | [] ->
               [s]
             | _ ->
-              [ "HOOKS=(base udev autodetect keyboard keymap consolefont \
-                 modconf block encrypt lvm2 filesystems fsck)" ]
+              [ Printf.sprintf "HOOKS=(%s)"
+                  (String.concat " " Config.mkinitcpio_hooks) ]
         in
         File.filter_map_lines ~file fill_in_FILES;
         File.filter_map_lines ~file fill_in_HOOKS )
