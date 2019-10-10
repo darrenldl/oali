@@ -511,10 +511,7 @@ let () =
         Fun.protect
           ~finally:(fun () -> close_out oc)
           (fun () -> output_string oc sys_part_luks.primary_key);
-        Unix.chmod keyfile_path 0o000;
-        exec
-          (Printf.sprintf "chmod 600 %s/initramfs-linux*"
-             Config.boot_mount_point) )
+        Unix.chmod keyfile_path 0o000 )
       else print_endline "Skipped";
       config);
   reg ~name:"Installing keyfile for unlocking /boot after boot" (fun config ->
@@ -610,6 +607,10 @@ let () =
       if Option.get config.encrypt_sys then
         Arch_chroot.exec "mkinitcpio -p linux"
       else print_endline "Skipped";
+      config);
+  reg ~name:"Updating initramfs permissions" (fun config ->
+      exec
+        (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
       config);
   reg ~name:"Installing hardened kernel" (fun config ->
       if Option.get config.add_hardened then
