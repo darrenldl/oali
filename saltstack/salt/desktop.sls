@@ -16,7 +16,8 @@ Terminal emulators:
       # - qterminal
       - cool-retro-term
       # - kitty
-      - termite
+      # - termite
+      - alacritty
 
 Shells:
   pkg.installed:
@@ -33,6 +34,9 @@ Sway:
     - pkgs:
       - waybar
       - otf-font-awesome
+      - bemenu
+      - swayidle
+      - swaylock
 
 # LXQt:
 #   pkg.installed:
@@ -90,6 +94,6 @@ Audio server:
 Screensaver:
   pkg.installed:
     - pkgs:
-      - i3lock
-      - xscreensaver
+      # - i3lock
+      # - xscreensaver
 
