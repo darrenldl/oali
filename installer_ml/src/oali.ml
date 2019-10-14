@@ -473,6 +473,9 @@ let () =
         (Printf.sprintf "pacstrap %s base linux base-devel"
            Config.sys_mount_point);
       config);
+  reg ~name:"Installing dhcpcd" (fun config ->
+      Arch_chroot.install ["dhcpcd"];
+      config);
   reg ~name:"Generating fstab" (fun config ->
       let fstab_path =
         concat_file_names [Config.sys_mount_point; "etc"; "fstab"]
