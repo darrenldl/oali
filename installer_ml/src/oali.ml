@@ -473,9 +473,6 @@ let () =
         (Printf.sprintf "pacstrap %s base linux base-devel"
            Config.sys_mount_point);
       config);
-  reg ~name:"Installing dhcpcd" (fun config ->
-      Arch_chroot.install ["dhcpcd"];
-      config);
   reg ~name:"Generating fstab" (fun config ->
       let fstab_path =
         concat_file_names [Config.sys_mount_point; "etc"; "fstab"]
@@ -672,6 +669,9 @@ let () =
       Arch_chroot.pacman "-Sy"; config);
   reg ~name:"Installing wifi-menu" (fun config ->
       Arch_chroot.install ["dialog"; "wpa_supplicant"];
+      config);
+  reg ~name:"Installing dhcpcd" (fun config ->
+      Arch_chroot.install ["dhcpcd"];
       config);
   reg ~name:"Installing bootloader packages" (fun config ->
       Arch_chroot.install ["grub"];
