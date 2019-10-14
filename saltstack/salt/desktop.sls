@@ -4,6 +4,7 @@ Desktop environment related:
       - xorg
       - xorg-server-xwayland
       - wayland
+      - qt5-wayland
       - sddm
       - redshift
       - archlinux-wallpaper
