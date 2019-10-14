@@ -2,46 +2,47 @@ Desktop environment related:
   pkg.installed:
     - pkgs:
       - xorg
-      - xfwm4
-      - xfce4-settings
-      # - xfce4
-      # - xfce4-goodies
-      # - xfce4-notifyd
+      - xorg-server-xwayland
       - wayland
+      - qt5-wayland
       - sddm
-      # - kwin
-      # - systemsettings
       - redshift
       - archlinux-wallpaper
-      - elementary-icon-theme
       - termdown
+      - sway
 
 Terminal emulators:
   pkg.installed:
     - pkgs:
+      # - qterminal
       - cool-retro-term
       # - kitty
-      # - terminology
+      # - termite
+      - alacritty
 
 Shells:
   pkg.installed:
     - pkgs:
       - zsh
 
-# Rest reminder:
-#   pkg.installed:
-#     - pkgs:
-#       - workrave
-
 Todo manager:
   pkg.installed:
     - pkgs:
       - task
 
-LXQt:
+Sway:
   pkg.installed:
     - pkgs:
-      - lxqt
+      - waybar
+      - otf-font-awesome
+      - bemenu
+      - swayidle
+      - swaylock
+
+# LXQt:
+#   pkg.installed:
+#     - pkgs:
+#       - lxqt
 
 Window manager related:
   pkg.installed:
@@ -63,8 +64,8 @@ Screenshot:
   pkg.installed:
     - pkgs:
       - spectacle
-      - maim
-      - flameshot
+      # - maim
+      # - flameshot
 
 Scan utils:
   pkg.installed:
@@ -77,7 +78,8 @@ File managers:
       - vifm
       # - thunar
       # - thunar-volman
-      - tumbler
+      # - tumbler
+      - caja
 
 Login manager:
   pkg.installed:
@@ -94,6 +96,6 @@ Audio server:
 Screensaver:
   pkg.installed:
     - pkgs:
-      - i3lock
-      - xscreensaver
+      # - i3lock
+      # - xscreensaver
 

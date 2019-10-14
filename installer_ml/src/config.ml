@@ -52,3 +52,16 @@ let oali_setup_note_name = "oali_setup_note"
 
 let sshd_config_path_in_repo =
   Misc_utils.concat_file_names [repo_name; "saltstack"; "salt"; "sshd_config"]
+
+let mkinitcpio_hooks =
+  [ "base"
+  ; "udev"
+  ; "autodetect"
+  ; "keyboard"
+  ; "keymap"
+  ; "consolefont"
+  ; "modconf"
+  ; "block"
+  ; "encrypt"
+  ; "filesystems"
+  ; "fsck" ]
