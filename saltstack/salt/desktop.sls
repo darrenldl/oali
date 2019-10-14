@@ -78,7 +78,8 @@ File managers:
       - vifm
       # - thunar
       # - thunar-volman
-      - tumbler
+      # - tumbler
+      - caja
 
 Login manager:
   pkg.installed:
