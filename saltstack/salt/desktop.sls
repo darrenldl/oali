@@ -38,6 +38,7 @@ Sway:
       - bemenu
       - swayidle
       - swaylock
+      - wl-clipboard
 
 # LXQt:
 #   pkg.installed:
@@ -63,7 +64,8 @@ Screen recording:
 Screenshot:
   pkg.installed:
     - pkgs:
-      - spectacle
+      - grim
+      # - spectacle
       # - maim
       # - flameshot
 
