@@ -6,6 +6,11 @@ System monitoring:
        - glances
        - nmon
 
+System info:
+  pkg.installed:
+    - pkgs:
+      - screenfetch
+
 # At:
 #   pkg.installed:
 #     - pkgs:
