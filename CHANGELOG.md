@@ -1,3 +1,8 @@
+# 0.0.4
+- Fixed `oali_pack` files permissions
+- Added installation of `dhcpcd`
+- Moved SaltStack files to `oali-profiles` repo
+
 # 0.0.3
 - Fixed boot partition cryptsetup parameters adjustment task unit
 - Fixed partition size percentage calculation
