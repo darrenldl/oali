@@ -23,8 +23,8 @@ script:
   - docker exec installer_builder bash -c 'cd ~; ls'
   - docker exec installer_builder bash -c 'cp -r ~/oali-master ~/oali'
   - docker exec installer_builder bash -c 'chmod u=rwx ~/oali'
-  - docker exec installer_builder bash -c 'eval $(opam env); cd ~/oali/installer_ml; make'
-  - docker cp installer_builder:/home/opam/oali/installer_ml/_build/default/src/oali.exe ./oali
+  - docker exec installer_builder bash -c 'eval $(opam env); cd ~/oali/; make'
+  - docker cp installer_builder:/home/opam/oali/_build/default/src/oali.exe ./oali
   - strip oali
 
 deploy:
