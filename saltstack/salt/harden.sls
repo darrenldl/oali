@@ -1,2 +1,0 @@
-include:
-  - disable_firewire
