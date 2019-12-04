@@ -32,7 +32,7 @@ Overall oali aims to be snappy, minimal, smart, and hassle free. See **Specifics
   - Current salt states download/install around 10 GiB of data
 
 #### Instructions
-The OCaml code is not self contained, thus if you choose to compile it yourself, you will need to install various dependencies.
+The OCaml code is not self contained, thus if you choose to compile it yourself, you will need to install various dependencies
 
 For deployment purposes, it is recommended that you use the static binaries provided, which you can download via [GitHub releases](https://github.com/darrenldl/ocaml-linux-installer/releases)
 
@@ -45,7 +45,7 @@ The static binaries of the installer are built via Travis CI using `ocaml/opam2:
   - Mildly complex FDE setups are really laborious and error prone to set up, and unfortunately you can't really afford human errors during these set ups depending on the nature of installation
   - A lot of decisions are based on information processing and very mechanical - no point in having a human devoted to repeating deterministic steps
 - Why not bash?
-  - The previous iteration of this installer was written in bash actually (see `scripts/setup.sh`), but it only supported one disk layout and always have encryption
+  - The previous iteration of this installer was written in bash actually (see `laptop/scripts/setup.sh` at [oali-profiles](https://github.com/darrenldl/oali-profiles)), but it only supported one disk layout and always have encryption
   - Adding a lot of decision making code and information handling code to bash code was really tedious and difficult
 - Why OCaml?
   - I know I can do OCaml/Rust reasonably fast, but slow to a crawl with dynamically typed langs
@@ -56,7 +56,7 @@ The static binaries of the installer are built via Travis CI using `ocaml/opam2:
 Oali automatically adjusts dialogues and settings based on whether the live CD is running in UEFI or BIOS mode
 
 #### Disk layout choices
-**Single system disk** - Oali slices the disks into ESP (if in EFI mode), boot and root partitions automatically
+**Single system disk** - Oali slices the disk into ESP (if in EFI mode), boot and root partitions automatically
 
 **Manual picking** - Oali just uses the choices you provide
 
@@ -64,7 +64,7 @@ Oali automatically adjusts dialogues and settings based on whether the live CD i
 
 Oali will handle encryption along with other chores automatically with the disk layout you picked in mind, such as
 - `/etc/crypttab` is set up only if the disk layout doesn't involve USB key
-- `/etc/fstab` is adjusted to disable USB key partitions if disk layout uses USB key
+- `/etc/fstab` is adjusted to disable USB key partitions if disk layout uses USB key so USB key can be unplugged safely after booting up
 
 #### Encryption specifics
 Oali uses `cryptsetup` for LUKS setup, and allows you to toggle boot and root partition encryption separately
@@ -83,8 +83,22 @@ If system/root partition encryption is enabled, then it is protected by a keyfil
 
 The keyfile is stored in within the initramfs in boot partition
 
-#### Post-install notes
-After installation, several files will be present in `/root/oali_pack` (all of the files are to be accessed/executed by root)
+#### Profiles
+Profiles are prebuilt SaltStack and script files that might suit specific scenarios
+
+Currently there are 2 profiles
+- Laptop (can also be used by a desktop)
+- Server
+
+Note that the profiles only affect what files are installed for post-bootstrapping phase,
+i.e. all the above actions are supported by Oali regardless
+of which profile you pick
+
+You can also use a customised profile: start by forking [oali-profiles](https://github.com/darrenldl/oali-profiles)
+modify the relevant files to your liking, and select "Custom" in the profile menu, and provide your git repo URL
+
+#### Post-bootstrapping
+After initial installation, several files will be present in `/root/oali_pack` (all of the files are to be accessed/executed by root)
 - `salt_exec.sh` allows you start the saltstack setup, present only if you answered yes to using saltstack for your further setup
 - `oli_setup_note` contains description of the files
 - `usb_key_mount.sh` allows you to mount your USB key easily and reliably
