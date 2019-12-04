@@ -22,13 +22,28 @@ Overall oali aims to be snappy, minimal, smart, and hassle free. See **Specifics
 ## Getting started
 #### Prerequisites
 - Working internet connection
-- Partitioning done for system partition
-- USB key (data will be lost)
+
+- Disk layout choice dependent
+
+  - If you are using **Single system disk**
+
+    - then just a single disk is required, partitioning will be done automatically during which the partition table will be wiped
+
+  - If you are using **Manual picking**
+
+    - then you need to have the partioning done prior to Oali asking for the disk layout choice
+
+  - If you are using **Single system partition + USB key**
+
+    - then you need to have a single system partition ready somewhere, and a USB key. The USB key will be automatically partitioned, during which the partition table will be wiped
 
 #### Space requirement
-- USB key (if you intend to use disk layout that utilises a USB key)
+- USB key
+
   - 1 GiB USB drive will be very sufficient
+
 - System drive
+
   - Current salt states download/install around 10 GiB of data
 
 #### Instructions
