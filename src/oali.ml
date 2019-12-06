@@ -801,32 +801,38 @@ let () =
       Printf.printf "Setting password for %s" user_name;
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
       config);
-  reg ~name:"Git cloning oali-profiles repo into current directory" (fun config ->
-      Printf.printf "The default oali-profiles repo URL is :\n";
-      Printf.printf "  %s\n" Config.oali_profiles_repo_url;
-      print_newline ();
-      let oali_profiles_repo_url =
-        if ask_yn_confirm "Do you want to use a custom repo instead?" = `Yes then
-          ask_string_confirm ~is_valid:not_empty "Please enter url"
-        else
-          Config.oali_profiles_repo_url
-      in
-      let oali_profiles_repo_name = String.split_on_char '/' oali_profiles_repo_url |> List.rev |> List.hd in
-      FileUtil.(rm ~force:Force ~recurse:true [ oali_profiles_repo_name ]);
-      exec (Printf.sprintf "git clone %s" oali_profiles_repo_url);
-      { config with oali_profiles_repo_url  = Some oali_profiles_repo_url;
-                    oali_profiles_repo_name = Some oali_profiles_repo_name
-      });
+  reg ~name:"Git cloning oali-profiles repo into current directory"
+    (fun config ->
+       Printf.printf "The default oali-profiles repo URL is :\n";
+       Printf.printf "  %s\n" Config.oali_profiles_repo_url;
+       print_newline ();
+       let oali_profiles_repo_url =
+         if ask_yn_confirm "Do you want to use a custom repo instead?" = `Yes
+         then ask_string_confirm ~is_valid:not_empty "Please enter url"
+         else Config.oali_profiles_repo_url
+       in
+       let oali_profiles_repo_name =
+         String.split_on_char '/' oali_profiles_repo_url |> List.rev |> List.hd
+       in
+       FileUtil.(rm ~force:Force ~recurse:true [ oali_profiles_repo_name ]);
+       exec (Printf.sprintf "git clone %s" oali_profiles_repo_url);
+       {
+         config with
+         oali_profiles_repo_url = Some oali_profiles_repo_url;
+         oali_profiles_repo_name = Some oali_profiles_repo_name;
+       });
   reg ~name:"Select profile to use" (fun config ->
       let dir = Option.get config.oali_profiles_repo_name in
-      let profiles = Sys.readdir dir |> Array.to_list |> List.filter Sys.is_directory in
+      let profiles =
+        Sys.readdir dir |> Array.to_list
+        |> List.filter (fun name -> Sys.is_directory (Filename.concat dir name))
+      in
       match profiles with
       | [] -> failwith "Cloned repository does not contain profile directories"
       | _ ->
         let profile_choice = pick_choice profiles in
         let profile = List.nth profiles profile_choice in
-        { config with oali_profile = Some profile }
-    );
+        { config with oali_profile = Some profile });
   reg ~name:"Creating oali files folder" (fun config ->
       let dst_path =
         concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
@@ -930,11 +936,14 @@ let () =
         Arch_chroot.install [ "openssh" ];
       config);
   reg ~name:"Copying sshd_config over" (fun config ->
-      let sshd_config_path_in_repo = Misc_utils.concat_file_names [
-          Option.get config.oali_profiles_repo_name;
-          Option.get config.oali_profile;
-          "salt"
-        ] in
+      let sshd_config_path_in_repo =
+        Misc_utils.concat_file_names
+          [
+            Option.get config.oali_profiles_repo_name;
+            Option.get config.oali_profile;
+            "salt";
+          ]
+      in
       if Option.get config.enable_ssh_server then
         FileUtil.cp [ sshd_config_path_in_repo ] Config.etc_ssh_dir_path;
       config);
@@ -1067,11 +1076,12 @@ let () =
   reg ~name:"Copying SaltStack files" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
       ( if use_saltstack then
-          let salt_files_path = concat_file_names
+          let salt_files_path =
+            concat_file_names
               [
                 Option.get config.oali_profiles_repo_name;
                 Option.get config.oali_profile;
-                "salt"
+                "salt";
               ]
           in
           let folders =

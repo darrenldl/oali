@@ -10,7 +10,10 @@ type 'a retry =
   | Stop of 'a
   | Retry
 
-type yn = [`Yes | `No]
+type yn =
+  [ `Yes
+  | `No
+  ]
 
 let not_empty s = s <> ""
 
