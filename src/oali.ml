@@ -1162,7 +1162,10 @@ let () =
         (fun () -> output_string oc note);
       config);
   reg ~name:"Setting oali files permissions" (fun _answer_store config ->
-      exec (Printf.sprintf "chmod 700 %s/*" Config.oali_files_dir_path);
+      let path =
+        concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
+      in
+      exec (Printf.sprintf "chmod 700 %s/*" path);
       config);
   reg ~name:"Asking if unmount partitions" (fun _answer_store config ->
       let do_unmount = ask_yn "Do you want to unmount partitions?" = `Yes in
