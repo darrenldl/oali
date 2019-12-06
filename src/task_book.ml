@@ -179,5 +179,6 @@ let run task_book =
           aux task_book )
   in
   finalize task_book;
+  Proc_utils.clear ();
   print_endline "Welcome to oali - OCaml Arch Linux Installer";
   aux task_book
