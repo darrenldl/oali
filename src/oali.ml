@@ -13,7 +13,7 @@ let () =
       config);
   reg ~name:"Pick editor" (fun answer_store config ->
       let editor =
-        retry (fun () ->
+        retry ~answer_store (fun () ->
             let editor =
               ask_string ~is_valid:not_empty ~answer_store "Please enter editor command"
             in
@@ -82,16 +82,17 @@ let () =
   reg ~name:"Installing git" (fun _answer_store config ->
       install [ "git" ];
       config);
-  reg ~name:"Asking for hostname" (fun _answer_store config ->
-      let hostname = ask_string_confirm ~is_valid:not_empty "Hostname" in
+  reg ~name:"Asking for hostname" (fun answer_store config ->
+      let hostname = ask_string_confirm ~is_valid:not_empty ~answer_store "Hostname" in
       { config with hostname = Some hostname });
-  reg ~name:"Asking if install hardened kernel" (fun _answer_store config ->
+  reg ~name:"Asking if install hardened kernel" (fun answer_store config ->
       let add_hardened =
-        ask_yn_confirm "Do you want to install hardened kernel?" = `Yes
+        ask_yn_confirm ~answer_store "Do you want to install hardened kernel?" = `Yes
       in
       let hardened_as_default =
         add_hardened
         && ask_yn_confirm
+          ~answer_store
           "Do you want to set the GRUB default boot entry to the hardened \
            kernel?"
            = `Yes
@@ -101,28 +102,30 @@ let () =
         add_hardened = Some add_hardened;
         hardened_as_default = Some hardened_as_default;
       });
-  reg ~name:"Pick whether to encrypt BOOT partition" (fun _answer_store config ->
+  reg ~name:"Pick whether to encrypt BOOT partition" (fun answer_store config ->
       let encrypt =
-        ask_yn "Enable encryption for BOOT (/boot) partition?" = `Yes
+        ask_yn ~answer_store "Enable encryption for BOOT (/boot) partition?" = `Yes
       in
       { config with encrypt_boot = Some encrypt });
-  reg ~name:"Adjusting cryptsetup parameters for boot partition" (fun _answer_store config ->
+  reg ~name:"Adjusting cryptsetup parameters for boot partition" (fun answer_store config ->
       if Option.get config.encrypt_boot then
         let iter_time_ms, key_size_bits =
-          retry (fun () ->
+          retry ~answer_store (fun () ->
               let iter_time_ms =
                 if
                   ask_yn
+                    ~answer_store
                     "Do you want to adjust iteration time of boot partition?"
                   = `Yes
-                then Some (ask_uint "Please enter iteration time in ms")
+                then Some (ask_uint ~answer_store "Please enter iteration time in ms")
                 else None
               in
               let key_size_bits =
                 if
-                  ask_yn "Do you want to adjust key size of boot partition?"
+                  ask_yn ~answer_store
+                    "Do you want to adjust key size of boot partition?"
                   = `Yes
-                then Some (ask_uint "Please enter key size in bits")
+                then Some (ask_uint ~answer_store "Please enter key size in bits")
                 else None
               in
               ask_yn_end_retry
@@ -134,12 +137,12 @@ let () =
           boot_part_enc_params = Some { iter_time_ms; key_size_bits };
         }
       else config);
-  reg ~name:"Pick whether to encrypt ROOT partition" (fun _answer_store config ->
+  reg ~name:"Pick whether to encrypt ROOT partition" (fun answer_store config ->
       let encrypt_boot = Option.get config.encrypt_boot in
       let encrypt =
-        retry (fun () ->
+        retry ~answer_store (fun () ->
             let encrypt_sys =
-              ask_yn "Enable encryption for ROOT (/) partition?" = `Yes
+              ask_yn ~answer_store "Enable encryption for ROOT (/) partition?" = `Yes
             in
             if encrypt_boot && not encrypt_sys then
               print_boxed_msg
@@ -148,23 +151,26 @@ let () =
             confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
       in
       { config with encrypt_sys = Some encrypt });
-  reg ~name:"Adjusting cryptsetup parameters for root partition" (fun _answer_store config ->
+  reg ~name:"Adjusting cryptsetup parameters for root partition" (fun answer_store config ->
       if Option.get config.encrypt_sys then
         let iter_time_ms, key_size_bits =
-          retry (fun () ->
+          retry ~answer_store (fun () ->
               let iter_time_ms =
                 if
                   ask_yn
+                    ~answer_store
                     "Do you want to adjust iteration time of root partition?"
                   = `Yes
-                then Some (ask_uint "Please enter iteration time in ms")
+                then Some (ask_uint ~answer_store"Please enter iteration time in ms")
                 else None
               in
               let key_size_bits =
                 if
-                  ask_yn "Do you want to adjust key size of root partition?"
+                  ask_yn
+                    ~answer_store
+                    "Do you want to adjust key size of root partition?"
                   = `Yes
-                then Some (ask_uint "Please enter key size in bits")
+                then Some (ask_uint ~answer_store"Please enter key size in bits")
                 else None
               in
               ask_yn_end_retry
@@ -788,9 +794,9 @@ let () =
   reg ~name:"Setting up root password" (fun _answer_store config ->
       Arch_chroot.exec_no_capture "passwd";
       config);
-  reg ~name:"Setting user account" (fun _answer_store config ->
+  reg ~name:"Setting user account" (fun answer_store config ->
       let user_name =
-        ask_string_confirm ~is_valid:not_empty "Please enter user name"
+        ask_string_confirm ~is_valid:not_empty ~answer_store "Please enter user name"
       in
       print_endline "Adding user";
       Arch_chroot.exec
@@ -802,13 +808,13 @@ let () =
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
       config);
   reg ~name:"Git cloning oali-profiles repo into current directory"
-    (fun _answer_store config ->
+    (fun answer_store config ->
        Printf.printf "The default oali-profiles repo URL is :\n";
        Printf.printf "  %s\n" Config.oali_profiles_repo_url;
        print_newline ();
        let oali_profiles_repo_url =
-         if ask_yn_confirm "Do you want to use a custom repo instead?" = `Yes
-         then ask_string_confirm ~is_valid:not_empty "Please enter url"
+         if ask_yn_confirm ~answer_store "Do you want to use a custom repo instead?" = `Yes
+         then ask_string_confirm ~is_valid:not_empty ~answer_store "Please enter url"
          else Config.oali_profiles_repo_url
        in
        let oali_profiles_repo_name =
@@ -928,9 +934,9 @@ let () =
         (concat_file_names [ dst_path; Config.useradd_helper_restricted_name ])
         0o660;
       config);
-  reg ~name:"Ask if enable SSH server" (fun _answer_store config ->
+  reg ~name:"Ask if enable SSH server" (fun answer_store config ->
       let enable_ssh_server =
-        ask_yn "Do you want to enable SSH server?" = `Yes
+        ask_yn ~answer_store "Do you want to enable SSH server?" = `Yes
       in
       { config with enable_ssh_server = Some enable_ssh_server });
   reg ~name:"Installing SSH server" (fun _answer_store config ->
@@ -1051,9 +1057,9 @@ let () =
                   | `Yes -> Retry
                   | `No -> Stop () )) );
       config);
-  reg ~name:"Ask if set up SaltStack" (fun _answer_store config ->
+  reg ~name:"Ask if set up SaltStack" (fun answer_store config ->
       let use_saltstack =
-        ask_yn "Do you want to use SaltStack for package management?" = `Yes
+        ask_yn ~answer_store "Do you want to use SaltStack for package management?" = `Yes
       in
       { config with use_saltstack = Some use_saltstack });
   reg ~name:"Installing SaltStack" (fun _answer_store config ->

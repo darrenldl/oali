@@ -17,9 +17,16 @@ type yn =
 
 let not_empty s = s <> ""
 
-let retry (f : unit -> 'a retry) : 'a =
-  let rec aux f = match f () with Stop x -> x | Retry -> aux f in
-  aux f
+let retry ?answer_store (f : unit -> 'a retry) : 'a =
+  let rec aux first_run f = match f () with
+      Stop x -> x
+    | Retry -> if not first_run then (
+        print_endline "Wiping answer store";
+        Option.iter Hashtbl.reset answer_store
+      );
+      aux false f
+  in
+  aux true f
 
 module Internal = struct
   let ask_string ?(is_valid = fun _ -> true)
@@ -31,7 +38,7 @@ module Internal = struct
     in
     match answer with
     | Some x ->
-      Printf.printf "using stored answer \"%s\"" x; x
+      Printf.printf "%s => using stored answer : %s" prompt x; x
     | None ->
       retry (fun () ->
           Printf.printf "%s : " prompt;
