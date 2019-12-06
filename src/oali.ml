@@ -826,6 +826,8 @@ let () =
       let profiles =
         Sys.readdir dir |> Array.to_list
         |> List.filter (fun name -> Sys.is_directory (Filename.concat dir name))
+        |> List.filter (fun name ->
+            Core_kernel.String.sub ~pos:0 ~len:1 name <> ".")
       in
       match profiles with
       | [] -> failwith "Cloned repository does not contain profile directories"
