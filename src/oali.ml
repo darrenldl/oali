@@ -1018,6 +1018,7 @@ let () =
                     let user_ssh_authorized_keys_path =
                       Option.get config.user_ssh_authorized_keys_path
                     in
+                    exec (Printf.sprintf "touch %s" user_ssh_authorized_keys_path);
                     Printf.printf "Installing SSH key for user : %s\n" user_name;
                     let key_line =
                       let ic = open_in decrypted_dst_path in
