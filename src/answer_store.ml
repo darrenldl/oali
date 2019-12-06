@@ -1,7 +1,9 @@
 type t = (string, string) Hashtbl.t
 
 let normalize_name s =
-  s |> String.lowercase_ascii |> String.split_on_char ' ' |> String.concat "_"
+  s |> String.lowercase_ascii
+  |> Core_kernel.String.filter ~f:Core_kernel.Char.is_alphanum
+  |> String.split_on_char ' ' |> String.concat "_"
 
 let task_name_to_file_name ~task_name =
   Misc_utils.concat_file_names
