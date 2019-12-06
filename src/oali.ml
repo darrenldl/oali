@@ -804,16 +804,16 @@ let () =
   reg ~name:"Git cloning oali-profiles repo into current directory" (fun config ->
       Printf.printf "The default oali-profiles repo URL is :\n";
       Printf.printf "  %s\n" Config.oali_profiles_repo_url;
-      let repo_url =
+      let oali_profiles_repo_url =
         if ask_yn_confirm "Do you want to use a custom repo instead?" = `Yes then
           ask_string_confirm ~is_valid:not_empty "Please enter url"
         else
           Config.oali_profiles_repo_url
       in
-      let repo_name = String.split_on_char '/' repo_url |> List.rev |> List.hd in
+      let repo_name = String.split_on_char '/' oali_profiles_repo_url |> List.rev |> List.hd in
       FileUtil.(rm ~force:Force ~recurse:true [ repo_name ]);
-      exec (Printf.sprintf "git clone %s" repo_url);
-      config);
+      exec (Printf.sprintf "git clone %s" oali_profiles_repo_url);
+      { config with oali_profiles_repo_url  = Some oali_profiles_repo_url});
   reg ~name:"Creating oali files folder" (fun config ->
       let dst_path =
         concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
