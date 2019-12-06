@@ -1,5 +1,7 @@
 type t = (string, string) Hashtbl.t
 
+let create () = Hashtbl.create 100
+
 let to_json (t : t) : Yojson.Basic.t =
   let l =
     t
@@ -17,7 +19,7 @@ let to_file fname (t : t) =
 let of_json (x : Yojson.Basic.t) : t =
   match x with
   | `Assoc l ->
-    let t = Hashtbl.create 100 in
+    let t = create () in
     List.iter (fun (k, v) ->
         match v with
         | `String v ->
