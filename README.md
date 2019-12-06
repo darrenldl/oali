@@ -19,6 +19,12 @@ Oali is an installer written in OCaml which sets up a Arch Linux installation wi
 
 Overall oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below for more information.
 
+## TODO
+
+- Resumable installation (add logging etc)
+- Static config file support (so installation is fully automated)
+- Whatever is missing from the original script
+
 ## Getting started
 #### Prerequisites
 - Working internet connection
