@@ -1,6 +1,6 @@
 open Sexplib.Std
 
-type task = Task_config.t -> Task_config.t
+type task = Answer_store.t -> Task_config.t -> Task_config.t
 
 exception End_install
 
@@ -20,51 +20,49 @@ type task_result =
   | Failed
   | Skipped
 
-type stats =
-  { mutable result : task_result
-  ; mutable exec_count : int }
+type stats = {
+  mutable result : task_result;
+  mutable exec_count : int;
+}
 
-type task_record =
-  { name : string
-  ; task : task
-  ; stats : stats }
+type task_record = {
+  name : string;
+  task : task;
+  stats : stats;
+}
 
-type progress = {finished : string list} [@@deriving sexp]
+type progress = { finished : string list } [@@deriving sexp]
 
 type task_fail_choice =
   | Retry
   | Skip
   | End_install
 
-type t =
-  { mutable config : Task_config.t
-  ; mutable task_queue : task_record list
-  ; mutable tasks_to_run : task_record array option
-  ; mutable cur_task : int option }
+type t = {
+  mutable config : Task_config.t;
+  mutable task_queue : task_record list;
+  mutable tasks_to_run : task_record array option;
+  mutable cur_task : int option;
+}
 
 let task_result_to_string res =
   match res with
-  | Not_run ->
-    "Not run"
-  | Okay ->
-    "Finished successfully"
-  | Failed ->
-    "Failed"
-  | Skipped ->
-    "Skipped"
+  | Not_run -> "Not run"
+  | Okay -> "Finished successfully"
+  | Failed -> "Failed"
+  | Skipped -> "Skipped"
 
 let make config =
-  {config; task_queue = []; tasks_to_run = None; cur_task = None}
+  { config; task_queue = []; tasks_to_run = None; cur_task = None }
 
 let register task_book ~name task =
   task_book.task_queue <-
-    {name; task; stats = {result = Not_run; exec_count = 0}}
+    { name; task; stats = { result = Not_run; exec_count = 0 } }
     :: task_book.task_queue
 
 let finalize task_book =
   assert (task_book.tasks_to_run = None);
-  task_book.tasks_to_run <-
-    Some (Array.of_list (List.rev task_book.task_queue))
+  task_book.tasks_to_run <- Some (Array.of_list (List.rev task_book.task_queue))
 
 let print_task_list task_book =
   let tasks_to_run = Option.get task_book.tasks_to_run in
@@ -84,19 +82,22 @@ let pick_task task_book =
   Misc_utils.pick_choice ~header:"Tasks" choices
 
 let rec run_single_task task_book task_record : unit =
-  let name = task_record.name in
+  let task_name = task_record.name in
   let task = task_record.task in
+  let answer_store = Answer_store.load ~task_name in
   Proc_utils.clear ();
-  print_endline name;
-  for _ = 0 to String.length name - 1 do
+  print_endline task_name;
+  for _ = 0 to String.length task_name - 1 do
     print_string "="
   done;
   print_newline ();
   print_newline ();
   let succeeded, new_config =
     try
-      let config = task task_book.config in
-      print_newline (); (true, config)
+      let config = task answer_store task_book.config in
+      print_newline ();
+      Answer_store.write ~task_name answer_store;
+      (true, config)
     with
     | Proc_utils.Exec_fail r ->
       print_endline (Proc_utils.report_failure r);
@@ -107,20 +108,25 @@ let rec run_single_task task_book task_record : unit =
     | Sys_error msg ->
       Printf.printf "Sys_error : %s\n" msg;
       (false, task_book.config)
+    | Unix.Unix_error (err, s1, s2) ->
+      Printf.printf "Unix.Unix_error : %s, %s, %s" (Unix.error_message err) s1
+        s2;
+      (false, task_book.config)
+    | FileUtilCP.CpError msg ->
+      Printf.printf "FileUtilCP.CpError : %s" msg;
+      (false, task_book.config)
   in
   if not succeeded then (
     let choices =
-      [("Retry", Retry); ("Skip", Skip); ("End install", End_install)]
+      [ ("Retry", Retry); ("Skip", Skip); ("End install", End_install) ]
     in
     let choice_index =
       Misc_utils.pick_choice ~confirm:true (List.map (fun (x, _) -> x) choices)
     in
     let choice = List.nth choices choice_index |> fun (_, x) -> x in
     match choice with
-    | Retry ->
-      run_single_task task_book task_record
-    | Skip ->
-      task_record.stats.result <- Skipped
+    | Retry -> run_single_task task_book task_record
+    | Skip -> task_record.stats.result <- Skipped
     | End_install ->
       task_record.stats.result <- Failed;
       raise End_install )
@@ -128,9 +134,11 @@ let rec run_single_task task_book task_record : unit =
 
 let pick_installer_action () =
   let choices =
-    [ ("Run all tasks", Run_everything)
-    ; ("Run, skip to task", Run_skip_to_task)
-    ; ("Terminate", Terminate) ]
+    [
+      ("Run all tasks", Run_everything);
+      ("Run, skip to task", Run_skip_to_task);
+      ("Terminate", Terminate);
+    ]
   in
   let choice_index =
     Misc_utils.pick_choice ~header:"Actions"
@@ -143,19 +151,16 @@ let pick_tasks_to_run task_book =
   let tasks = Option.get task_book.tasks_to_run in
   let task_count = Array.length tasks in
   match pick_installer_action () with
-  | Run_everything ->
-    Some tasks
+  | Run_everything -> Some tasks
   | Run_skip_to_task ->
     let skip_to = pick_task task_book in
     Some (Array.sub tasks skip_to (task_count - skip_to))
-  | Terminate ->
-    None
+  | Terminate -> None
 
 let run task_book =
   let rec aux task_book =
     match pick_tasks_to_run task_book with
-    | None ->
-      ()
+    | None -> ()
     | Some tasks -> (
         Sys.set_signal Sys.sigint
           (Sys.Signal_handle
@@ -176,5 +181,6 @@ let run task_book =
           aux task_book )
   in
   finalize task_book;
+  Proc_utils.clear ();
   print_endline "Welcome to oali - OCaml Arch Linux Installer";
   aux task_book

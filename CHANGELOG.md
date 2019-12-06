@@ -1,7 +1,10 @@
 # 0.0.4
 - Fixed `oali_pack` files permissions
-- Added installation of `dhcpcd`
 - Moved SaltStack files to `oali-profiles` repo
+  - Added installation of `dhcpcd` to the moved SaltStack files
+- Added answer store
+  - Answers of a session are stored when appropriate, and can be
+    loaded in another session
 
 # 0.0.3
 - Fixed boot partition cryptsetup parameters adjustment task unit

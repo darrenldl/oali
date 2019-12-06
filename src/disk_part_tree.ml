@@ -12,10 +12,8 @@ let of_parts parts =
   |> List.fold_left
     (fun tbl (disk, part) ->
        match DiskPartMap.find_opt disk tbl with
-       | None ->
-         DiskPartMap.add disk [part] tbl
-       | Some l ->
-         DiskPartMap.add disk (part :: l) tbl)
+       | None -> DiskPartMap.add disk [ part ] tbl
+       | Some l -> DiskPartMap.add disk (part :: l) tbl)
     DiskPartMap.empty
   |> DiskPartMap.to_seq |> List.of_seq
   |> List.sort (fun (k1, _) (k2, _) -> compare k1 k2)
@@ -28,8 +26,7 @@ let get ~disk_index ~part_index tree =
 let remove_part_by_index ~disk_index ~part_index tree =
   List.mapi
     (fun i (k, l) ->
-       if i = disk_index then (k, Misc_utils.list_no_nth l part_index)
-       else (k, l))
+       if i = disk_index then (k, Misc_utils.list_no_nth l part_index) else (k, l))
     tree
 
 let remove_part part tree =
