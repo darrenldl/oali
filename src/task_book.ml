@@ -106,6 +106,9 @@ let rec run_single_task task_book task_record : unit =
     | Sys_error msg ->
       Printf.printf "Sys_error : %s\n" msg;
       (false, task_book.config)
+    | Unix.Unix_error (err, s1, s2) ->
+      Printf.printf "Unix.Unix_error : %s, %s, %s" (Unix.error_message err) s1 s2;
+      (false, task_book.config)
   in
   if not succeeded then (
     let choices =

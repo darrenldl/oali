@@ -804,6 +804,7 @@ let () =
   reg ~name:"Git cloning oali-profiles repo into current directory" (fun config ->
       Printf.printf "The default oali-profiles repo URL is :\n";
       Printf.printf "  %s\n" Config.oali_profiles_repo_url;
+      print_newline ();
       let oali_profiles_repo_url =
         if ask_yn_confirm "Do you want to use a custom repo instead?" = `Yes then
           ask_string_confirm ~is_valid:not_empty "Please enter url"
