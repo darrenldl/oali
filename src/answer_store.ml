@@ -42,10 +42,4 @@ let load ~task_name : t =
     (* Printf.printf "Loaded answer store from : %s\n" fname; *)
     t
   with
-  | Yojson.Json_error _ ->
-    (* Printf.printf "Failed to load answer store from : %s\n" fname; *)
-    (* print_endline "Creating new answer store"; *)
-    create ()
-  | Sys_error _ ->
-    (* print_endline "Creating new answer store"; *)
-    create ()
+  | _ -> create ()
