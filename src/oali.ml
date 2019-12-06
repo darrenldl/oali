@@ -817,6 +817,16 @@ let () =
       { config with oali_profiles_repo_url  = Some oali_profiles_repo_url;
                     oali_profiles_repo_name = Some oali_profiles_repo_name
       });
+  reg ~name:"Select profile to use" (fun config ->
+      let dir = Option.get config.oali_profiles_repo_name in
+      let profiles = Sys.readdir dir |> Array.to_list |> List.filter Sys.is_directory in
+      match profiles with
+      | [] -> failwith "Cloned repository does not contain profile directories"
+      | _ ->
+        let profile_choice = pick_choice profiles in
+        let profile = List.nth profiles profile_choice in
+        { config with oali_profile = Some profile }
+    );
   reg ~name:"Creating oali files folder" (fun config ->
       let dst_path =
         concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
