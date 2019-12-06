@@ -39,9 +39,11 @@ let useradd_helper_as_powerful_name = "useradd_helper_as_powerful.sh"
 
 let useradd_helper_restricted_name = "useradd_helper_restricted.sh"
 
-let repo_url = "https://github.com/darrenldl/ocaml-linux-installer"
+let oali_profiles_repo_url = "https://github.com/darrenldl/oali-profiles"
 
-let repo_name = "ocaml-linux-installer"
+let repo_name = "oali"
+
+let repo_url = "https://github.com/darrenldl/oali"
 
 let salt_exec_script_name = "salt_exec.sh"
 
@@ -52,7 +54,7 @@ let usb_key_unmount_script_name = "usb_key_umount.sh"
 let oali_setup_note_name = "oali_setup_note"
 
 let sshd_config_path_in_repo =
-  Misc_utils.concat_file_names [ repo_name; "saltstack"; "salt"; "sshd_config" ]
+  Misc_utils.concat_file_names [ "saltstack"; "salt"; "sshd_config" ]
 
 let mkinitcpio_hooks =
   [

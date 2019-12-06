@@ -10,9 +10,7 @@ type 'a retry =
   | Stop of 'a
   | Retry
 
-type yn =
-  | Yes
-  | No
+type yn = [`Yes | `No]
 
 let not_empty s = s <> ""
 
@@ -42,12 +40,12 @@ let ask_yn prompt =
       let no_len = String.length no in
       let y = String.sub yes 0 (min yes_len len) in
       let n = String.sub no 0 (min no_len len) in
-      if s = y && len <= yes_len then Stop Yes
-      else if s = n && len <= no_len then Stop No
+      if s = y && len <= yes_len then Stop `Yes
+      else if s = n && len <= no_len then Stop `No
       else Retry)
 
 let ask_yn_end_retry ~(ret : 'a) prompt =
-  match ask_yn prompt with Yes -> Stop ret | No -> Retry
+  match ask_yn prompt with `Yes -> Stop ret | `No -> Retry
 
 let ask_uint ?upper_bound_exc prompt =
   ask_string

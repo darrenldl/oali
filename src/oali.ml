@@ -33,7 +33,7 @@ let () =
         ask_yn
           "Do you want to use reflector to automatically sort mirrorlist by \
            rate"
-        = Yes
+        = `Yes
       in
       { config with use_reflector = Some use_reflector });
   reg ~name:"Installing reflector" (fun config ->
@@ -67,7 +67,7 @@ let () =
             ask_yn_end_retry ~ret:() "Finished viewing/editing?");
         if
           ask_yn_confirm "Do you want to copy this mirrorlist over to live CD?"
-          = Yes
+          = `Yes
         then FileUtil.mv dst_path Config.livecd_mirrorlist_path );
       config);
   reg ~name:"Manual configuration of mirrorlist" (fun config ->
@@ -87,14 +87,14 @@ let () =
       { config with hostname = Some hostname });
   reg ~name:"Asking if install hardened kernel" (fun config ->
       let add_hardened =
-        ask_yn_confirm "Do you want to install hardened kernel?" = Yes
+        ask_yn_confirm "Do you want to install hardened kernel?" = `Yes
       in
       let hardened_as_default =
         add_hardened
         && ask_yn_confirm
           "Do you want to set the GRUB default boot entry to the hardened \
            kernel?"
-           = Yes
+           = `Yes
       in
       {
         config with
@@ -103,7 +103,7 @@ let () =
       });
   reg ~name:"Pick whether to encrypt BOOT partition" (fun config ->
       let encrypt =
-        ask_yn "Enable encryption for BOOT (/boot) partition?" = Yes
+        ask_yn "Enable encryption for BOOT (/boot) partition?" = `Yes
       in
       { config with encrypt_boot = Some encrypt });
   reg ~name:"Adjusting cryptsetup parameters for boot partition" (fun config ->
@@ -114,14 +114,14 @@ let () =
                 if
                   ask_yn
                     "Do you want to adjust iteration time of boot partition?"
-                  = Yes
+                  = `Yes
                 then Some (ask_uint "Please enter iteration time in ms")
                 else None
               in
               let key_size_bits =
                 if
                   ask_yn "Do you want to adjust key size of boot partition?"
-                  = Yes
+                  = `Yes
                 then Some (ask_uint "Please enter key size in bits")
                 else None
               in
@@ -139,7 +139,7 @@ let () =
       let encrypt =
         retry (fun () ->
             let encrypt_sys =
-              ask_yn "Enable encryption for ROOT (/) partition?" = Yes
+              ask_yn "Enable encryption for ROOT (/) partition?" = `Yes
             in
             if encrypt_boot && not encrypt_sys then
               print_boxed_msg
@@ -156,14 +156,14 @@ let () =
                 if
                   ask_yn
                     "Do you want to adjust iteration time of root partition?"
-                  = Yes
+                  = `Yes
                 then Some (ask_uint "Please enter iteration time in ms")
                 else None
               in
               let key_size_bits =
                 if
                   ask_yn "Do you want to adjust key size of root partition?"
-                  = Yes
+                  = `Yes
                 then Some (ask_uint "Please enter key size in bits")
                 else None
               in
@@ -209,7 +209,7 @@ let () =
         let disks = Disk_utils.list_disks () in
         if List.length disks = 0 then
           failwith
-            "Not enough disks found, please make sure you have connected at \
+            "`Not enough disks found, please make sure you have connected at \
              least one disk";
         let disk =
           retry (fun () ->
@@ -309,7 +309,7 @@ let () =
           || ((not is_efi_mode) && List.length parts < 2)
         then
           failwith
-            "Not enough partitions found, please make sure partitioning was \
+            "`Not enough partitions found, please make sure partitioning was \
              done correctly";
         let disk_part_tree = Disk_part_tree.of_parts parts in
         let disk_part_tree, esp_part_path =
@@ -360,7 +360,7 @@ let () =
         let parts = Disk_utils.list_parts () in
         if List.length parts < 1 then
           failwith
-            "Not enough partitions found, please make sure partitioning was \
+            "`Not enough partitions found, please make sure partitioning was \
              done correctly";
         let disk_part_tree = Disk_part_tree.of_parts parts in
         let sys_part_path =
@@ -377,7 +377,7 @@ let () =
         in
         if List.length disks < 1 then
           failwith
-            "Not enough disks left, please make sure you have attached the \
+            "`Not enough disks left, please make sure you have attached the \
              USB drive";
         let usb_key =
           retry (fun () ->
@@ -801,9 +801,18 @@ let () =
       Printf.printf "Setting password for %s" user_name;
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
       config);
-  reg ~name:"Git cloning repository into current directory" (fun config ->
-      FileUtil.(rm ~force:Force ~recurse:true [ Config.repo_name ]);
-      exec (Printf.sprintf "git clone %s" Config.repo_url);
+  reg ~name:"Git cloning oali-profiles repo into current directory" (fun config ->
+      Printf.printf "The default oali-profiles repo URL is :\n";
+      Printf.printf "  %s\n" Config.oali_profiles_repo_url;
+      let repo_url =
+        if ask_yn_confirm "Do you want to use a custom repo instead?" = `Yes then
+          ask_string_confirm ~is_valid:not_empty "Please enter url"
+        else
+          Config.oali_profiles_repo_url
+      in
+      let repo_name = String.split_on_char '/' repo_url |> List.rev |> List.hd in
+      FileUtil.(rm ~force:Force ~recurse:true [ repo_name ]);
+      exec (Printf.sprintf "git clone %s" repo_url);
       config);
   reg ~name:"Creating oali files folder" (fun config ->
       let dst_path =
@@ -898,7 +907,7 @@ let () =
       config);
   reg ~name:"Ask if enable SSH server" (fun config ->
       let enable_ssh_server =
-        ask_yn "Do you want to enable SSH server?" = Yes
+        ask_yn "Do you want to enable SSH server?" = `Yes
       in
       { config with enable_ssh_server = Some enable_ssh_server });
   reg ~name:"Installing SSH server" (fun config ->
@@ -906,8 +915,9 @@ let () =
         Arch_chroot.install [ "openssh" ];
       config);
   reg ~name:"Copying sshd_config over" (fun config ->
+      let sshd_config_path_in_repo = Misc_utils.concat_file_names [Option.get config.oali_profiles_repo_url] in
       if Option.get config.enable_ssh_server then
-        FileUtil.cp [ Config.sshd_config_path_in_repo ] Config.etc_ssh_dir_path;
+        FileUtil.cp [ sshd_config_path_in_repo ] Config.etc_ssh_dir_path;
       config);
   reg ~name:"Enabling SSH server" (fun config ->
       if Option.get config.enable_ssh_server then
@@ -972,7 +982,7 @@ let () =
                 match
                   ask_yn "Does the hash match the hash of the original file?"
                 with
-                | Yes -> (
+                | `Yes -> (
                     let user_name = Option.get config.user_name in
                     let user_ssh_authorized_keys_path =
                       Option.get config.user_ssh_authorized_keys_path
@@ -995,22 +1005,22 @@ let () =
                          output_string user_ssh_authorized_keys_oc key_line;
                          output_string user_ssh_authorized_keys_oc "\n");
                     match ask_yn "Do you want to add another SSH key?" with
-                    | Yes -> Retry
-                    | No -> Stop () )
-                | No -> (
+                    | `Yes -> Retry
+                    | `No -> Stop () )
+                | `No -> (
                     print_endline "Incorrect file received";
                     match ask_yn "Do you want to retry?" with
-                    | Yes -> Retry
-                    | No -> Stop () )
+                    | `Yes -> Retry
+                    | `No -> Stop () )
               with Exec_fail _ -> (
                   print_endline "Decryption failed";
                   match ask_yn "Do you want to retry?" with
-                  | Yes -> Retry
-                  | No -> Stop () )) );
+                  | `Yes -> Retry
+                  | `No -> Stop () )) );
       config);
   reg ~name:"Ask if set up SaltStack" (fun config ->
       let use_saltstack =
-        ask_yn "Do you want to use SaltStack for package management?" = Yes
+        ask_yn "Do you want to use SaltStack for package management?" = `Yes
       in
       { config with use_saltstack = Some use_saltstack });
   reg ~name:"Installing SaltStack" (fun config ->
@@ -1085,7 +1095,7 @@ let () =
       exec (Printf.sprintf "chmod 700 %s/*" Config.oali_files_dir_path);
       config);
   reg ~name:"Asking if unmount partitions" (fun config ->
-      let do_unmount = ask_yn "Do you want to unmount partitions?" = Yes in
+      let do_unmount = ask_yn "Do you want to unmount partitions?" = `Yes in
       { config with do_unmount = Some do_unmount });
   reg ~name:"Unmounting partitions" (fun config ->
       ( if Option.get config.do_unmount then
@@ -1094,7 +1104,7 @@ let () =
       config);
   reg ~name:"Asking if shutdown" (fun config ->
       if Option.get config.do_unmount then
-        let do_shutdown = ask_yn "Do you want to shutdown?" = Yes in
+        let do_shutdown = ask_yn "Do you want to shutdown?" = `Yes in
         { config with do_shutdown = Some do_shutdown }
       else (
         print_endline "Shutdown skipped";
