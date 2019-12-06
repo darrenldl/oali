@@ -6,7 +6,7 @@ let esp_part_max_frac = 0.25
 
 let efi_dir = "/efi"
 
-let esp_mount_point = Misc_utils.concat_file_names [sys_mount_point; efi_dir]
+let esp_mount_point = Misc_utils.concat_file_names [ sys_mount_point; efi_dir ]
 
 let boot_part_size_MiB = 500.0
 
@@ -16,7 +16,8 @@ let total_disk_usage_frac = 0.75
 
 let boot_dir = "/boot"
 
-let boot_mount_point = Misc_utils.concat_file_names [sys_mount_point; boot_dir]
+let boot_mount_point =
+  Misc_utils.concat_file_names [ sys_mount_point; boot_dir ]
 
 let sys_part_keyfile_name = "sys_part.key"
 
@@ -27,12 +28,12 @@ let boot_mapper_name = "crypt_boot"
 let root_mapper_name = "crypt_root"
 
 let livecd_mirrorlist_path =
-  Misc_utils.concat_file_names ["/etc"; "pacman.d"; "mirrorlist"]
+  Misc_utils.concat_file_names [ "/etc"; "pacman.d"; "mirrorlist" ]
 
 let etc_ssh_dir_path =
-  Misc_utils.concat_file_names [sys_mount_point; "etc"; "ssh"]
+  Misc_utils.concat_file_names [ sys_mount_point; "etc"; "ssh" ]
 
-let oali_files_dir_path = Misc_utils.concat_file_names ["/root"; "oali_pack"]
+let oali_files_dir_path = Misc_utils.concat_file_names [ "/root"; "oali_pack" ]
 
 let useradd_helper_as_powerful_name = "useradd_helper_as_powerful.sh"
 
@@ -51,17 +52,19 @@ let usb_key_unmount_script_name = "usb_key_umount.sh"
 let oali_setup_note_name = "oali_setup_note"
 
 let sshd_config_path_in_repo =
-  Misc_utils.concat_file_names [repo_name; "saltstack"; "salt"; "sshd_config"]
+  Misc_utils.concat_file_names [ repo_name; "saltstack"; "salt"; "sshd_config" ]
 
 let mkinitcpio_hooks =
-  [ "base"
-  ; "udev"
-  ; "autodetect"
-  ; "keyboard"
-  ; "keymap"
-  ; "consolefont"
-  ; "modconf"
-  ; "block"
-  ; "encrypt"
-  ; "filesystems"
-  ; "fsck" ]
+  [
+    "base";
+    "udev";
+    "autodetect";
+    "keyboard";
+    "keymap";
+    "consolefont";
+    "modconf";
+    "block";
+    "encrypt";
+    "filesystems";
+    "fsck";
+  ]

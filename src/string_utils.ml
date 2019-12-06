@@ -24,10 +24,8 @@ let get_tail_num s =
          pos := match !pos with None -> Some i | Some x -> Some x)
     s;
   match !pos with
-  | None ->
-    None
-  | Some pos ->
-    Some (String.sub s pos (len - pos) |> int_of_string)
+  | None -> None
+  | Some pos -> Some (String.sub s pos (len - pos) |> int_of_string)
 
 let strip_prefix ~prefix s =
   let prefix_len = String.length prefix in

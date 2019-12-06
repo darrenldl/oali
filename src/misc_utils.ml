@@ -53,8 +53,7 @@ let ask_uint ?upper_bound_exc prompt =
   ask_string
     ~is_valid:(fun s ->
         match int_of_string_opt s with
-        | None ->
-          false
+        | None -> false
         | Some x -> (
             match upper_bound_exc with None -> x >= 0 | Some ub -> x < ub ))
     prompt
@@ -108,15 +107,13 @@ let pick_choice_grouped ?(confirm = true) ?(first_header = "Options")
       let choice2 =
         pick_choice ~confirm:false ~header:second_header second_layer
       in
-      if confirm then
-        confirm_answer_is_correct_end_retry ~ret:(choice1, choice2)
+      if confirm then confirm_answer_is_correct_end_retry ~ret:(choice1, choice2)
       else Stop (choice1, choice2))
 
 let list_no_nth l n =
   let rec aux acc l n =
     match l with
-    | [] ->
-      List.rev acc
+    | [] -> List.rev acc
     | x :: xs ->
       if n = 0 then aux acc xs (pred n) else aux (x :: acc) xs (pred n)
   in
@@ -124,8 +121,10 @@ let list_no_nth l n =
 
 let print_boxed_msg s =
   let len = String.length s + 4 in
-  let line = String.concat "" ["+"; String.make (len - 2) '-'; "+"] in
-  print_endline line; Printf.printf "| %s |\n" s; print_endline line
+  let line = String.concat "" [ "+"; String.make (len - 2) '-'; "+" ] in
+  print_endline line;
+  Printf.printf "| %s |\n" s;
+  print_endline line
 
 let concat_file_names names =
   let splits =
@@ -136,10 +135,8 @@ let concat_file_names names =
   in
   let res = String.concat Filename.dir_sep splits in
   match names with
-  | [] ->
-    res
-  | x :: _ ->
-    if String.sub x 0 1 = "/" then "/" ^ res else res
+  | [] -> res
+  | x :: _ -> if String.sub x 0 1 = "/" then "/" ^ res else res
 
 let calc_frac ~max_frac ~value ~total =
   assert (max_frac >= 0.0);

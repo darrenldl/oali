@@ -25,10 +25,8 @@ let list_parts () =
   |> List.filter (fun (path, _dst) ->
       let last_part = List.hd (List.rev (String.split_on_char '-' path)) in
       match Core_kernel.String.substr_index last_part ~pattern:"part" with
-      | Some _ ->
-        true
-      | None ->
-        false)
+      | Some _ -> true
+      | None -> false)
   |> List.map (fun (_, dst) -> dst)
   |> List.sort_uniq compare
 
@@ -52,10 +50,8 @@ let list_disks () =
   |> List.filter (fun (path, _dst) ->
       let last_part = List.hd (List.rev (String.split_on_char '-' path)) in
       match Core_kernel.String.substr_index last_part ~pattern:"part" with
-      | Some _ ->
-        false
-      | None ->
-        true)
+      | Some _ -> false
+      | None -> true)
   |> List.map (fun (_, dst) -> dst)
   |> List.sort_uniq compare
 
