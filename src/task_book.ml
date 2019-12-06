@@ -82,22 +82,14 @@ let pick_task task_book =
   Misc_utils.pick_choice ~header:"Tasks" choices
 
 let rec run_single_task task_book task_record : unit =
-  let name = task_record.name in
+  let task_name = task_record.name in
   let task = task_record.task in
-  let answer_store_path =
-    let dir = Config.oali_answer_store_dir in
-    let fname = name |> String.split_on_char ' ' |> String.concat "_" in
-    Misc_utils.concat_file_names [dir; fname]
-  in
   let answer_store =
-    try
-      Answer_store.from_file answer_store_path
-    with
-    | Sys_error _ -> Answer_store.create ()
+      Answer_store.load ~task_name
   in
   Proc_utils.clear ();
-  print_endline name;
-  for _ = 0 to String.length name - 1 do
+  print_endline task_name;
+  for _ = 0 to String.length task_name - 1 do
     print_string "="
   done;
   print_newline ();
@@ -106,7 +98,7 @@ let rec run_single_task task_book task_record : unit =
     try
       let config = task answer_store task_book.config in
       print_newline ();
-      Answer_store.to_file answer_store_path answer_store;
+      Answer_store.write ~task_name answer_store;
       (true, config)
     with
     | Proc_utils.Exec_fail r ->
