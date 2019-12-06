@@ -15,7 +15,8 @@ let () =
       let editor =
         retry ~answer_store (fun () ->
             let editor =
-              ask_string ~is_valid:not_empty ~answer_store "Please enter editor command"
+              ask_string ~is_valid:not_empty ~answer_store
+                "Please enter editor command"
             in
             try
               exec (Printf.sprintf "hash %s" editor);
@@ -83,16 +84,18 @@ let () =
       install [ "git" ];
       config);
   reg ~name:"Asking for hostname" (fun answer_store config ->
-      let hostname = ask_string_confirm ~is_valid:not_empty ~answer_store "Hostname" in
+      let hostname =
+        ask_string_confirm ~is_valid:not_empty ~answer_store "Hostname"
+      in
       { config with hostname = Some hostname });
   reg ~name:"Asking if install hardened kernel" (fun answer_store config ->
       let add_hardened =
-        ask_yn_confirm ~answer_store "Do you want to install hardened kernel?" = `Yes
+        ask_yn_confirm ~answer_store "Do you want to install hardened kernel?"
+        = `Yes
       in
       let hardened_as_default =
         add_hardened
-        && ask_yn_confirm
-          ~answer_store
+        && ask_yn_confirm ~answer_store
           "Do you want to set the GRUB default boot entry to the hardened \
            kernel?"
            = `Yes
@@ -104,45 +107,50 @@ let () =
       });
   reg ~name:"Pick whether to encrypt BOOT partition" (fun answer_store config ->
       let encrypt =
-        ask_yn ~answer_store "Enable encryption for BOOT (/boot) partition?" = `Yes
+        ask_yn ~answer_store "Enable encryption for BOOT (/boot) partition?"
+        = `Yes
       in
       { config with encrypt_boot = Some encrypt });
-  reg ~name:"Adjusting cryptsetup parameters for boot partition" (fun answer_store config ->
-      if Option.get config.encrypt_boot then
-        let iter_time_ms, key_size_bits =
-          retry ~answer_store (fun () ->
-              let iter_time_ms =
-                if
-                  ask_yn
-                    ~answer_store
-                    "Do you want to adjust iteration time of boot partition?"
-                  = `Yes
-                then Some (ask_uint ~answer_store "Please enter iteration time in ms")
-                else None
-              in
-              let key_size_bits =
-                if
-                  ask_yn ~answer_store
-                    "Do you want to adjust key size of boot partition?"
-                  = `Yes
-                then Some (ask_uint ~answer_store "Please enter key size in bits")
-                else None
-              in
-              ask_yn_end_retry
-                ~ret:(iter_time_ms, key_size_bits)
-                "Are the above answers correct?")
-        in
-        {
-          config with
-          boot_part_enc_params = Some { iter_time_ms; key_size_bits };
-        }
-      else config);
+  reg ~name:"Adjusting cryptsetup parameters for boot partition"
+    (fun answer_store config ->
+       if Option.get config.encrypt_boot then
+         let iter_time_ms, key_size_bits =
+           retry ~answer_store (fun () ->
+               let iter_time_ms =
+                 if
+                   ask_yn ~answer_store
+                     "Do you want to adjust iteration time of boot partition?"
+                   = `Yes
+                 then
+                   Some
+                     (ask_uint ~answer_store "Please enter iteration time in ms")
+                 else None
+               in
+               let key_size_bits =
+                 if
+                   ask_yn ~answer_store
+                     "Do you want to adjust key size of boot partition?"
+                   = `Yes
+                 then
+                   Some (ask_uint ~answer_store "Please enter key size in bits")
+                 else None
+               in
+               ask_yn_end_retry
+                 ~ret:(iter_time_ms, key_size_bits)
+                 "Are the above answers correct?")
+         in
+         {
+           config with
+           boot_part_enc_params = Some { iter_time_ms; key_size_bits };
+         }
+       else config);
   reg ~name:"Pick whether to encrypt ROOT partition" (fun answer_store config ->
       let encrypt_boot = Option.get config.encrypt_boot in
       let encrypt =
         retry ~answer_store (fun () ->
             let encrypt_sys =
-              ask_yn ~answer_store "Enable encryption for ROOT (/) partition?" = `Yes
+              ask_yn ~answer_store "Enable encryption for ROOT (/) partition?"
+              = `Yes
             in
             if encrypt_boot && not encrypt_sys then
               print_boxed_msg
@@ -151,37 +159,39 @@ let () =
             confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
       in
       { config with encrypt_sys = Some encrypt });
-  reg ~name:"Adjusting cryptsetup parameters for root partition" (fun answer_store config ->
-      if Option.get config.encrypt_sys then
-        let iter_time_ms, key_size_bits =
-          retry ~answer_store (fun () ->
-              let iter_time_ms =
-                if
-                  ask_yn
-                    ~answer_store
-                    "Do you want to adjust iteration time of root partition?"
-                  = `Yes
-                then Some (ask_uint ~answer_store"Please enter iteration time in ms")
-                else None
-              in
-              let key_size_bits =
-                if
-                  ask_yn
-                    ~answer_store
-                    "Do you want to adjust key size of root partition?"
-                  = `Yes
-                then Some (ask_uint ~answer_store"Please enter key size in bits")
-                else None
-              in
-              ask_yn_end_retry
-                ~ret:(iter_time_ms, key_size_bits)
-                "Are the above answers correct?")
-        in
-        {
-          config with
-          sys_part_enc_params = Some { iter_time_ms; key_size_bits };
-        }
-      else config);
+  reg ~name:"Adjusting cryptsetup parameters for root partition"
+    (fun answer_store config ->
+       if Option.get config.encrypt_sys then
+         let iter_time_ms, key_size_bits =
+           retry ~answer_store (fun () ->
+               let iter_time_ms =
+                 if
+                   ask_yn ~answer_store
+                     "Do you want to adjust iteration time of root partition?"
+                   = `Yes
+                 then
+                   Some
+                     (ask_uint ~answer_store "Please enter iteration time in ms")
+                 else None
+               in
+               let key_size_bits =
+                 if
+                   ask_yn ~answer_store
+                     "Do you want to adjust key size of root partition?"
+                   = `Yes
+                 then
+                   Some (ask_uint ~answer_store "Please enter key size in bits")
+                 else None
+               in
+               ask_yn_end_retry
+                 ~ret:(iter_time_ms, key_size_bits)
+                 "Are the above answers correct?")
+         in
+         {
+           config with
+           sys_part_enc_params = Some { iter_time_ms; key_size_bits };
+         }
+       else config);
   reg ~name:"Pick disk layout choice" (fun _answer_store config ->
       let open Disk_layout in
       let choices =
@@ -480,11 +490,12 @@ let () =
         Unix.mkdir Config.esp_mount_point 0o744;
         Disk_layout.mount_esp_part disk_layout );
       config);
-  reg ~name:"Installing base system (base linux base-devel)" (fun _answer_store config ->
-      exec_no_capture
-        (Printf.sprintf "pacstrap %s base linux base-devel"
-           Config.sys_mount_point);
-      config);
+  reg ~name:"Installing base system (base linux base-devel)"
+    (fun _answer_store config ->
+       exec_no_capture
+         (Printf.sprintf "pacstrap %s base linux base-devel"
+            Config.sys_mount_point);
+       config);
   reg ~name:"Generating fstab" (fun _answer_store config ->
       let fstab_path =
         concat_file_names [ Config.sys_mount_point; "etc"; "fstab" ]
@@ -523,30 +534,31 @@ let () =
         Unix.chmod keyfile_path 0o000 )
       else print_endline "Skipped";
       config);
-  reg ~name:"Installing keyfile for unlocking /boot after boot" (fun _answer_store config ->
-      if
-        Option.get config.disk_layout_choice
-        <> Disk_layout.Sys_part_plus_usb_drive
-      then
-        if Option.get config.encrypt_boot then (
-          let disk_layout = Option.get config.disk_layout in
-          let boot_part_luks =
-            match disk_layout.boot_part.upper with
-            | Plain_FS _ -> failwith "Expected LUKS"
-            | Luks luks -> luks
-          in
-          let boot_secondary_key = Option.get boot_part_luks.secondary_key in
-          let keyfile_path =
-            concat_file_names
-              [ Config.sys_mount_point; "root"; Config.boot_part_keyfile_name ]
-          in
-          let oc = open_out_bin keyfile_path in
-          Fun.protect
-            ~finally:(fun () -> close_out oc)
-            (fun () -> output_string oc boot_secondary_key);
-          () )
-        else print_endline "Skipped";
-      config);
+  reg ~name:"Installing keyfile for unlocking /boot after boot"
+    (fun _answer_store config ->
+       if
+         Option.get config.disk_layout_choice
+         <> Disk_layout.Sys_part_plus_usb_drive
+       then
+         if Option.get config.encrypt_boot then (
+           let disk_layout = Option.get config.disk_layout in
+           let boot_part_luks =
+             match disk_layout.boot_part.upper with
+             | Plain_FS _ -> failwith "Expected LUKS"
+             | Luks luks -> luks
+           in
+           let boot_secondary_key = Option.get boot_part_luks.secondary_key in
+           let keyfile_path =
+             concat_file_names
+               [ Config.sys_mount_point; "root"; Config.boot_part_keyfile_name ]
+           in
+           let oc = open_out_bin keyfile_path in
+           Fun.protect
+             ~finally:(fun () -> close_out oc)
+             (fun () -> output_string oc boot_secondary_key);
+           () )
+         else print_endline "Skipped";
+       config);
   reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot"
     (fun _answer_store config ->
        ( if Option.get config.encrypt_boot then
@@ -684,87 +696,90 @@ let () =
       if Option.get config.is_efi_mode then
         Arch_chroot.install [ "efibootmgr"; "efitools" ];
       config);
-  reg ~name:"Updating grub config: GRUB_ENABLE_CRYPTODISK" (fun _answer_store config ->
-      let encrypt = Option.get config.encrypt_boot in
-      ( if encrypt then
-          let default_grub_path =
-            concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
-          in
-          let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
-          let enable_grub_enable_cryptodisk =
-            let re_uncommented =
-              Printf.sprintf "^%s=" grub_enable_cryptodisk
-              |> Re.Posix.re |> Re.compile
-            in
-            let re_commented =
-              Printf.sprintf "^#%s=" grub_enable_cryptodisk
-              |> Re.Posix.re |> Re.compile
-            in
-            fun match_count s ->
-              match (Re.matches re_uncommented s, Re.matches re_commented s) with
-              | [], [] -> (match_count, [ s ])
-              | _, _ -> (succ match_count, [ grub_enable_cryptodisk ^ "=y" ])
-          in
-          let modification_count =
-            File.filter_map_fold_lines ~file:default_grub_path 0
-              enable_grub_enable_cryptodisk
-          in
-          if modification_count = 0 then
-            let oc =
-              open_out_gen [ Open_text; Open_append ] 0o600 default_grub_path
-            in
-            Fun.protect
-              ~finally:(fun () -> close_out oc)
-              (fun () -> output_string oc (grub_enable_cryptodisk ^ "=y\n")) );
-      config);
-  reg ~name:"Updating GRUB config: GRUB_CMDLINE_LINUX" (fun _answer_store config ->
-      let disk_layout = Option.get config.disk_layout in
-      if Option.get config.encrypt_sys then
-        let sys_part_path = disk_layout.sys_part.lower.path in
-        let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
-        let default_grub_path =
-          concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
-        in
-        let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
-        let re =
-          Printf.sprintf "^%s=" grub_cmdline_linux |> Re.Posix.re |> Re.compile
-        in
-        let update_grub_cmdline s =
-          match Re.matches re s with
-          | [] -> [ s ]
-          | _ ->
-            [
-              Printf.sprintf
-                "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                 root=/dev/mapper/%s\""
-                grub_cmdline_linux sys_part_uuid Config.root_mapper_name
-                Config.sys_part_keyfile_name Config.root_mapper_name;
-            ]
-        in
-        File.filter_map_lines ~file:default_grub_path update_grub_cmdline
-      else print_endline "Skipped";
-      config);
-  reg ~name:"Setting hardened kernel as default boot entry" (fun _answer_store config ->
-      let file =
-        concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
-      in
-      ( if Option.get config.hardened_as_default then
-          let update_grub_default =
-            let grub_default = "GRUB_DEFAULT" in
-            let entry_str =
-              "Advanced options for Arch Linux>Arch Linux, with Linux \
-               linux-hardened"
-            in
-            let re =
-              Printf.sprintf "^%s" grub_default |> Re.Posix.re |> Re.compile
-            in
-            fun s ->
-              match Re.matches re s with
-              | [] -> [ s ]
-              | _ -> [ Printf.sprintf "%s=\"%s\"" grub_default entry_str ]
-          in
-          File.filter_map_lines ~file update_grub_default );
-      config);
+  reg ~name:"Updating grub config: GRUB_ENABLE_CRYPTODISK"
+    (fun _answer_store config ->
+       let encrypt = Option.get config.encrypt_boot in
+       ( if encrypt then
+           let default_grub_path =
+             concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
+           in
+           let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
+           let enable_grub_enable_cryptodisk =
+             let re_uncommented =
+               Printf.sprintf "^%s=" grub_enable_cryptodisk
+               |> Re.Posix.re |> Re.compile
+             in
+             let re_commented =
+               Printf.sprintf "^#%s=" grub_enable_cryptodisk
+               |> Re.Posix.re |> Re.compile
+             in
+             fun match_count s ->
+               match (Re.matches re_uncommented s, Re.matches re_commented s) with
+               | [], [] -> (match_count, [ s ])
+               | _, _ -> (succ match_count, [ grub_enable_cryptodisk ^ "=y" ])
+           in
+           let modification_count =
+             File.filter_map_fold_lines ~file:default_grub_path 0
+               enable_grub_enable_cryptodisk
+           in
+           if modification_count = 0 then
+             let oc =
+               open_out_gen [ Open_text; Open_append ] 0o600 default_grub_path
+             in
+             Fun.protect
+               ~finally:(fun () -> close_out oc)
+               (fun () -> output_string oc (grub_enable_cryptodisk ^ "=y\n")) );
+       config);
+  reg ~name:"Updating GRUB config: GRUB_CMDLINE_LINUX"
+    (fun _answer_store config ->
+       let disk_layout = Option.get config.disk_layout in
+       if Option.get config.encrypt_sys then
+         let sys_part_path = disk_layout.sys_part.lower.path in
+         let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
+         let default_grub_path =
+           concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
+         in
+         let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
+         let re =
+           Printf.sprintf "^%s=" grub_cmdline_linux |> Re.Posix.re |> Re.compile
+         in
+         let update_grub_cmdline s =
+           match Re.matches re s with
+           | [] -> [ s ]
+           | _ ->
+             [
+               Printf.sprintf
+                 "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                  root=/dev/mapper/%s\""
+                 grub_cmdline_linux sys_part_uuid Config.root_mapper_name
+                 Config.sys_part_keyfile_name Config.root_mapper_name;
+             ]
+         in
+         File.filter_map_lines ~file:default_grub_path update_grub_cmdline
+       else print_endline "Skipped";
+       config);
+  reg ~name:"Setting hardened kernel as default boot entry"
+    (fun _answer_store config ->
+       let file =
+         concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
+       in
+       ( if Option.get config.hardened_as_default then
+           let update_grub_default =
+             let grub_default = "GRUB_DEFAULT" in
+             let entry_str =
+               "Advanced options for Arch Linux>Arch Linux, with Linux \
+                linux-hardened"
+             in
+             let re =
+               Printf.sprintf "^%s" grub_default |> Re.Posix.re |> Re.compile
+             in
+             fun s ->
+               match Re.matches re s with
+               | [] -> [ s ]
+               | _ -> [ Printf.sprintf "%s=\"%s\"" grub_default entry_str ]
+           in
+           File.filter_map_lines ~file update_grub_default );
+       config);
   reg ~name:"Installing GRUB to disk" (fun _answer_store config ->
       let is_efi_mode = Option.get config.is_efi_mode in
       let disk_layout = Option.get config.disk_layout in
@@ -796,7 +811,8 @@ let () =
       config);
   reg ~name:"Setting user account" (fun answer_store config ->
       let user_name =
-        ask_string_confirm ~is_valid:not_empty ~answer_store "Please enter user name"
+        ask_string_confirm ~is_valid:not_empty ~answer_store
+          "Please enter user name"
       in
       print_endline "Adding user";
       Arch_chroot.exec
@@ -813,8 +829,13 @@ let () =
        Printf.printf "  %s\n" Config.oali_profiles_repo_url;
        print_newline ();
        let oali_profiles_repo_url =
-         if ask_yn_confirm ~answer_store "Do you want to use a custom repo instead?" = `Yes
-         then ask_string_confirm ~is_valid:not_empty ~answer_store "Please enter url"
+         if
+           ask_yn_confirm ~answer_store
+             "Do you want to use a custom repo instead?"
+           = `Yes
+         then
+           ask_string_confirm ~is_valid:not_empty ~answer_store
+             "Please enter url"
          else Config.oali_profiles_repo_url
        in
        let oali_profiles_repo_name =
@@ -847,57 +868,58 @@ let () =
       in
       FileUtil.mkdir dst_path;
       config);
-  reg ~name:"Generating USB key mounting and unmounting scripts" (fun _answer_store config ->
-      let use_usb_key =
-        Option.get config.disk_layout_choice
-        = Disk_layout.Sys_part_plus_usb_drive
-      in
-      let disk_layout = Option.get config.disk_layout in
-      if use_usb_key then (
-        let encrypt_boot = Option.get config.encrypt_boot in
-        let is_efi_mode = Option.get config.is_efi_mode in
-        let boot_part_path = disk_layout.boot_part.lower.path in
-        let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
-        let esp_part_path =
-          Option.map
-            (fun part -> Disk_layout.(part.lower.path))
-            disk_layout.esp_part
-        in
-        let esp_part_uuid =
-          Option.map (fun path -> Disk_utils.uuid_of_dev path) esp_part_path
-        in
-        (let dst_path =
+  reg ~name:"Generating USB key mounting and unmounting scripts"
+    (fun _answer_store config ->
+       let use_usb_key =
+         Option.get config.disk_layout_choice
+         = Disk_layout.Sys_part_plus_usb_drive
+       in
+       let disk_layout = Option.get config.disk_layout in
+       if use_usb_key then (
+         let encrypt_boot = Option.get config.encrypt_boot in
+         let is_efi_mode = Option.get config.is_efi_mode in
+         let boot_part_path = disk_layout.boot_part.lower.path in
+         let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
+         let esp_part_path =
+           Option.map
+             (fun part -> Disk_layout.(part.lower.path))
+             disk_layout.esp_part
+         in
+         let esp_part_uuid =
+           Option.map (fun path -> Disk_utils.uuid_of_dev path) esp_part_path
+         in
+         (let dst_path =
+            concat_file_names
+              [
+                Config.sys_mount_point;
+                Config.oali_files_dir_path;
+                Config.usb_key_mount_script_name;
+              ]
+          in
+          let script =
+            Usb_key_mount_script_template.gen ~encrypt:encrypt_boot ~is_efi_mode
+              ~esp_part_uuid ~boot_part_uuid
+          in
+          let oc = open_out dst_path in
+          Fun.protect
+            ~finally:(fun () -> close_out oc)
+            (fun () -> output_string oc script));
+         let dst_path =
            concat_file_names
              [
                Config.sys_mount_point;
                Config.oali_files_dir_path;
-               Config.usb_key_mount_script_name;
+               Config.usb_key_unmount_script_name;
              ]
          in
          let script =
-           Usb_key_mount_script_template.gen ~encrypt:encrypt_boot ~is_efi_mode
-             ~esp_part_uuid ~boot_part_uuid
+           Usb_key_unmount_script_template.gen ~encrypt:encrypt_boot ~is_efi_mode
          in
          let oc = open_out dst_path in
          Fun.protect
            ~finally:(fun () -> close_out oc)
-           (fun () -> output_string oc script));
-        let dst_path =
-          concat_file_names
-            [
-              Config.sys_mount_point;
-              Config.oali_files_dir_path;
-              Config.usb_key_unmount_script_name;
-            ]
-        in
-        let script =
-          Usb_key_unmount_script_template.gen ~encrypt:encrypt_boot ~is_efi_mode
-        in
-        let oc = open_out dst_path in
-        Fun.protect
-          ~finally:(fun () -> close_out oc)
-          (fun () -> output_string oc script) );
-      config);
+           (fun () -> output_string oc script) );
+       config);
   reg ~name:"Copying useradd helper scripts" (fun _answer_store config ->
       let cwd = Sys.getcwd () in
       let dst_path =
@@ -951,7 +973,7 @@ let () =
             Option.get config.oali_profile;
             "saltstack";
             "salt";
-            "sshd_config"
+            "sshd_config";
           ]
       in
       if Option.get config.enable_ssh_server then
@@ -1059,7 +1081,9 @@ let () =
       config);
   reg ~name:"Ask if set up SaltStack" (fun answer_store config ->
       let use_saltstack =
-        ask_yn ~answer_store "Do you want to use SaltStack for package management?" = `Yes
+        ask_yn ~answer_store
+          "Do you want to use SaltStack for package management?"
+        = `Yes
       in
       { config with use_saltstack = Some use_saltstack });
   reg ~name:"Installing SaltStack" (fun _answer_store config ->

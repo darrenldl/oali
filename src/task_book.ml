@@ -84,9 +84,7 @@ let pick_task task_book =
 let rec run_single_task task_book task_record : unit =
   let task_name = task_record.name in
   let task = task_record.task in
-  let answer_store =
-      Answer_store.load ~task_name
-  in
+  let answer_store = Answer_store.load ~task_name in
   Proc_utils.clear ();
   print_endline task_name;
   for _ = 0 to String.length task_name - 1 do

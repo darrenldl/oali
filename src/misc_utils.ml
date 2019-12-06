@@ -18,12 +18,13 @@ type yn =
 let not_empty s = s <> ""
 
 let retry ?answer_store (f : unit -> 'a retry) : 'a =
-  let rec aux first_run f = match f () with
-      Stop x -> x
-    | Retry -> if not first_run then (
+  let rec aux first_run f =
+    match f () with
+    | Stop x -> x
+    | Retry ->
+      if not first_run then (
         print_endline "Wiping answer store";
-        Option.iter Hashtbl.reset answer_store
-      );
+        Option.iter Hashtbl.reset answer_store );
       aux false f
   in
   aux true f
@@ -31,22 +32,24 @@ let retry ?answer_store (f : unit -> 'a retry) : 'a =
 module Internal = struct
   let ask_string ?(is_valid = fun _ -> true)
       ~(answer_store : (string, string) Hashtbl.t option) prompt =
-    let answer = match answer_store with
+    let answer =
+      match answer_store with
       | None -> None
-      | Some answer_store ->
-        Hashtbl.find_opt answer_store prompt
+      | Some answer_store -> Hashtbl.find_opt answer_store prompt
     in
     match answer with
     | Some x ->
-      Printf.printf "%s => using stored answer : %s" prompt x; x
+      Printf.printf "%s => using stored answer : %s" prompt x;
+      x
     | None ->
       retry (fun () ->
           Printf.printf "%s : " prompt;
           let res = try read_line () with End_of_file -> "" in
           if is_valid res then (
-            Option.iter (fun store -> Hashtbl.add store prompt res) answer_store;
-            Stop res
-          )
+            Option.iter
+              (fun store -> Hashtbl.add store prompt res)
+              answer_store;
+            Stop res )
           else (
             print_endline "Invalid answer, please try again";
             Retry ))
@@ -54,7 +57,8 @@ module Internal = struct
   let ask_yn ~answer_store prompt =
     retry (fun () ->
         let s =
-          ask_string ~is_valid:not_empty ~answer_store (Printf.sprintf "%s y/n" prompt)
+          ask_string ~is_valid:not_empty ~answer_store
+            (Printf.sprintf "%s y/n" prompt)
           |> String.lowercase_ascii
         in
         let len = String.length s in
@@ -78,8 +82,7 @@ module Internal = struct
           | None -> false
           | Some x -> (
               match upper_bound_exc with None -> x >= 0 | Some ub -> x < ub ))
-      ~answer_store
-      prompt
+      ~answer_store prompt
     |> int_of_string
 end
 
