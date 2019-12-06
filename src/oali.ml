@@ -889,15 +889,13 @@ let () =
       let dst_path =
         concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
       in
-      let oali_profiles_repo_name =
-        Option.get config.oali_profiles_repo_name
-      in
       FileUtil.cp
         [
           concat_file_names
             [
               cwd;
-              oali_profiles_repo_name;
+              Option.get config.oali_profiles_repo_name;
+              Option.get config.oali_profile;
               "scripts";
               Config.useradd_helper_as_powerful_name;
             ];
@@ -908,7 +906,8 @@ let () =
           concat_file_names
             [
               cwd;
-              oali_profiles_repo_name;
+              Option.get config.oali_profiles_repo_name;
+              Option.get config.oali_profile;
               "scripts";
               Config.useradd_helper_restricted_name;
             ];
@@ -931,10 +930,11 @@ let () =
         Arch_chroot.install [ "openssh" ];
       config);
   reg ~name:"Copying sshd_config over" (fun config ->
-      let oali_profiles_repo_name =
-        Option.get config.oali_profiles_repo_name
-      in
-      let sshd_config_path_in_repo = Misc_utils.concat_file_names [oali_profiles_repo_name] in
+      let sshd_config_path_in_repo = Misc_utils.concat_file_names [
+          Option.get config.oali_profiles_repo_name;
+          Option.get config.oali_profile;
+          "salt"
+        ] in
       if Option.get config.enable_ssh_server then
         FileUtil.cp [ sshd_config_path_in_repo ] Config.etc_ssh_dir_path;
       config);
@@ -1067,10 +1067,13 @@ let () =
   reg ~name:"Copying SaltStack files" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
       ( if use_saltstack then
-          let oali_profiles_repo_name =
-            Option.get config.oali_profiles_repo_name
+          let salt_files_path = concat_file_names
+              [
+                Option.get config.oali_profiles_repo_name;
+                Option.get config.oali_profile;
+                "salt"
+              ]
           in
-          let salt_files_path = Filename.concat oali_profiles_repo_name "saltstack" in
           let folders =
             Sys.readdir salt_files_path
             |> Array.to_list
