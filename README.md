@@ -74,7 +74,7 @@ The static binaries of the installer are built via Travis CI using `ocaml/opam2:
 
 ## Specifics
 #### Answer remembering
-Oali rememebrs answers to dialogues when appropriate, i.e. for relatively static information like
+Oali remembers answers to dialogues when appropriate, i.e. for relatively static information like
 - choice of editor
 - hostname
 - encryption parameters
