@@ -41,5 +41,4 @@ let load ~task_name : t =
     let t = Yojson.Basic.from_file fname |> of_json in
     (* Printf.printf "Loaded answer store from : %s\n" fname; *)
     t
-  with
-  | _ -> create ()
+  with _ -> create ()
