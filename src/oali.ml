@@ -943,6 +943,7 @@ let () =
           [
             Option.get config.oali_profiles_repo_name;
             Option.get config.oali_profile;
+            "saltstack";
             "salt";
             "sshd_config"
           ]
@@ -1085,7 +1086,7 @@ let () =
               [
                 Option.get config.oali_profiles_repo_name;
                 Option.get config.oali_profile;
-                "salt";
+                "saltstack";
               ]
           in
           let folders =
