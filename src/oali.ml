@@ -944,6 +944,7 @@ let () =
             Option.get config.oali_profiles_repo_name;
             Option.get config.oali_profile;
             "salt";
+            "sshd_config"
           ]
       in
       if Option.get config.enable_ssh_server then
