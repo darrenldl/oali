@@ -1020,7 +1020,7 @@ let () =
                     in
                     Printf.printf "Installing SSH key for user : %s\n" user_name;
                     let key_line =
-                      let ic = open_in decrypted_file_hash in
+                      let ic = open_in decrypted_dst_path in
                       Fun.protect
                         ~finally:(fun () -> close_in ic)
                         (fun () -> input_line ic)
