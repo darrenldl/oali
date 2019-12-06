@@ -811,10 +811,12 @@ let () =
         else
           Config.oali_profiles_repo_url
       in
-      let repo_name = String.split_on_char '/' oali_profiles_repo_url |> List.rev |> List.hd in
-      FileUtil.(rm ~force:Force ~recurse:true [ repo_name ]);
+      let oali_profiles_repo_name = String.split_on_char '/' oali_profiles_repo_url |> List.rev |> List.hd in
+      FileUtil.(rm ~force:Force ~recurse:true [ oali_profiles_repo_name ]);
       exec (Printf.sprintf "git clone %s" oali_profiles_repo_url);
-      { config with oali_profiles_repo_url  = Some oali_profiles_repo_url});
+      { config with oali_profiles_repo_url  = Some oali_profiles_repo_url;
+                    oali_profiles_repo_name = Some oali_profiles_repo_name
+      });
   reg ~name:"Creating oali files folder" (fun config ->
       let dst_path =
         concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
@@ -877,12 +879,15 @@ let () =
       let dst_path =
         concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
       in
+      let oali_profiles_repo_name =
+        Option.get config.oali_profiles_repo_name
+      in
       FileUtil.cp
         [
           concat_file_names
             [
               cwd;
-              Config.repo_name;
+              oali_profiles_repo_name;
               "scripts";
               Config.useradd_helper_as_powerful_name;
             ];
@@ -893,7 +898,7 @@ let () =
           concat_file_names
             [
               cwd;
-              Config.repo_name;
+              oali_profiles_repo_name;
               "scripts";
               Config.useradd_helper_restricted_name;
             ];
@@ -916,7 +921,10 @@ let () =
         Arch_chroot.install [ "openssh" ];
       config);
   reg ~name:"Copying sshd_config over" (fun config ->
-      let sshd_config_path_in_repo = Misc_utils.concat_file_names [Option.get config.oali_profiles_repo_url] in
+      let oali_profiles_repo_name =
+        Option.get config.oali_profiles_repo_name
+      in
+      let sshd_config_path_in_repo = Misc_utils.concat_file_names [oali_profiles_repo_name] in
       if Option.get config.enable_ssh_server then
         FileUtil.cp [ sshd_config_path_in_repo ] Config.etc_ssh_dir_path;
       config);
@@ -1049,7 +1057,10 @@ let () =
   reg ~name:"Copying SaltStack files" (fun config ->
       let use_saltstack = Option.get config.use_saltstack in
       ( if use_saltstack then
-          let salt_files_path = Filename.concat Config.repo_name "saltstack" in
+          let oali_profiles_repo_name =
+            Option.get config.oali_profiles_repo_name
+          in
+          let salt_files_path = Filename.concat oali_profiles_repo_name "saltstack" in
           let folders =
             Sys.readdir salt_files_path
             |> Array.to_list

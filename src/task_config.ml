@@ -16,6 +16,7 @@ type t = {
   use_saltstack : bool option;
   user_name : string option;
   oali_profiles_repo_url : string option;
+  oali_profiles_repo_name : string option;
   do_unmount : bool option;
   do_shutdown : bool option;
 }
@@ -39,6 +40,7 @@ let create () =
     use_saltstack = None;
     user_name = None;
     oali_profiles_repo_url = None;
+    oali_profiles_repo_name = None;
     do_unmount = None;
     do_shutdown = None;
   }
