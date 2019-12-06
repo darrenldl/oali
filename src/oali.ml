@@ -5,17 +5,17 @@ let () =
   let config = Task_config.create () in
   let task_book = Task_book.make config in
   let reg ~name task = Task_book.register task_book ~name task in
-  reg ~name:"Increase size of cow partition" (fun answer_store config ->
+  reg ~name:"Increase size of cow partition" (fun _answer_store config ->
       exec "mount -o remount,size=2G /run/archiso/cowspace";
       config);
   reg ~name:"Update time" (fun _answer_store config ->
       exec "timedatectl set-ntp true";
       config);
-  reg ~name:"Pick editor" (fun _answer_store config ->
+  reg ~name:"Pick editor" (fun answer_store config ->
       let editor =
         retry (fun () ->
             let editor =
-              ask_string ~is_valid:not_empty "Please enter editor command"
+              ask_string ~is_valid:not_empty ~answer_store "Please enter editor command"
             in
             try
               exec (Printf.sprintf "hash %s" editor);
