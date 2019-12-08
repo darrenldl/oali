@@ -1,7 +1,6 @@
 (executable
  (name oali)
  (libraries core_kernel
-            sexplib
             re
             fileutils
             yojson)

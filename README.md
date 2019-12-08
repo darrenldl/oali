@@ -17,7 +17,7 @@ Oali is an installer written in OCaml which sets up a Arch Linux installation wi
 - Optional full disk encryption
 - Optional `linux-hardened` kernel installation
 
-Overall oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below for more information.
+Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below for more information.
 
 ## TODO
 
@@ -57,7 +57,7 @@ The OCaml code is not self contained, thus if you choose to compile it yourself,
 
 For deployment purposes, it is recommended that you use the static binaries provided, which you can download via [GitHub releases](https://github.com/darrenldl/ocaml-linux-installer/releases)
 
-Simply run the downloaded binary (i.e. oali) in live CD to get started
+Simply run the downloaded binary (i.e. `oali`) in live CD to get started
 
 The static binaries of the installer are built via Travis CI using `ocaml/opam2:alpine` Docker image, and should be able to run on Arch Linux live CD without any further setup
 
@@ -73,6 +73,17 @@ The static binaries of the installer are built via Travis CI using `ocaml/opam2:
   - Here is mostly a lot of handling of immutable information (e.g. processing of system information), where Rust doesn't carry a significant advantage over OCaml, and the overhead didn't seem worth it to me
 
 ## Specifics
+#### Answer remembering
+Oali remembers answers to dialogues when appropriate, i.e. for relatively static information like
+- choice of editor
+- hostname
+- encryption parameters
+
+The answers are stored in `oali-answers` folder in JSON format. Each task has its own JSON file with a normalised/santised name.
+
+In each session, Oali will try to retrieve answers from the folder and the specific JSOn file. Missing files/answers are treated
+as not being stored.
+
 #### EFI/BIOS
 Oali automatically adjusts dialogues and settings based on whether the live CD is running in UEFI or BIOS mode
 
