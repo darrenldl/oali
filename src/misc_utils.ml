@@ -109,36 +109,35 @@ let ask_string_confirm ?(is_valid = fun _ -> true) ?answer_store prompt =
       let ret = Internal.ask_string ~is_valid ~answer_store prompt in
       confirm_answer_is_correct_end_retry ~ret)
 
-let pick_choice_kv (type a) ?(confirm = true) ?(header = "Options")
-    (choices : (string * a) list) : a =
+let pick_choice_num ?(confirm = true) ?(header = "Options")
+    (choices : string list) : int =
   retry (fun () ->
       assert (List.length choices > 0);
-      let keys, values = List.split choices in
       print_endline header;
       print_newline ();
-      List.iteri (fun i s -> Printf.printf "%5d    %s\n" i s) keys;
+      List.iteri (fun i s -> Printf.printf "%5d    %s\n" i s) choices;
       print_newline ();
       let choice_count = List.length choices in
       if choice_count = 1 then (
         print_endline "Selected the only choice automatically";
-        Stop (List.nth values 0) )
+        Stop 0 )
       else
         let choice_num =
           ask_uint ~upper_bound_exc:choice_count "Enter choice"
         in
-        let choice = List.nth values choice_num in
-        if confirm then confirm_answer_is_correct_end_retry ~ret:choice
-        else Stop choice)
+        if confirm then confirm_answer_is_correct_end_retry ~ret:choice_num
+        else Stop choice_num)
+
+let pick_choice_kv (type a) ?(confirm = true) ?(header = "Options")
+    (choices : (string * a) list) : a =
+  let keys, values = List.split choices in
+  let choice_num = pick_choice_num ~confirm ~header keys in
+  List.nth values choice_num
 
 let pick_choice_value ?(confirm = true) ?(header = "Options")
     (choices : string list) : string =
-  let choices = List.map (fun x -> (x, x)) choices in
-  pick_choice_kv ~confirm ~header choices
-
-let pick_choice_num ?(confirm = true) ?(header = "Options")
-    (choices : string list) : int =
-  let choices = List.mapi (fun i x -> (x, i)) choices in
-  pick_choice_kv ~confirm ~header choices
+  let choice_num = pick_choice_num ~confirm ~header choices in
+  List.nth choices choice_num
 
 let pick_choice_grouped ?(confirm = true) ?(first_header = "Options")
     ?(second_header = "Options") (choices : ('a * 'b list) list) =
