@@ -1,11 +1,3 @@
-(* let do_and_ask_retry_if_fail ?(action_name = "") (f : unit -> ('a, 'b) result) =
- *   let rec aux f =
- *     match f () with
- *     | Ok x -> Ok x
- *     | Error x ->
- *       Printf.printf "Action %s failed, do you want to retry?" action_name
- *   in *)
-
 type 'a retry =
   | Stop of 'a
   | Retry
@@ -117,7 +109,8 @@ let ask_string_confirm ?(is_valid = fun _ -> true) ?answer_store prompt =
       let ret = Internal.ask_string ~is_valid ~answer_store prompt in
       confirm_answer_is_correct_end_retry ~ret)
 
-let pick_choice ?(confirm = true) ?(header = "Options") choices =
+let pick_choice_num ?(confirm = true) ?(header = "Options")
+    (choices : string list) : int =
   retry (fun () ->
       assert (List.length choices > 0);
       print_endline header;
@@ -129,23 +122,58 @@ let pick_choice ?(confirm = true) ?(header = "Options") choices =
         print_endline "Selected the only choice automatically";
         Stop 0 )
       else
-        let choice = ask_uint ~upper_bound_exc:choice_count "Enter choice" in
-        if confirm then confirm_answer_is_correct_end_retry ~ret:choice
-        else Stop choice)
+        let choice_num =
+          ask_uint ~upper_bound_exc:choice_count "Enter choice"
+        in
+        if confirm then confirm_answer_is_correct_end_retry ~ret:choice_num
+        else Stop choice_num)
 
-let pick_choice_grouped ?(confirm = true) ?(first_header = "Options")
-    ?(second_header = "Options") (choices : ('a * 'b list) list) =
+let pick_choice_kv (type a) ?(confirm = true) ?(header = "Options")
+    (choices : (string * a) list) : a =
+  let keys, values = List.split choices in
+  let choice_num = pick_choice_num ~confirm ~header keys in
+  List.nth values choice_num
+
+let pick_choice_value ?(confirm = true) ?(header = "Options")
+    (choices : string list) : string =
+  let choice_num = pick_choice_num ~confirm ~header choices in
+  List.nth choices choice_num
+
+let pick_choice_grouped_num ?(confirm = true) ?(first_header = "Options")
+    ?(second_header = "Options") (choices : (string * string list) list) =
   retry (fun () ->
-      let first_layer = List.map (fun (k, _) -> k) choices in
+      let first_layer = List.map (fun (x, _) -> x) choices in
       let choice1 =
-        pick_choice ~confirm:false ~header:first_header first_layer
+        pick_choice_num ~confirm:false ~header:first_header first_layer
       in
       let second_layer = List.nth choices choice1 |> fun (_, l) -> l in
       let choice2 =
-        pick_choice ~confirm:false ~header:second_header second_layer
+        pick_choice_num ~confirm:false ~header:second_header second_layer
       in
       if confirm then confirm_answer_is_correct_end_retry ~ret:(choice1, choice2)
       else Stop (choice1, choice2))
+
+let pick_choice_grouped_kv (type a) ?(confirm = true)
+    ?(first_header = "Options") ?(second_header = "Options")
+    (choices : (string * (string * a) list) list) : a =
+  let keys =
+    List.map (fun (k, l) -> (k, List.map (fun (k, _) -> k) l)) choices
+  in
+  let c1, c2 =
+    pick_choice_grouped_num ~confirm ~first_header ~second_header keys
+  in
+  let _, layer2 = List.nth choices c1 in
+  let _, value = List.nth layer2 c2 in
+  value
+
+let pick_choice_grouped_value ?(confirm = true) ?(first_header = "Options")
+    ?(second_header = "Options") (choices : (string * string list) list) :
+  string =
+  let c1, c2 =
+    pick_choice_grouped_num ~confirm ~first_header ~second_header choices
+  in
+  let _, layer2 = List.nth choices c1 in
+  List.nth layer2 c2
 
 let list_no_nth l n =
   let rec aux acc l n =

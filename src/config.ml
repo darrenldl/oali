@@ -68,6 +68,7 @@ let mkinitcpio_hooks =
     "consolefont";
     "modconf";
     "block";
+    "lvm2";
     "encrypt";
     "filesystems";
     "fsck";

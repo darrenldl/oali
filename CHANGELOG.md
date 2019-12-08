@@ -5,6 +5,7 @@
 - Added answer store
   - Answers of a session are stored when appropriate, and can be
     loaded in another session
+- Added missing `Random.self_init` call
 
 # 0.0.3
 - Fixed boot partition cryptsetup parameters adjustment task unit

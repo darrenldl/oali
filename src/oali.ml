@@ -5,6 +5,9 @@ let () =
   let config = Task_config.create () in
   let task_book = Task_book.make config in
   let reg ~name task = Task_book.register task_book ~name task in
+  reg ~name:"Initialising entropy of Oali" (fun _answer_store config ->
+      Random.self_init ();
+      config);
   reg ~name:"Increase size of cow partition" (fun _answer_store config ->
       exec "mount -o remount,size=2G /run/archiso/cowspace";
       config);
@@ -203,8 +206,7 @@ let () =
             Sys_part_plus_usb_drive );
         ]
       in
-      let choice_num = pick_choice (List.map (fun (x, _) -> x) choices) in
-      let choice = (fun (_, y) -> y) (List.nth choices choice_num) in
+      let choice = pick_choice_kv choices in
       { config with disk_layout_choice = Some choice });
   reg ~name:"Checking if in EFI mode" (fun _answer_store config ->
       let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
@@ -229,8 +231,7 @@ let () =
              least one disk";
         let disk =
           retry (fun () ->
-              let disk_index = pick_choice ~header:"Disks" disks in
-              let disk = List.nth disks disk_index in
+              let disk = pick_choice_value ~header:"Disks" disks in
               ask_yn_end_retry ~ret:disk
                 (Printf.sprintf
                    "Partition table of %s will be wiped if you proceed, is \
@@ -331,7 +332,7 @@ let () =
         let disk_part_tree, esp_part_path =
           if is_efi_mode then
             let disk_index, part_index =
-              pick_choice_grouped
+              pick_choice_grouped_num
                 ~first_header:"Select disk containing the EFI partition"
                 ~second_header:"Select EFI partition" disk_part_tree
             in
@@ -343,7 +344,7 @@ let () =
         in
         let disk_part_tree, boot_part_path =
           let disk_index, part_index =
-            pick_choice_grouped
+            pick_choice_grouped_num
               ~first_header:"Select disk containing the boot partition"
               ~second_header:"Select boot partition" disk_part_tree
           in
@@ -353,7 +354,7 @@ let () =
         in
         let sys_part_path =
           let disk_index, part_index =
-            pick_choice_grouped
+            pick_choice_grouped_num
               ~first_header:"Select disk containing the system partition"
               ~second_header:"Select system partition" disk_part_tree
           in
@@ -381,7 +382,7 @@ let () =
         let disk_part_tree = Disk_part_tree.of_parts parts in
         let sys_part_path =
           let disk_index, part_index =
-            pick_choice_grouped
+            pick_choice_grouped_num
               ~first_header:"Select disk containing the system partition"
               ~second_header:"Select system partition" disk_part_tree
           in
@@ -397,8 +398,7 @@ let () =
              USB drive";
         let usb_key =
           retry (fun () ->
-              let disk_index = pick_choice ~header:"Select USB drive" disks in
-              let disk = List.nth disks disk_index in
+              let disk = pick_choice_value ~header:"Select USB drive" disks in
               ask_yn_end_retry ~ret:disk
                 (Printf.sprintf
                    "Partition table of %s will be wiped if you proceed, is \
@@ -1112,8 +1112,7 @@ let () =
         | [] ->
           failwith "Cloned repository does not contain profile directories"
         | _ ->
-          let profile_choice = pick_choice profiles in
-          let profile = List.nth profiles profile_choice in
+          let profile = pick_choice_value profiles in
           { config with oali_profile = Some profile }
       else config);
   reg ~name:"Copying SaltStack files" (fun _answer_store config ->
