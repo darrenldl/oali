@@ -1095,27 +1095,27 @@ let () =
            config with
            oali_profiles_repo_url = Some oali_profiles_repo_url;
            oali_profiles_repo_name = Some oali_profiles_repo_name;
-         }
-       ) else config
-    );
+         } )
+       else config);
   reg ~name:"Select profile to use" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
-      if use_saltstack then (
-      let dir = Option.get config.oali_profiles_repo_name in
-      let profiles =
-        Sys.readdir dir |> Array.to_list
-        |> List.filter (fun name -> Sys.is_directory (Filename.concat dir name))
-        |> List.filter (fun name ->
-            Core_kernel.String.sub ~pos:0 ~len:1 name <> ".")
-      in
-      match profiles with
-      | [] -> failwith "Cloned repository does not contain profile directories"
-      | _ ->
-        let profile_choice = pick_choice profiles in
-        let profile = List.nth profiles profile_choice in
-        { config with oali_profile = Some profile })
-      else config
-    );
+      if use_saltstack then
+        let dir = Option.get config.oali_profiles_repo_name in
+        let profiles =
+          Sys.readdir dir |> Array.to_list
+          |> List.filter (fun name ->
+              Sys.is_directory (Filename.concat dir name))
+          |> List.filter (fun name ->
+              Core_kernel.String.sub ~pos:0 ~len:1 name <> ".")
+        in
+        match profiles with
+        | [] ->
+          failwith "Cloned repository does not contain profile directories"
+        | _ ->
+          let profile_choice = pick_choice profiles in
+          let profile = List.nth profiles profile_choice in
+          { config with oali_profile = Some profile }
+      else config);
   reg ~name:"Copying SaltStack files" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
       ( if use_saltstack then
