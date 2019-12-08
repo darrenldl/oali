@@ -5,6 +5,10 @@ let () =
   let config = Task_config.create () in
   let task_book = Task_book.make config in
   let reg ~name task = Task_book.register task_book ~name task in
+  reg ~name:"Initialising entropy of Oali" (fun _answer_store config ->
+      Random.self_init ();
+      config
+    );
   reg ~name:"Increase size of cow partition" (fun _answer_store config ->
       exec "mount -o remount,size=2G /run/archiso/cowspace";
       config);
