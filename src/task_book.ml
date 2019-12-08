@@ -120,9 +120,7 @@ let rec run_single_task task_book task_record : unit =
     let choices =
       [ ("Retry", Retry); ("Skip", Skip); ("End install", End_install) ]
     in
-    let choice =
-      Misc_utils.pick_choice_kv ~confirm:true choices
-    in
+    let choice = Misc_utils.pick_choice_kv ~confirm:true choices in
     match choice with
     | Retry -> run_single_task task_book task_record
     | Skip -> task_record.stats.result <- Skipped
@@ -139,8 +137,7 @@ let pick_installer_action () =
       ("Terminate", Terminate);
     ]
   in
-  Misc_utils.pick_choice_kv ~header:"Actions"
-    choices
+  Misc_utils.pick_choice_kv ~header:"Actions" choices
 
 let pick_tasks_to_run task_book =
   let tasks = Option.get task_book.tasks_to_run in
