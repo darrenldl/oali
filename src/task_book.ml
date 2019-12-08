@@ -79,7 +79,7 @@ let pick_task task_book =
         Printf.sprintf "%s    %s" record.name
           (task_result_to_string record.stats.result))
   in
-  Misc_utils.pick_choice ~header:"Tasks" choices
+  Misc_utils.pick_choice_num ~header:"Tasks" choices
 
 let rec run_single_task task_book task_record : unit =
   let task_name = task_record.name in
@@ -120,10 +120,9 @@ let rec run_single_task task_book task_record : unit =
     let choices =
       [ ("Retry", Retry); ("Skip", Skip); ("End install", End_install) ]
     in
-    let choice_index =
-      Misc_utils.pick_choice ~confirm:true (List.map (fun (x, _) -> x) choices)
+    let choice =
+      Misc_utils.pick_choice_kv ~confirm:true choices
     in
-    let choice = List.nth choices choice_index |> fun (_, x) -> x in
     match choice with
     | Retry -> run_single_task task_book task_record
     | Skip -> task_record.stats.result <- Skipped
@@ -140,12 +139,8 @@ let pick_installer_action () =
       ("Terminate", Terminate);
     ]
   in
-  let choice_index =
-    Misc_utils.pick_choice ~header:"Actions"
-      (List.map (fun (x, _) -> x) choices)
-  in
-  let _, x = List.nth choices choice_index in
-  x
+  Misc_utils.pick_choice_kv ~header:"Actions"
+    choices
 
 let pick_tasks_to_run task_book =
   let tasks = Option.get task_book.tasks_to_run in

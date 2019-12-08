@@ -207,8 +207,7 @@ let () =
             Sys_part_plus_usb_drive );
         ]
       in
-      let choice_num = pick_choice (List.map (fun (x, _) -> x) choices) in
-      let choice = (fun (_, y) -> y) (List.nth choices choice_num) in
+      let choice = pick_choice_kv choices in
       { config with disk_layout_choice = Some choice });
   reg ~name:"Checking if in EFI mode" (fun _answer_store config ->
       let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
@@ -233,8 +232,7 @@ let () =
              least one disk";
         let disk =
           retry (fun () ->
-              let disk_index = pick_choice ~header:"Disks" disks in
-              let disk = List.nth disks disk_index in
+              let disk = pick_choice_value ~header:"Disks" disks in
               ask_yn_end_retry ~ret:disk
                 (Printf.sprintf
                    "Partition table of %s will be wiped if you proceed, is \
@@ -401,8 +399,7 @@ let () =
              USB drive";
         let usb_key =
           retry (fun () ->
-              let disk_index = pick_choice ~header:"Select USB drive" disks in
-              let disk = List.nth disks disk_index in
+              let disk = pick_choice_value ~header:"Select USB drive" disks in
               ask_yn_end_retry ~ret:disk
                 (Printf.sprintf
                    "Partition table of %s will be wiped if you proceed, is \
@@ -1116,8 +1113,7 @@ let () =
         | [] ->
           failwith "Cloned repository does not contain profile directories"
         | _ ->
-          let profile_choice = pick_choice profiles in
-          let profile = List.nth profiles profile_choice in
+          let profile = pick_choice_value profiles in
           { config with oali_profile = Some profile }
       else config);
   reg ~name:"Copying SaltStack files" (fun _answer_store config ->
