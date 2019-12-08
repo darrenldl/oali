@@ -139,10 +139,10 @@ let pick_choice_value ?(confirm = true) ?(header = "Options")
   let choice_num = pick_choice_num ~confirm ~header choices in
   List.nth choices choice_num
 
-let pick_choice_grouped ?(confirm = true) ?(first_header = "Options")
-    ?(second_header = "Options") (choices : ('a * 'b list) list) =
+let pick_choice_grouped_num ?(confirm = true) ?(first_header = "Options")
+    ?(second_header = "Options") (choices : (string * string list) list) =
   retry (fun () ->
-      let first_layer = List.map (fun (k, _) -> k) choices in
+      let first_layer = List.map (fun (x, _) -> x) choices in
       let choice1 =
         pick_choice_num ~confirm:false ~header:first_header first_layer
       in
@@ -152,6 +152,28 @@ let pick_choice_grouped ?(confirm = true) ?(first_header = "Options")
       in
       if confirm then confirm_answer_is_correct_end_retry ~ret:(choice1, choice2)
       else Stop (choice1, choice2))
+
+let pick_choice_grouped_kv (type a) ?(confirm = true)
+    ?(first_header = "Options") ?(second_header = "Options")
+    (choices : (string * (string * a) list) list) : a =
+  let keys =
+    List.map (fun (k, l) -> (k, List.map (fun (k, _) -> k) l)) choices
+  in
+  let c1, c2 =
+    pick_choice_grouped_num ~confirm ~first_header ~second_header keys
+  in
+  let _, layer2 = List.nth choices c1 in
+  let _, value = List.nth layer2 c2 in
+  value
+
+let pick_choice_grouped_value ?(confirm = true) ?(first_header = "Options")
+    ?(second_header = "Options") (choices : (string * string list) list) :
+  string =
+  let c1, c2 =
+    pick_choice_grouped_num ~confirm ~first_header ~second_header choices
+  in
+  let _, layer2 = List.nth choices c1 in
+  List.nth layer2 c2
 
 let list_no_nth l n =
   let rec aux acc l n =

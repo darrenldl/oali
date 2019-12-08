@@ -332,7 +332,7 @@ let () =
         let disk_part_tree, esp_part_path =
           if is_efi_mode then
             let disk_index, part_index =
-              pick_choice_grouped
+              pick_choice_grouped_num
                 ~first_header:"Select disk containing the EFI partition"
                 ~second_header:"Select EFI partition" disk_part_tree
             in
@@ -344,7 +344,7 @@ let () =
         in
         let disk_part_tree, boot_part_path =
           let disk_index, part_index =
-            pick_choice_grouped
+            pick_choice_grouped_num
               ~first_header:"Select disk containing the boot partition"
               ~second_header:"Select boot partition" disk_part_tree
           in
@@ -354,7 +354,7 @@ let () =
         in
         let sys_part_path =
           let disk_index, part_index =
-            pick_choice_grouped
+            pick_choice_grouped_num
               ~first_header:"Select disk containing the system partition"
               ~second_header:"Select system partition" disk_part_tree
           in
@@ -382,7 +382,7 @@ let () =
         let disk_part_tree = Disk_part_tree.of_parts parts in
         let sys_part_path =
           let disk_index, part_index =
-            pick_choice_grouped
+            pick_choice_grouped_num
               ~first_header:"Select disk containing the system partition"
               ~second_header:"Select system partition" disk_part_tree
           in
