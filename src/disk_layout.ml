@@ -30,9 +30,9 @@ type luks = {
   mutable state : luks_state;
 }
 
-type upper =
-  | Plain_Fs of fs
-  | Luks of luks
+(* type upper =
+ *   | Plain_Fs of fs
+ *   | Luks of luks *)
 
 type state =
   | Unformatted
@@ -64,10 +64,12 @@ type lvm_lv = {
   vg_name : string;
 }
 
+type mid = lvm_lv option
+
 type lower =
   | Clear of { path : string}
   | Luks of {
-      luks : luks option;
+      luks : luks;
       path : string
     }
 
@@ -80,7 +82,7 @@ type lvm_info = {
 type storage_unit =
   {
     upper : upper;
-    mid : lvm_lv option;
+    mid : mid;
     lower : lower;
     mutable state : state;
   }
@@ -102,6 +104,18 @@ type layout_choice =
   | Lvm_usb_drive_plus_pv_s
 
 let luks_version_to_int ver = match ver with LuksV1 -> 1 | LuksV2 -> 2
+
+let path_to_lower_for_mid (x : storage_unit) : string =
+  match x.lower with
+  | Clear {path } -> path
+  | Luks { luks; _ } ->
+    luks.mapper_name
+
+let path_to_mid_for_upper (x : storage_unit) : string =
+  match x.mid with
+  | None -> path_to_lower_for_mid x
+  | Some x ->
+    Printf.sprintf "/dev/%s/%s" x.vg_name x.lv_name
 
 (* let make_lower ~disk ~part_num = {disk; part_num} *)
 
