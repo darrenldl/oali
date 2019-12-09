@@ -4,6 +4,15 @@ type fs =
   | Fat32
   | Ext4
 
+type lvm = {
+  lv_name : string;
+  inner_fs : fs;
+}
+
+type inner =
+  | Fs of fs
+  | Lvm of lvm
+
 type enc_params = {
   iter_time_ms : int option;
   key_size_bits : int option;
@@ -24,18 +33,13 @@ type luks = {
   primary_key : string;
   secondary_key : string option;
   version : luks_version;
-  inner_fs : fs;
+  inner : inner;
   mapper_name : string;
   mutable state : luks_state;
 }
 
-type lvm = {
-  vg_name : string;
-}
-
 type upper =
-  | Plain_FS of fs
-  | Lvm of lvm
+  | Plain_Fs of fs
   | Luks of luks
 
 type state =
@@ -43,11 +47,20 @@ type state =
   | Mounted
   | Unmounted
 
-type part = {
+type simple_part = {
   lower : lower;
   upper : upper;
   mutable state : state;
 }
+
+type lvm_lv = {
+  lv_name : string;
+  luks : luks;
+}
+
+type part =
+  | Simple of simple_part
+  | Lvm of lvm_lv
 
 type t = {
   sys_part : part;
