@@ -93,7 +93,7 @@ let path_to_lower_for_mid (t : t) : string =
   match t.lower with
   | Clear {path } -> path
   | Luks { luks; _ } ->
-    luks.mapper_name
+    Printf.sprintf "/dev/mapper/%s" luks.mapper_name
 
 let path_to_mid_for_upper (t : t) : string =
   match t.mid with
