@@ -4,21 +4,14 @@ type fs =
   | Fat32
   | Ext4
 
-type lvm = {
-  lv_name : string;
-  inner_fs : fs;
-}
-
-type inner =
-  | Fs of fs
-  | Lvm of lvm
+(* type inner =
+ *   | Fs of fs
+ *   | Lvm of lvm *)
 
 type enc_params = {
   iter_time_ms : int option;
   key_size_bits : int option;
 }
-
-type lower = { path : string }
 
 type luks_version =
   | LuksV1
@@ -33,7 +26,6 @@ type luks = {
   primary_key : string;
   secondary_key : string option;
   version : luks_version;
-  inner : inner;
   mapper_name : string;
   mutable state : luks_state;
 }
@@ -47,27 +39,58 @@ type state =
   | Mounted
   | Unmounted
 
-type simple_part = {
-  lower : lower;
-  upper : upper;
-  mutable state : state;
+(* type simple_part = {
+ *   lower : lower;
+ *   upper : upper;
+ *   mutable state : state;
+ * } *)
+
+(* type lvm_lv = {
+ *   lv_name : string;
+ *   luks : luks;
+ * } *)
+
+(* type part =
+ *   | Simple of simple_part
+ *   | Lvm of lvm_lv *)
+
+type upper = {
+  mount_point : string;
+  fs : fs;
 }
 
 type lvm_lv = {
   lv_name : string;
-  luks : luks;
+  vg_name : string;
 }
 
-type part =
-  | Simple of simple_part
-  | Lvm of lvm_lv
+type lower =
+  | Clear of { path : string}
+  | Luks of {
+      luks : luks option;
+      path : string
+    }
+
+type lvm_info = {
+  vg_pv_map : string list String_map.t;
+  vg_name : string;
+  pv_name : string list;
+}
+
+type storage_unit =
+  {
+    upper : upper;
+    mid : lvm_lv option;
+    lower : lower;
+    mutable state : state;
+  }
 
 type t = {
-  sys_part : part;
-  (* ; swap_part : part option *)
-  boot_part : part;
-  esp_part : part option;
-  lvm_pv_s : string list;
+  sys_part : storage_unit;
+  swap_part : storage_unit option;
+  boot_part : storage_unit;
+  esp_part : storage_unit option;
+  lvm_info : lvm_info option;
 }
 
 type layout_choice =
