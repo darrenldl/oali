@@ -73,3 +73,5 @@ let mkinitcpio_hooks =
     "filesystems";
     "fsck";
   ]
+
+let lvm_vg_name = "vg_sys"

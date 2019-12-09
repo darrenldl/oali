@@ -1,28 +1,23 @@
-open Sexplib.Std
 open Proc_utils
 
 type fs =
   | Fat32
   | Ext4
-[@@deriving sexp]
 
 type enc_params = {
   iter_time_ms : int option;
   key_size_bits : int option;
 }
-[@@deriving sexp]
 
-type lower = { path : string } [@@deriving sexp]
+type lower = { path : string }
 
 type luks_version =
   | LuksV1
   | LuksV2
-[@@deriving sexp]
 
 type luks_state =
   | Luks_opened
   | Luks_closed
-[@@deriving sexp]
 
 type luks = {
   enc_params : enc_params;
@@ -33,33 +28,34 @@ type luks = {
   mapper_name : string;
   mutable state : luks_state;
 }
-[@@deriving sexp]
+
+type lvm = {
+  vg_name : string;
+}
 
 type upper =
   | Plain_FS of fs
+  | Lvm of lvm
   | Luks of luks
-[@@deriving sexp]
 
 type state =
   | Unformatted
   | Mounted
   | Unmounted
-[@@deriving sexp]
 
 type part = {
   lower : lower;
   upper : upper;
   mutable state : state;
 }
-[@@deriving sexp]
 
 type t = {
   sys_part : part;
   (* ; swap_part : part option *)
   boot_part : part;
   esp_part : part option;
+  lvm_pv_s : string list;
 }
-[@@deriving sexp]
 
 type layout_choice =
   | Single_disk
@@ -68,7 +64,6 @@ type layout_choice =
   | Lvm_single_disk
   | Lvm_boot_plus_maybe_EFI_plus_pv_s
   | Lvm_usb_drive_plus_pv_s
-[@@deriving sexp]
 
 let luks_version_to_int ver = match ver with LuksV1 -> 1 | LuksV2 -> 2
 
