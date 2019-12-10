@@ -40,7 +40,7 @@ end
  *   | Luks of luks *)
 
 type state =
-  [ `Unformatted
+  [ `Fresh
   | `Mounted
   | `Unmounted
   ]
@@ -201,9 +201,9 @@ module Lower = struct
 end
 
 module Mid = struct
-  let make_mid_none () = None
+  let make_none () = None
 
-  let make_mid_lvm ~lv_name ~vg_name = Some { lv_name; vg_name }
+  let make_lvm ~lv_name ~vg_name = Some { lv_name; vg_name }
 end
 
 module Upper = struct
@@ -228,15 +228,21 @@ module Upper = struct
 end
 
 let set_up t =
+  assert (t.state = `Fresh);
   Lower.set_up t;
-  Upper.set_up t
+  Upper.set_up t;
+  t.state <- `Unmounted
 
 let mount t =
+  assert (t.state = `Unmounted);
   Lower.mount t;
-  Upper.mount t
+  Upper.mount t;
+  t.state <- `Mounted
 
 let unmount t =
+  assert (t.state = `Mounted);
   Upper.unmount t;
-  Lower.unmount t
+  Lower.unmount t;
+  t.state <- `Unmounted
 
-let make lower mid upper = { upper; mid; lower; state = `Unformatted }
+let make lower mid upper = { upper; mid; lower; state = `Fresh }

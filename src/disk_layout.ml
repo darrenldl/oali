@@ -62,16 +62,16 @@ type layout_choice =
  *       |> exec );
  *   p.state <- Mounted *)
 
-let unmount_part ({ lower; upper; state } as p) =
-  assert (state = Mounted);
-  ( match upper with
-    | Plain_FS _ -> Printf.sprintf "umount %s" lower.path |> exec
-    | Luks luks ->
-      let mapper_name = luks_to_mapper_name_cmd_string luks in
-      Printf.sprintf "umount %s" mapper_name |> exec;
-      p.state <- Unmounted;
-      luks_close { lower; upper; state } );
-  p.state <- Unmounted
+(* let unmount_part ({ lower; upper; state } as p) =
+ *   assert (state = Mounted);
+ *   ( match upper with
+ *     | Plain_FS _ -> Printf.sprintf "umount %s" lower.path |> exec
+ *     | Luks luks ->
+ *       let mapper_name = luks_to_mapper_name_cmd_string luks in
+ *       Printf.sprintf "umount %s" mapper_name |> exec;
+ *       p.state <- Unmounted;
+ *       luks_close { lower; upper; state } );
+ *   p.state <- Unmounted *)
 
 (* let format_cmd fs part =
  *   match fs with
@@ -165,10 +165,10 @@ let unmount_part ({ lower; upper; state } as p) =
  *   { lower; upper; state = Unformatted } *)
 
 let make_esp_storage_unit ~path =
-  let lower = Storage_unit.make_lower_clear ~path in
-  let mid = Storage_unit.make_mid_none () in
+  let lower = Storage_unit.Lower.make_clear ~path in
+  let mid = Storage_unit.Mid.make_none () in
   let upper =
-    Storage_unit.make_upper ~mount_point:Config.esp_mount_point `Fat32
+    Storage_unit.Upper.make ~mount_point:Config.esp_mount_point `Fat32
   in
   Storage_unit.make lower mid upper
 
@@ -180,61 +180,51 @@ let make_boot_storage_unit ~enc_params ~encrypt path =
           ~is_valid:(fun x -> x <> "")
           "Please enter passphrase for encryption"
       in
-      Storage_unit.make_lower_luks ~primary_key ~add_secondary_key:true
+      Storage_unit.Lower.make_luks ~primary_key ~add_secondary_key:true
         ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
-    else Storage_unit.make_lower_clear ~path
+    else Storage_unit.Lower.make_clear ~path
   in
-  let mid = Storage_unit.make_mid_none () in
+  let mid = Storage_unit.Mid.make_none () in
   let upper =
-    Storage_unit.make_upper ~mount_point:Config.boot_mount_point `Ext4
+    Storage_unit.Upper.make ~mount_point:Config.boot_mount_point `Ext4
   in
   Storage_unit.make lower mid upper
 
-let make_sys_part ~enc_params ~encrypt ~use_lvm path =
+let make_sys_storage_unit ~enc_params ~encrypt ~use_lvm path =
   let lower =
     if encrypt then
-      Storage_unit.make_lower_luks ~path ~mapper_name:Config.sys_mapper_name
+      Storage_unit.Lower.make_luks ~path ~mapper_name:Config.sys_mapper_name
         enc_params
-    else Storage_unit.make_lower_clear ~path
+    else Storage_unit.Lower.make_clear ~path
   in
   let mid =
     if use_lvm then
-      Storage_unit.make_mid_lvm ~lv_name:Config.lvm_lv_name_sys
+      Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
         ~vg_name:Config.lvm_vg_name
-    else Storage_unit.make_mid_none ()
+    else Storage_unit.Mid.make_none ()
   in
   let upper =
-    Storage_unit.make_upper ~mount_point:Config.sys_mount_point `Ext4
+    Storage_unit.Upper.make ~mount_point:Config.sys_mount_point `Ext4
   in
   Storage_unit.make lower mid upper
 
-let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
-    ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt =
-  let esp_part = Option.map (fun p -> make_esp_part p) esp_part_path in
-  let boot_part =
-    make_boot_part ~enc_params:boot_part_enc_params boot_encrypt boot_part_path
-  in
-  let sys_part =
-    make_sys_part ~enc_params:sys_part_enc_params sys_encrypt sys_part_path
-  in
-  { esp_part; boot_part; sys_part }
+(* let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
+ *     ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt =
+ *   let esp_part = Option.map (fun p -> make_esp_part p) esp_part_path in
+ *   let boot_part =
+ *     make_boot_part ~enc_params:boot_part_enc_params boot_encrypt boot_part_path
+ *   in
+ *   let sys_part =
+ *     make_sys_part ~enc_params:sys_part_enc_params sys_encrypt sys_part_path
+ *   in
+ *   { esp_part; boot_part; sys_part } *)
 
-let mount_esp_part layout =
-  mount_part (Option.get layout.esp_part) ~mount_point:Config.esp_mount_point
-
-let mount_boot_part layout =
-  mount_part layout.boot_part ~mount_point:Config.boot_mount_point
-
-let mount_sys_part layout =
-  mount_part layout.sys_part ~mount_point:Config.sys_mount_point
-
-let unmount_esp_part layout = Option.iter unmount_part layout.esp_part
-
-let unmount_boot_part layout = unmount_part layout.boot_part
-
-let unmount_sys_part layout = unmount_part layout.sys_part
+let mount layout =
+  Option.iter  Storage_unit.mount layout.esp_part;
+  Storage_unit.mount layout.boot_part;
+  Storage_unit.mount layout.sys_part
 
 let unmount layout =
-  unmount_esp_part layout;
-  unmount_boot_part layout;
-  unmount_sys_part layout
+  Option.iter Storage_unit.unmount layout.esp_part;
+  Storage_unit.unmount layout.boot_part;
+  Storage_unit.unmount layout.sys_part
