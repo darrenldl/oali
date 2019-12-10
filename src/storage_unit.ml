@@ -5,6 +5,11 @@ type fs =
   | `Ext4
   ]
 
+type luks_state =
+  [ `Luks_opened
+  | `Luks_closed
+  ]
+
 (* type inner =
  *   | Fs of fs
  *   | Lvm of lvm *)
@@ -20,18 +25,12 @@ module Luks_info = struct
     | `LuksV2
     ]
 
-  type luks_state =
-    [ `Luks_opened
-    | `Luks_closed
-    ]
-
   type t = {
     enc_params : enc_params;
     primary_key : string;
     secondary_key : string option;
     version : luks_version;
     mapper_name : string;
-    mutable state : luks_state;
   }
 end
 
@@ -75,8 +74,9 @@ type mid = lvm_lv option
 type lower =
   | Clear of { path : string }
   | Luks of {
-      luks : Luks_info.t;
+      info : Luks_info.t;
       path : string;
+      mutable state : luks_state;
     }
 
 type t = {
@@ -91,7 +91,7 @@ let luks_version_to_int ver = match ver with `LuksV1 -> 1 | `LuksV2 -> 2
 let path_to_lower_for_mid (t : t) : string =
   match t.lower with
   | Clear { path } -> path
-  | Luks { luks; _ } -> Printf.sprintf "/dev/mapper/%s" luks.mapper_name
+  | Luks { info; _ } -> Printf.sprintf "/dev/mapper/%s" info.mapper_name
 
 let path_to_mid_for_upper (t : t) : string =
   match t.mid with
@@ -104,7 +104,7 @@ module Lower = struct
   let make_luks ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
       ?(add_secondary_key = false) ?(version = `LuksV2) ~path ~mapper_name
       enc_params : lower =
-    let luks : Luks_info.t =
+    let info : Luks_info.t =
       {
         enc_params =
           Option.value
@@ -118,47 +118,51 @@ module Lower = struct
             else None );
         version;
         mapper_name;
-        state = `Luks_closed;
       }
     in
-    Luks { luks; path }
+    Luks { info; path;
+      state = `Luks_closed; }
 
   let mount (t : t) =
     match t.lower with
     | Clear _ -> ()
-    | Luks { luks; path } ->
-      assert (luks.state = `Luks_closed);
-      let stdin, f =
-        Printf.sprintf "cryptsetup open --key-file=- %s %s" path
-          luks.mapper_name
-        |> exec_with_stdin
-      in
-      output_string stdin luks.primary_key;
-      f ();
-      luks.state <- `Luks_opened
+    | Luks luks ->
+      match luks.state with
+      | `Luks_opened -> ()
+      | `Luks_closed ->
+        let stdin, f =
+          Printf.sprintf "cryptsetup open --key-file=- %s %s" luks.path
+            luks.info.mapper_name
+          |> exec_with_stdin
+        in
+        output_string stdin luks.info.primary_key;
+        f ();
+        luks.state <- `Luks_opened
 
   let unmount (t : t) =
     match t.lower with
     | Clear _ -> ()
-    | Luks { luks; _ } ->
-      assert (luks.state = `Luks_opened);
-      Printf.sprintf "cryptsetup close %s" luks.mapper_name |> exec;
-      luks.state <- `Luks_closed
+    | Luks luks ->
+      match luks.state with
+      | `Luks_closed -> ()
+      | `Luks_opened ->
+        Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec;
+        luks.state <- `Luks_closed
 
   let set_up t =
     match t.lower with
     | Clear _ -> ()
-    | Luks { luks; path } -> (
+    | Luks luks -> (
         let iter_time_ms_opt =
           Option.map
             (fun x -> [ "--iter-time"; string_of_int x ])
-            luks.enc_params.iter_time_ms
+            luks.info.enc_params.iter_time_ms
           |> Option.value ~default:[]
         in
         let key_size_bits_opt =
           Option.map
             (fun x -> [ "--key-size"; string_of_int x ])
-            luks.enc_params.key_size_bits
+            luks.info.enc_params.key_size_bits
           |> Option.value ~default:[]
         in
         (let stdin, f =
@@ -169,14 +173,14 @@ module Lower = struct
                "-y";
                "--key-file=-";
                "--type";
-               Printf.sprintf "luks%d" (luks_version_to_int luks.version);
+               Printf.sprintf "luks%d" (luks_version_to_int luks.info.version);
              ]
-               @ iter_time_ms_opt @ key_size_bits_opt @ [ path ] )
+               @ iter_time_ms_opt @ key_size_bits_opt @ [ luks.path ] )
            |> exec_with_stdin
          in
-         output_string stdin luks.primary_key;
+         output_string stdin luks.info.primary_key;
          f ());
-        match luks.secondary_key with
+        match luks.info.secondary_key with
         | None -> ()
         | Some secondary_key ->
           let tmp_path = Filename.temp_file "installer" "secondary_key" in
@@ -191,12 +195,12 @@ module Lower = struct
                 "luksAddKey";
                 "-y";
                 "--key-file=-";
-                path;
+                luks.path;
                 tmp_path;
               ]
             |> exec_with_stdin
           in
-          output_string stdin luks.primary_key;
+          output_string stdin luks.info.primary_key;
           f () )
 end
 
