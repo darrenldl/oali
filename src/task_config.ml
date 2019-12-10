@@ -6,8 +6,8 @@ type t = {
   hardened_as_default : bool option;
   encrypt_boot : bool option;
   encrypt_sys : bool option;
-  boot_part_enc_params : Disk_layout.enc_params option;
-  sys_part_enc_params : Disk_layout.enc_params option;
+  boot_part_enc_params : Storage_unit.Luks_info.enc_params option;
+  sys_part_enc_params : Storage_unit.Luks_info.enc_params option;
   editor : string option;
   use_reflector : bool option;
   hostname : string option;
