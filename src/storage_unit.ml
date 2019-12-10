@@ -100,3 +100,120 @@ let path_to_mid_for_upper (t : t) : string =
   | None -> path_to_lower_for_mid t
   | Some x ->
     Printf.sprintf "/dev/%s/%s" x.vg_name x.lv_name
+
+let open_lower (t : t) =
+  match t.lower with
+  | Clear _ -> ()
+  | Luks { luks; path } ->
+    assert (luks.state = Luks_closed);
+    let stdin, f =
+      Printf.sprintf "cryptsetup open --key-file=- %s %s" path
+        luks.mapper_name
+      |> exec_with_stdin
+    in
+    output_string stdin luks.primary_key;
+    f ();
+    luks.state <- Luks_opened
+
+let close_lower (t : t) =
+  match t.lower with
+  | Clear _ -> ()
+  | Luks { luks; _} ->
+    assert (luks.state = Luks_opened);
+    Printf.sprintf "cryptsetup close %s" luks.mapper_name |> exec;
+    luks.state <- Luks_closed
+
+let open_upper (t : t) =
+  let { mount_point; _} = t.upper in
+  let mid_path = path_to_mid_for_upper t in
+  Printf.sprintf "mount %s %s" mid_path mount_point |> exec
+
+let close_upper (t : t) =
+  let { mount_point; _ } = t.upper in
+  Printf.sprintf "umount %s" mount_point
+
+let set_up_lower t =
+  match t.lower with
+  | Clear _ -> ()
+  | Luks {luks; path} ->
+      let iter_time_ms_opt =
+        Option.map
+          (fun x -> [ "--iter-time"; string_of_int x ])
+          luks.enc_params.iter_time_ms
+        |> Option.value ~default:[]
+      in
+      let key_size_bits_opt =
+        Option.map
+          (fun x -> [ "--key-size"; string_of_int x ])
+          luks.enc_params.key_size_bits
+        |> Option.value ~default:[]
+      in
+      (let stdin, f =
+         String.concat " "
+           ( [
+             "cryptsetup";
+             "luksFormat";
+             "-y";
+             "--key-file=-";
+             "--type";
+             Printf.sprintf "luks%d" (luks_version_to_int luks.version);
+           ]
+             @ iter_time_ms_opt @ key_size_bits_opt @ [ path ] )
+         |> exec_with_stdin
+       in
+       output_string stdin luks.primary_key;
+       f ());
+      ( match luks.secondary_key with
+        | None -> ()
+        | Some secondary_key ->
+          let tmp_path = Filename.temp_file "installer" "secondary_key" in
+          let tmp_oc = open_out tmp_path in
+          Fun.protect
+            ~finally:(fun () -> close_out tmp_oc)
+            (fun () -> output_string tmp_oc secondary_key);
+          let stdin, f =
+            String.concat " "
+              [
+                "cryptsetup";
+                "luksAddKey";
+                "-y";
+                "--key-file=-";
+                path;
+                tmp_path;
+              ]
+            |> exec_with_stdin
+          in
+          output_string stdin luks.primary_key;
+          f () )
+
+let set_up_upper t =
+  let format_cmd fs part =
+    match fs with
+    | Fat32 -> Printf.sprintf "mkfs.fat -F32 %s" part
+    | Ext4 -> Printf.sprintf "mkfs.ext4 %s" part
+  in
+  format_cmd t.upper.fs (path_to_mid_for_upper t) |> exec
+
+let set_up t =
+  set_up_lower t;
+  set_up_upper t
+
+let make_lower_clear ~path : lower =
+  Clear { path }
+
+let make_lower_luks ~enc_params ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
+    ?(add_secondary_key = false) ?(version = LuksV2) ~path ~mapper_name : lower =
+  let luks = {
+    enc_params =
+      Option.value
+        ~default:{ iter_time_ms = None; key_size_bits = None }
+        enc_params;
+    primary_key;
+    secondary_key =
+      ( if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:4096)
+        else None );
+    version;
+    mapper_name;
+    state = Luks_closed;
+  }
+  in Luks { luks; path }
