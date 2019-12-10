@@ -210,26 +210,25 @@ let make_sys ~enc_params ~encrypt ~use_lvm path =
 
 let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
     ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt ~sys_lvm =
-  let esp =
-    Option.map (fun path -> make_esp ~path) esp_part_path in
+  let esp = Option.map (fun path -> make_esp ~path) esp_part_path in
   let boot =
-    make_boot ~enc_params:boot_part_enc_params ~encrypt:boot_encrypt boot_part_path
+    make_boot ~enc_params:boot_part_enc_params ~encrypt:boot_encrypt
+      boot_part_path
   in
   let sys =
-    make_sys ~enc_params:sys_part_enc_params ~encrypt:sys_encrypt ~use_lvm:sys_lvm sys_part_path
+    make_sys ~enc_params:sys_part_enc_params ~encrypt:sys_encrypt
+      ~use_lvm:sys_lvm sys_part_path
   in
   let lvm_info =
     (* let vg_pv_map = String_map.empty |> String_map.add Config.lvm_vg_name [sys_part_path] in *)
-    if sys_lvm then Some {
-      vg_name = Config.lvm_vg_name;
-      pv_name = [sys_part_path];
-    }
+    if sys_lvm then
+      Some { vg_name = Config.lvm_vg_name; pv_name = [ sys_part_path ] }
     else None
   in
-  { esp; boot; sys; lvm_info}
+  { esp; boot; sys; lvm_info }
 
 let mount layout =
-  Option.iter  Storage_unit.mount layout.esp;
+  Option.iter Storage_unit.mount layout.esp;
   Storage_unit.mount layout.boot;
   Storage_unit.mount layout.sys
 
