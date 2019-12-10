@@ -10,6 +10,7 @@ type t = {
   boot : Storage_unit.t;
   esp : Storage_unit.t option;
   lvm_info : lvm_info option;
+  pool : Storage_unit.pool;
 }
 
 type layout_choice =
@@ -164,17 +165,34 @@ type layout_choice =
  *   let lower = { path } in
  *   { lower; upper; state = Unformatted } *)
 
-let make_esp ~path =
-  let lower = Storage_unit.Lower.make_clear ~path in
-  let mid = Storage_unit.Mid.make_none () in
+module Params = struct
+
+  let esp_lower_id = 0
+  let esp_mid_id = 0
+
+  let boot_lower_id = 1
+  let boot_mid_id = 1
+
+  let sys_lower_id = 2
+  let sys_mid_id = 2
+end
+
+let make_esp (pool : Storage_unit.pool) ~path =
+  let lower_id = Params.esp_lower_id in
+  let mid_id = Params.esp_mid_id in
+  Hashtbl.add pool.lower_pool lower_id
+    (Storage_unit.Lower.make_clear ~path);
+  Hashtbl.add pool.mid_pool mid_id (Storage_unit.Mid.make_none ());
   let upper =
     Storage_unit.Upper.make ~mount_point:Config.esp_mount_point `Fat32
   in
-  Storage_unit.make lower mid upper
+  Storage_unit.make ~lower_id ~mid_id upper
 
-let make_boot ~enc_params ~encrypt path =
-  let lower =
-    if encrypt then
+let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
+  let lower_id = Params.boot_lower_id in
+  let mid_id = Params.boot_mid_id in
+  Hashtbl.add pool.lower_pool lower_id
+    (if encrypt then
       let primary_key =
         Misc_utils.ask_string_confirm
           ~is_valid:(fun x -> x <> "")
@@ -183,33 +201,34 @@ let make_boot ~enc_params ~encrypt path =
       Storage_unit.Lower.make_luks ~primary_key ~add_secondary_key:true
         ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
     else Storage_unit.Lower.make_clear ~path
-  in
-  let mid = Storage_unit.Mid.make_none () in
+   );
+  Hashtbl.add pool.mid_pool mid_id
+    (Storage_unit.Mid.make_none ());
   let upper =
     Storage_unit.Upper.make ~mount_point:Config.boot_mount_point `Ext4
   in
-  Storage_unit.make lower mid upper
+  Storage_unit.make ~lower_id ~mid_id upper
 
-let make_sys ~enc_params ~encrypt ~use_lvm path =
-  let lower =
-    if encrypt then
+let make_sys (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm path =
+  let lower_id = Params.sys_lower_id in
+  let mid_id = Params.sys_mid_id in
+  Hashtbl.add pool.lower_pool lower_id
+    (if encrypt then
       Storage_unit.Lower.make_luks ~path ~mapper_name:Config.sys_mapper_name
         enc_params
-    else Storage_unit.Lower.make_clear ~path
-  in
-  let mid =
-    if use_lvm then
+    else Storage_unit.Lower.make_clear ~path);
+  Hashtbl.add pool.mid_pool mid_id
+    (if use_lvm then
       Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
         ~vg_name:Config.lvm_vg_name
-    else Storage_unit.Mid.make_none ()
-  in
+    else Storage_unit.Mid.make_none ());
   let upper =
     Storage_unit.Upper.make ~mount_point:Config.sys_mount_point `Ext4
   in
-  Storage_unit.make lower mid upper
+  Storage_unit.make ~lower_id ~mid_id upper
 
 let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
-    ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt ~sys_lvm =
+    ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt ~use_lvm =
   let esp = Option.map (fun path -> make_esp ~path) esp_part_path in
   let boot =
     make_boot ~enc_params:boot_part_enc_params ~encrypt:boot_encrypt
@@ -221,7 +240,7 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
   in
   let lvm_info =
     (* let vg_pv_map = String_map.empty |> String_map.add Config.lvm_vg_name [sys_part_path] in *)
-    if sys_lvm then
+    if use_lvm then
       Some { vg_name = Config.lvm_vg_name; pv_name = [ sys_part_path ] }
     else None
   in
