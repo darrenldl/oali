@@ -1,7 +1,9 @@
+open Proc_utils
+
 type lvm_info = {
   (* vg_pv_map : string list String_map.t; *)
   vg_name : string;
-  pv_name : string list;
+  pv_name : string;
 }
 
 type t = {
@@ -268,7 +270,7 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
   let lvm_info =
     (* let vg_pv_map = String_map.empty |> String_map.add Config.lvm_vg_name [sys_part_path] in *)
     if use_lvm then
-      Some { vg_name = Config.lvm_vg_name; pv_name = [ sys_part_path ] }
+      Some { vg_name = Config.lvm_vg_name; pv_name = sys_part_path }
     else None
   in
   { root; var; home; esp; boot; lvm_info; pool }
@@ -294,7 +296,15 @@ let unmount layout =
   Option.iter (Storage_unit.unmount layout.pool) layout.var;
   Option.iter (Storage_unit.unmount layout.pool) layout.home
 
+let set_up_lvm layout =
+  Option.iter (fun lvm_info ->
+      Printf.sprintf "pvcreate %s" lvm_info.pv_name |> exec;
+      Printf.sprintf "vgcreate %s %s" lvm_info.vg_name lvm_info.pv_name |> exec
+    )
+    layout.lvm_info
+
 let set_up layout =
+  set_up_lvm layout;
   Option.iter (Storage_unit.set_up layout.pool) layout.esp;
   Storage_unit.set_up layout.pool layout.boot;
   Storage_unit.set_up layout.pool layout.root;
