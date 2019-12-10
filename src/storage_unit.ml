@@ -123,7 +123,7 @@ let open_upper (t : t) =
 
 let close_upper (t : t) =
   let { mount_point; _ } = t.upper in
-  Printf.sprintf "umount %s" mount_point
+  Printf.sprintf "umount %s" mount_point |> exec
 
 let set_up_lower t =
   match t.lower with
@@ -187,9 +187,17 @@ let set_up_upper t =
   in
   format_cmd t.upper.fs (path_to_mid_for_upper t) |> exec
 
-let set_up t =
+let set_up_storage_unit t =
   set_up_lower t;
   set_up_upper t
+
+let open_storage_unit t =
+  open_lower t;
+  open_upper t
+
+let close_storage_unit t =
+  close_upper t;
+  close_lower t
 
 let make_lower_clear ~path : lower =
   Clear { path }
