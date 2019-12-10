@@ -81,21 +81,28 @@ type lower =
 
 type t = {
   upper : upper;
-  mid : mid;
-  lower : lower;
+  mid_id : int;
+  lower_id : int;
   mutable state : state;
+}
+
+type pool = {
+  mid_pool : (int, mid) Hashtbl.t;
+  lower_pool : (int, lower) Hashtbl.t;
 }
 
 let luks_version_to_int ver = match ver with `LuksV1 -> 1 | `LuksV2 -> 2
 
-let path_to_lower_for_mid (t : t) : string =
-  match t.lower with
+let path_to_lower_for_mid pool (t : t) : string =
+  let lower = Hashtbl.find pool.lower_pool t.lower_id in
+  match lower with
   | Clear { path } -> path
   | Luks { info; _ } -> Printf.sprintf "/dev/mapper/%s" info.mapper_name
 
-let path_to_mid_for_upper (t : t) : string =
-  match t.mid with
-  | None -> path_to_lower_for_mid t
+let path_to_mid_for_upper pool (t : t) : string =
+  let mid = Hashtbl.find pool.mid_pool t.mid_id in
+  match mid with
+  | None -> path_to_lower_for_mid pool t
   | Some x -> Printf.sprintf "/dev/%s/%s" x.vg_name x.lv_name
 
 module Lower = struct
@@ -123,8 +130,8 @@ module Lower = struct
     Luks { info; path;
       state = `Luks_closed; }
 
-  let mount (t : t) =
-    match t.lower with
+  let mount pool (t : t) =
+    match Hashtbl.find pool.lower_pool t.lower_id with
     | Clear _ -> ()
     | Luks luks ->
       match luks.state with
@@ -139,8 +146,8 @@ module Lower = struct
         f ();
         luks.state <- `Luks_opened
 
-  let unmount (t : t) =
-    match t.lower with
+  let unmount pool (t : t) =
+    match Hashtbl.find pool.lower_pool t.lower_id with
     | Clear _ -> ()
     | Luks luks ->
       match luks.state with
@@ -149,8 +156,8 @@ module Lower = struct
         Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec;
         luks.state <- `Luks_closed
 
-  let set_up t =
-    match t.lower with
+  let set_up pool t =
+    match Hashtbl.find pool.lower_pool t.lower_id with
     | Clear _ -> ()
     | Luks luks -> (
         let iter_time_ms_opt =
@@ -215,41 +222,41 @@ end
 module Upper = struct
   let make ~mount_point fs = { mount_point; fs }
 
-  let mount (t : t) =
+  let mount pool (t : t) =
     let { mount_point; _ } = t.upper in
-    let mid_path = path_to_mid_for_upper t in
+    let mid_path = path_to_mid_for_upper pool t in
     Printf.sprintf "mount %s %s" mid_path mount_point |> exec
 
   let unmount (t : t) =
     let { mount_point; _ } = t.upper in
     Printf.sprintf "umount %s" mount_point |> exec
 
-  let set_up t =
+  let set_up pool t =
     let format_cmd fs part =
       match fs with
       | `Fat32 -> Printf.sprintf "mkfs.fat -F32 %s" part
       | `Ext4 -> Printf.sprintf "mkfs.ext4 %s" part
     in
-    format_cmd t.upper.fs (path_to_mid_for_upper t) |> exec
+    format_cmd t.upper.fs (path_to_mid_for_upper pool t) |> exec
 end
 
-let set_up t =
+let set_up pool t =
   assert (t.state = `Fresh);
-  Lower.set_up t;
+  Lower.set_up pool t;
   Mid.set_up t;
-  Upper.set_up t;
+  Upper.set_up pool t;
   t.state <- `Unmounted
 
-let mount t =
+let mount pool t =
   assert (t.state = `Unmounted);
-  Lower.mount t;
-  Upper.mount t;
+  Lower.mount pool t;
+  Upper.mount pool t;
   t.state <- `Mounted
 
-let unmount t =
+let unmount pool t =
   assert (t.state = `Mounted);
   Upper.unmount t;
-  Lower.unmount t;
+  Lower.unmount pool t;
   t.state <- `Unmounted
 
-let make lower mid upper = { upper; mid; lower; state = `Fresh }
+let make ~lower_id ~mid_id upper = { upper; mid_id; lower_id; state = `Fresh }
