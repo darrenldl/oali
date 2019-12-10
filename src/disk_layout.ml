@@ -167,7 +167,9 @@ let unmount_part ({ lower; upper; state } as p) =
 let make_esp_storage_unit ~path =
   let lower = Storage_unit.make_lower_clear ~path in
   let mid = Storage_unit.make_mid_none () in
-  let upper = Storage_unit.make_upper ~mount_point:Config.esp_mount_point `Fat32 in
+  let upper =
+    Storage_unit.make_upper ~mount_point:Config.esp_mount_point `Fat32
+  in
   Storage_unit.make lower mid upper
 
 let make_boot_storage_unit ~enc_params ~encrypt path =
@@ -178,39 +180,31 @@ let make_boot_storage_unit ~enc_params ~encrypt path =
           ~is_valid:(fun x -> x <> "")
           "Please enter passphrase for encryption"
       in
-      Storage_unit.make_lower_luks
-        ~primary_key
-        ~add_secondary_key:true
-        ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name
-        enc_params
-    else
-      Storage_unit.make_lower_clear ~path
+      Storage_unit.make_lower_luks ~primary_key ~add_secondary_key:true
+        ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
+    else Storage_unit.make_lower_clear ~path
   in
-  let mid =
-      Storage_unit.make_mid_none ()
-  in
-  let upper = Storage_unit.make_upper ~mount_point:Config.boot_mount_point
-      `Ext4
+  let mid = Storage_unit.make_mid_none () in
+  let upper =
+    Storage_unit.make_upper ~mount_point:Config.boot_mount_point `Ext4
   in
   Storage_unit.make lower mid upper
 
 let make_sys_part ~enc_params ~encrypt ~use_lvm path =
   let lower =
     if encrypt then
-      Storage_unit.make_lower_luks
-        ~path ~mapper_name:Config.sys_mapper_name
+      Storage_unit.make_lower_luks ~path ~mapper_name:Config.sys_mapper_name
         enc_params
-    else
-      Storage_unit.make_lower_clear ~path
+    else Storage_unit.make_lower_clear ~path
   in
   let mid =
     if use_lvm then
-      Storage_unit.make_mid_lvm ~lv_name:Config.lvm_lv_name_sys ~vg_name:Config.lvm_vg_name
-    else
-      Storage_unit.make_mid_none ()
+      Storage_unit.make_mid_lvm ~lv_name:Config.lvm_lv_name_sys
+        ~vg_name:Config.lvm_vg_name
+    else Storage_unit.make_mid_none ()
   in
-  let upper =Storage_unit.make_upper ~mount_point:Config.sys_mount_point
-      `Ext4
+  let upper =
+    Storage_unit.make_upper ~mount_point:Config.sys_mount_point `Ext4
   in
   Storage_unit.make lower mid upper
 

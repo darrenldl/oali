@@ -1,6 +1,9 @@
 open Proc_utils
 
-type fs = [ `Fat32 | `Ext4]
+type fs =
+  [ `Fat32
+  | `Ext4
+  ]
 
 (* type inner =
  *   | Fs of fs
@@ -66,33 +69,30 @@ type lvm_lv = {
 type mid = lvm_lv option
 
 type lower =
-  | Clear of { path : string}
+  | Clear of { path : string }
   | Luks of {
       luks : luks;
-      path : string
+      path : string;
     }
 
-type t =
-  {
-    upper : upper;
-    mid : mid;
-    lower : lower;
-    mutable state : state;
-  }
+type t = {
+  upper : upper;
+  mid : mid;
+  lower : lower;
+  mutable state : state;
+}
 
 let luks_version_to_int ver = match ver with `LuksV1 -> 1 | `LuksV2 -> 2
 
 let path_to_lower_for_mid (t : t) : string =
   match t.lower with
-  | Clear {path } -> path
-  | Luks { luks; _ } ->
-    Printf.sprintf "/dev/mapper/%s" luks.mapper_name
+  | Clear { path } -> path
+  | Luks { luks; _ } -> Printf.sprintf "/dev/mapper/%s" luks.mapper_name
 
 let path_to_mid_for_upper (t : t) : string =
   match t.mid with
   | None -> path_to_lower_for_mid t
-  | Some x ->
-    Printf.sprintf "/dev/%s/%s" x.vg_name x.lv_name
+  | Some x -> Printf.sprintf "/dev/%s/%s" x.vg_name x.lv_name
 
 let open_lower (t : t) =
   match t.lower with
@@ -111,13 +111,13 @@ let open_lower (t : t) =
 let close_lower (t : t) =
   match t.lower with
   | Clear _ -> ()
-  | Luks { luks; _} ->
+  | Luks { luks; _ } ->
     assert (luks.state = Luks_opened);
     Printf.sprintf "cryptsetup close %s" luks.mapper_name |> exec;
     luks.state <- Luks_closed
 
 let open_upper (t : t) =
-  let { mount_point; _} = t.upper in
+  let { mount_point; _ } = t.upper in
   let mid_path = path_to_mid_for_upper t in
   Printf.sprintf "mount %s %s" mid_path mount_point |> exec
 
@@ -128,7 +128,7 @@ let close_upper (t : t) =
 let set_up_lower t =
   match t.lower with
   | Clear _ -> ()
-  | Luks {luks; path} ->
+  | Luks { luks; path } -> (
       let iter_time_ms_opt =
         Option.map
           (fun x -> [ "--iter-time"; string_of_int x ])
@@ -156,28 +156,23 @@ let set_up_lower t =
        in
        output_string stdin luks.primary_key;
        f ());
-      ( match luks.secondary_key with
-        | None -> ()
-        | Some secondary_key ->
-          let tmp_path = Filename.temp_file "installer" "secondary_key" in
-          let tmp_oc = open_out tmp_path in
-          Fun.protect
-            ~finally:(fun () -> close_out tmp_oc)
-            (fun () -> output_string tmp_oc secondary_key);
-          let stdin, f =
-            String.concat " "
-              [
-                "cryptsetup";
-                "luksAddKey";
-                "-y";
-                "--key-file=-";
-                path;
-                tmp_path;
-              ]
-            |> exec_with_stdin
-          in
-          output_string stdin luks.primary_key;
-          f () )
+      match luks.secondary_key with
+      | None -> ()
+      | Some secondary_key ->
+        let tmp_path = Filename.temp_file "installer" "secondary_key" in
+        let tmp_oc = open_out tmp_path in
+        Fun.protect
+          ~finally:(fun () -> close_out tmp_oc)
+          (fun () -> output_string tmp_oc secondary_key);
+        let stdin, f =
+          String.concat " "
+            [
+              "cryptsetup"; "luksAddKey"; "-y"; "--key-file=-"; path; tmp_path;
+            ]
+          |> exec_with_stdin
+        in
+        output_string stdin luks.primary_key;
+        f () )
 
 let set_up_upper t =
   let format_cmd fs part =
@@ -199,36 +194,32 @@ let close_storage_unit t =
   close_upper t;
   close_lower t
 
-let make_lower_clear ~path : lower =
-  Clear { path }
+let make_lower_clear ~path : lower = Clear { path }
 
 let make_lower_luks ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
-    ?(add_secondary_key = false) ?(version = `LuksV2) ~path ~mapper_name enc_params : lower =
-  let luks = {
-    enc_params =
-      Option.value
-        ~default:{ iter_time_ms = None; key_size_bits = None }
-        enc_params;
-    primary_key;
-    secondary_key =
-      ( if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:4096)
-        else None );
-    version;
-    mapper_name;
-    state = Luks_closed;
-  }
-  in Luks { luks; path }
+    ?(add_secondary_key = false) ?(version = `LuksV2) ~path ~mapper_name
+    enc_params : lower =
+  let luks =
+    {
+      enc_params =
+        Option.value
+          ~default:{ iter_time_ms = None; key_size_bits = None }
+          enc_params;
+      primary_key;
+      secondary_key =
+        ( if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:4096)
+          else None );
+      version;
+      mapper_name;
+      state = Luks_closed;
+    }
+  in
+  Luks { luks; path }
 
 let make_mid_none () = None
 
-let make_mid_lvm ~lv_name ~vg_name =
-  Some {lv_name; vg_name}
+let make_mid_lvm ~lv_name ~vg_name = Some { lv_name; vg_name }
 
-let make_upper ~mount_point fs =
-  {
-    mount_point;
-    fs;
-  }
+let make_upper ~mount_point fs = { mount_point; fs }
 
-let make lower mid upper =
-  { upper; mid; lower; state = Unformatted}
+let make lower mid upper = { upper; mid; lower; state = Unformatted }
