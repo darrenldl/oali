@@ -168,20 +168,32 @@ let make_esp_storage_unit ~path =
   let lower = Storage_unit.make_lower_clear ~path in
   let mid = Storage_unit.make_mid_none () in
   let upper = Storage_unit.make_upper ~mount_point:Config.esp_mount_point `Fat32 in
-  make lower mid upper
+  Storage_unit.make lower mid upper
 
-let make_boot_part ~enc_params encrypt path =
+let make_boot_storage_unit ~enc_params encrypt path =
   if encrypt then
     let primary_key =
       Misc_utils.ask_string_confirm
         ~is_valid:(fun x -> x <> "")
         "Please enter passphrase for encryption"
     in
-    make_part ~path
-      (Luks
-         (make_luks ~enc_params ~primary_key ~add_secondary_key:true
-            ~version:LuksV1 Ext4 ~mapper_name:Config.boot_mapper_name))
-  else make_part ~path (Plain_FS Ext4)
+    let lower = Storage_unit.make_lower_luks ~enc_params
+        ~primary_key
+        ~add_secondary_key:true
+        ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name
+    in
+    let mid = Storage_unit.make_mid_none () in
+    let upper = Storage_unit.make_upper ~mount_point:Config.boot_mount_point
+        `Ext4
+    in
+    Storage_unit.make lower mid upper
+  else
+    let lower = Storage_unit.make_lower_clear ~path in
+    let mid = Storage_unit.make_mid_none () in
+    let upper = Storage_unit.make_upper
+                  ~mount_point:Config.boot_mount_point `Ext4
+    in
+    Storage_unit.make lower mid upper
 
 let make_sys_part ~enc_params encrypt path =
   if encrypt then

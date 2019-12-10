@@ -12,8 +12,9 @@ type enc_params = {
 }
 
 type luks_version =
-  | LuksV1
-  | LuksV2
+  [ `LuksV1
+  | `LuksV2
+  ]
 
 type luks_state =
   | Luks_opened
@@ -79,7 +80,7 @@ type t =
     mutable state : state;
   }
 
-let luks_version_to_int ver = match ver with LuksV1 -> 1 | LuksV2 -> 2
+let luks_version_to_int ver = match ver with `LuksV1 -> 1 | `LuksV2 -> 2
 
 let path_to_lower_for_mid (t : t) : string =
   match t.lower with
@@ -194,7 +195,7 @@ let make_lower_clear ~path : lower =
   Clear { path }
 
 let make_lower_luks ~enc_params ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
-    ?(add_secondary_key = false) ?(version = LuksV2) ~path ~mapper_name : lower =
+    ?(add_secondary_key = false) ?(version = `LuksV2) ~path ~mapper_name : lower =
   let luks = {
     enc_params =
       Option.value
