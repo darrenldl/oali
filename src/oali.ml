@@ -294,6 +294,7 @@ let () =
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
               ~sys_encrypt
+              ~use_lvm:false
           in
           { config with disk_layout = Some disk_layout } )
         else
@@ -317,6 +318,7 @@ let () =
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
               ~sys_encrypt
+              ~use_lvm:false
           in
           { config with disk_layout = Some disk_layout }
       | Sys_part_plus_boot_plus_maybe_EFI ->
@@ -371,6 +373,7 @@ let () =
             ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
             ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
             ~sys_encrypt
+            ~use_lvm:false
         in
         { config with disk_layout = Some disk_layout }
       | Sys_part_plus_usb_drive ->
@@ -456,6 +459,7 @@ let () =
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
               ~sys_encrypt
+            ~use_lvm:false
           in
           { config with disk_layout = Some disk_layout } )
         else
@@ -474,21 +478,22 @@ let () =
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
               ~sys_encrypt
+              ~use_lvm:false
           in
           { config with disk_layout = Some disk_layout });
   reg ~name:"Formatting disk" (fun _answer_store config ->
       let disk_layout = Option.get config.disk_layout in
-      Disk_layout.format disk_layout;
+      Disk_layout.set_up disk_layout;
       config);
   reg ~name:"Mounting disk" (fun _answer_store config ->
       let is_efi_mode = Option.get config.is_efi_mode in
       let disk_layout = Option.get config.disk_layout in
-      Disk_layout.mount_sys_part disk_layout;
+      Disk_layout.mount_root_var_home disk_layout;
       Unix.mkdir Config.boot_mount_point 0o744;
-      Disk_layout.mount_boot_part disk_layout;
+      Disk_layout.mount_boot disk_layout;
       if is_efi_mode then (
         Unix.mkdir Config.esp_mount_point 0o744;
-        Disk_layout.mount_esp_part disk_layout );
+        Disk_layout.mount_esp disk_layout );
       config);
   reg ~name:"Installing base system (base linux base-devel)"
     (fun _answer_store config ->
@@ -518,20 +523,18 @@ let () =
   reg ~name:"Installing keyfile for /" (fun _answer_store config ->
       if Option.get config.encrypt_sys then (
         let disk_layout = Option.get config.disk_layout in
-        let sys_part_luks =
-          match disk_layout.sys_part.upper with
-          | Plain_FS _ -> failwith "Expected LUKS"
-          | Luks luks -> luks
-        in
-        let keyfile_path =
-          concat_file_names
-            [ Config.sys_mount_point; "root"; Config.sys_part_keyfile_name ]
-        in
-        let oc = open_out_bin keyfile_path in
-        Fun.protect
-          ~finally:(fun () -> close_out oc)
-          (fun () -> output_string oc sys_part_luks.primary_key);
-        Unix.chmod keyfile_path 0o000 )
+        match Disk_layout.get_sys_lower disk_layout with
+        | Clear _ -> failwith "Expected LUKS"
+        | Luks { info; _ } ->
+          let keyfile_path =
+            concat_file_names
+              [ Config.sys_mount_point; "root"; Config.sys_part_keyfile_name ]
+          in
+          let oc = open_out_bin keyfile_path in
+          Fun.protect
+            ~finally:(fun () -> close_out oc)
+            (fun () -> output_string oc info.primary_key);
+          Unix.chmod keyfile_path 0o000 )
       else print_endline "Skipped";
       config);
   reg ~name:"Installing keyfile for unlocking /boot after boot"
@@ -542,28 +545,31 @@ let () =
        then
          if Option.get config.encrypt_boot then (
            let disk_layout = Option.get config.disk_layout in
-           let boot_part_luks =
-             match disk_layout.boot_part.upper with
-             | Plain_FS _ -> failwith "Expected LUKS"
-             | Luks luks -> luks
-           in
-           let boot_secondary_key = Option.get boot_part_luks.secondary_key in
-           let keyfile_path =
-             concat_file_names
-               [ Config.sys_mount_point; "root"; Config.boot_part_keyfile_name ]
-           in
-           let oc = open_out_bin keyfile_path in
-           Fun.protect
-             ~finally:(fun () -> close_out oc)
-             (fun () -> output_string oc boot_secondary_key);
-           () )
+           match Disk_layout.get_boot_lower disk_layout  with
+           | Clear _ -> failwith "Expected LUKS"
+           | Luks {info; _} ->
+             let boot_secondary_key = Option.get info.secondary_key in
+             let keyfile_path =
+               concat_file_names
+                 [ Config.sys_mount_point; "root"; Config.boot_part_keyfile_name ]
+             in
+             let oc = open_out_bin keyfile_path in
+             Fun.protect
+               ~finally:(fun () -> close_out oc)
+               (fun () -> output_string oc boot_secondary_key);
+             () )
          else print_endline "Skipped";
        config);
   reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot"
     (fun _answer_store config ->
        ( if Option.get config.encrypt_boot then
            let disk_layout = Option.get config.disk_layout in
-           let boot_part_path = disk_layout.boot_part.lower.path in
+           let boot_part_path =
+             match Disk_layout.get_boot_lower disk_layout with
+             | Clear _ -> failwith "Expected LUKS"
+             | Luks {path; _ } ->
+               path
+           in
            let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
            let keyfile_path =
              concat_file_names [ "/root"; Config.boot_part_keyfile_name ]

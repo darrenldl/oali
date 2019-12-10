@@ -19,9 +19,9 @@ type layout_choice =
   | Single_disk
   | Sys_part_plus_boot_plus_maybe_EFI
   | Sys_part_plus_usb_drive
-  | Lvm_single_disk
-  | Lvm_boot_plus_maybe_EFI_plus_pv_s
-  | Lvm_usb_drive_plus_pv_s
+  (* | Lvm_single_disk
+   * | Lvm_boot_plus_maybe_EFI_plus_pv_s
+   * | Lvm_usb_drive_plus_pv_s *)
 
 (* let make_lower ~disk ~part_num = {disk; part_num} *)
 
@@ -178,6 +178,24 @@ module Params = struct
   let sys_mid_id = 2
 end
 
+let get_esp_lower layout=
+  Hashtbl.find layout.pool.lower_pool Params.esp_lower_id
+
+let get_boot_lower layout =
+  Hashtbl.find layout.pool.lower_pool Params.boot_lower_id
+
+let get_sys_lower layout =
+  Hashtbl.find layout.pool.lower_pool Params.sys_lower_id
+
+let get_esp_mid layout =
+  Hashtbl.find layout.pool.mid_pool Params.esp_mid_id
+
+let get_boot_mid layout =
+  Hashtbl.find layout.pool.mid_pool Params.boot_mid_id
+
+let get_sys_mid layout =
+  Hashtbl.find layout.pool.mid_pool Params.sys_mid_id
+
 let make_esp (pool : Storage_unit.pool) ~path =
   let lower_id = Params.esp_lower_id in
   let mid_id = Params.esp_mid_id in
@@ -256,12 +274,21 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
   in
   { root; var; home; esp; boot; lvm_info; pool }
 
-let mount layout =
-  Option.iter (Storage_unit.mount layout.pool) layout.esp;
-  Storage_unit.mount layout.pool layout.boot;
+let mount_root_var_home layout =
   Storage_unit.mount layout.pool layout.root;
   Option.iter (Storage_unit.mount layout.pool) layout.var;
   Option.iter (Storage_unit.mount layout.pool) layout.home
+
+let mount_boot layout =
+  Storage_unit.mount layout.pool layout.boot
+
+let mount_esp layout =
+  Option.iter (Storage_unit.mount layout.pool) layout.esp
+
+let mount layout =
+  mount_root_var_home layout;
+  mount_boot layout;
+  mount_esp layout
 
 let unmount layout =
   Option.iter (Storage_unit.unmount layout.pool) layout.esp;
@@ -269,3 +296,10 @@ let unmount layout =
   Storage_unit.unmount layout.pool layout.root;
   Option.iter (Storage_unit.unmount layout.pool) layout.var;
   Option.iter (Storage_unit.unmount layout.pool) layout.home
+
+let set_up layout =
+  Option.iter (Storage_unit.set_up layout.pool) layout.esp;
+  Storage_unit.set_up layout.pool layout.boot;
+  Storage_unit.set_up layout.pool layout.root;
+  Option.iter (Storage_unit.set_up layout.pool) layout.var;
+  Option.iter (Storage_unit.set_up layout.pool) layout.home
