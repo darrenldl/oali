@@ -25,7 +25,7 @@ let boot_part_keyfile_name = "boot_part.key"
 
 let boot_mapper_name = "crypt_boot"
 
-let root_mapper_name = "crypt_root"
+let sys_mapper_name = "crypt_sys"
 
 let livecd_mirrorlist_path =
   Misc_utils.concat_file_names [ "/etc"; "pacman.d"; "mirrorlist" ]
@@ -75,3 +75,5 @@ let mkinitcpio_hooks =
   ]
 
 let lvm_vg_name = "vg_sys"
+
+let lvm_lv_name_sys = "lv_sys"

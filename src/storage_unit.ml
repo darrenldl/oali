@@ -194,8 +194,8 @@ let set_up t =
 let make_lower_clear ~path : lower =
   Clear { path }
 
-let make_lower_luks ~enc_params ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
-    ?(add_secondary_key = false) ?(version = `LuksV2) ~path ~mapper_name : lower =
+let make_lower_luks ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
+    ?(add_secondary_key = false) ?(version = `LuksV2) ~path ~mapper_name enc_params : lower =
   let luks = {
     enc_params =
       Option.value
