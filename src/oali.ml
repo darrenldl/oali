@@ -108,9 +108,23 @@ let () =
         add_hardened = Some add_hardened;
         hardened_as_default = Some hardened_as_default;
       });
+  reg ~name:"Pick whether to enable LVM" (fun answer_store config ->
+      print_endline "If enabled, a single physical volume and a single volume group will be created";
+      print_endline "/, /var, /home are then allocated as logical volumes in the volume group";
+      print_newline ();
+      let use_lvm =
+        ask_yn_confirm ~answer_store
+          "Enable LUKS for system partitions (does not include /boot, /esp)?"
+          = `Yes
+      in
+      {
+        config with
+        use_lvm = Some use_lvm
+      }
+    );
   reg ~name:"Pick whether to encrypt BOOT partition" (fun answer_store config ->
       let encrypt =
-        ask_yn ~answer_store "Enable encryption for BOOT (/boot) partition?"
+        ask_yn_confirm ~answer_store "Enable encryption for BOOT (/boot) partition?"
         = `Yes
       in
       { config with encrypt_boot = Some encrypt });
@@ -147,12 +161,15 @@ let () =
            boot_part_enc_params = Some { iter_time_ms; key_size_bits };
          }
        else config);
-  reg ~name:"Pick whether to encrypt ROOT partition" (fun answer_store config ->
+  reg ~name:"Pick whether to encrypt ROOT partition (or physical volume for LVM)" (fun answer_store config ->
+      let use_lvm = Option.get config.use_lvm in
       let encrypt_boot = Option.get config.encrypt_boot in
       let encrypt =
         retry ~answer_store (fun () ->
             let encrypt_sys =
-              ask_yn ~answer_store "Enable encryption for ROOT (/) partition?"
+              ask_yn ~answer_store
+                (if use_lvm then "Enable encryption for system physical volume?"
+                 else "Enable encryption for ROOT (/) partition?")
               = `Yes
             in
             if encrypt_boot && not encrypt_sys then
@@ -213,6 +230,7 @@ let () =
       { config with is_efi_mode = Some is_efi_mode });
   reg ~name:"Configure disk setup parameters" (fun _answer_store config ->
       let open Disk_layout in
+      let use_lvm = Option.get config.use_lvm in
       let boot_encrypt = Option.get config.encrypt_boot in
       let sys_encrypt = Option.get config.encrypt_sys in
       let is_efi_mode = Option.get config.is_efi_mode in
@@ -293,7 +311,7 @@ let () =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt ~use_lvm:false
+              ~sys_encrypt ~use_lvm
           in
           { config with disk_layout = Some disk_layout } )
         else
@@ -316,7 +334,7 @@ let () =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt ~use_lvm:false
+              ~sys_encrypt ~use_lvm
           in
           { config with disk_layout = Some disk_layout }
       | Sys_part_plus_boot_plus_maybe_EFI ->
@@ -370,7 +388,7 @@ let () =
           make_layout ~esp_part_path ~boot_part_path
             ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
             ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-            ~sys_encrypt ~use_lvm:false
+            ~sys_encrypt ~use_lvm
         in
         { config with disk_layout = Some disk_layout }
       | Sys_part_plus_usb_drive ->
@@ -455,7 +473,7 @@ let () =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt ~use_lvm:false
+              ~sys_encrypt ~use_lvm
           in
           { config with disk_layout = Some disk_layout } )
         else
@@ -473,7 +491,7 @@ let () =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt ~use_lvm:false
+              ~sys_encrypt ~use_lvm
           in
           { config with disk_layout = Some disk_layout });
   reg ~name:"Formatting disk" (fun _answer_store config ->
