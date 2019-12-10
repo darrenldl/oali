@@ -92,6 +92,11 @@ type pool = {
   lower_pool : (int, lower) Hashtbl.t;
 }
 
+let make_pool () =
+  { mid_pool = Hashtbl.create 100;
+    lower_pool = Hashtbl.create 100;
+  }
+
 let luks_version_to_int ver = match ver with `LuksV1 -> 1 | `LuksV2 -> 2
 
 let path_to_lower_for_mid pool (t : t) : string =

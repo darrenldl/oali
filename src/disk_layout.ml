@@ -5,7 +5,9 @@ type lvm_info = {
 }
 
 type t = {
-  sys : Storage_unit.t;
+  root : Storage_unit.t;
+  var : Storage_unit.t option;
+  home : Storage_unit.t option;
   (* swap : Storage_unit.t option; *)
   boot : Storage_unit.t;
   esp : Storage_unit.t option;
@@ -166,7 +168,6 @@ type layout_choice =
  *   { lower; upper; state = Unformatted } *)
 
 module Params = struct
-
   let esp_lower_id = 0
   let esp_mid_id = 0
 
@@ -209,7 +210,7 @@ let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
   in
   Storage_unit.make ~lower_id ~mid_id upper
 
-let make_sys (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm path =
+let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm path : Storage_unit.t * Storage_unit.t option * Storage_unit.t option =
   let lower_id = Params.sys_lower_id in
   let mid_id = Params.sys_mid_id in
   Hashtbl.add pool.lower_pool lower_id
@@ -219,24 +220,33 @@ let make_sys (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm path =
     else Storage_unit.Lower.make_clear ~path);
   Hashtbl.add pool.mid_pool mid_id
     (if use_lvm then
-      Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
-        ~vg_name:Config.lvm_vg_name
-    else Storage_unit.Mid.make_none ());
+       let part_size_MiB = Disk_utils.disk_size_MiB path in
+       let size_to_use_MiB =
+         min
+           (Config.lvm_lv_root_frac *. part_size_MiB)
+           Config.lvm_lv_root_max_size_MiB
+       in
+       let size = Printf.sprintf "%dM" (int_of_float size_to_use_MiB) in
+       Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
+         ~vg_name:Config.lvm_vg_name ~size
+     else Storage_unit.Mid.make_none ());
   let upper =
     Storage_unit.Upper.make ~mount_point:Config.sys_mount_point `Ext4
   in
-  Storage_unit.make ~lower_id ~mid_id upper
+  let root = Storage_unit.make ~lower_id ~mid_id upper in
+  (root, None, None)
 
 let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
     ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt ~use_lvm =
-  let esp = Option.map (fun path -> make_esp ~path) esp_part_path in
+  let pool = Storage_unit.make_pool () in
+  let esp = Option.map (fun path -> make_esp pool ~path) esp_part_path in
   let boot =
-    make_boot ~enc_params:boot_part_enc_params ~encrypt:boot_encrypt
-      boot_part_path
+    make_boot pool ~enc_params:boot_part_enc_params ~encrypt:boot_encrypt
+      ~path:boot_part_path
   in
-  let sys =
-    make_sys ~enc_params:sys_part_enc_params ~encrypt:sys_encrypt
-      ~use_lvm:sys_lvm sys_part_path
+  let root, var, home =
+    make_root_var_home pool ~enc_params:sys_part_enc_params ~encrypt:sys_encrypt
+      ~use_lvm sys_part_path
   in
   let lvm_info =
     (* let vg_pv_map = String_map.empty |> String_map.add Config.lvm_vg_name [sys_part_path] in *)
@@ -244,14 +254,18 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
       Some { vg_name = Config.lvm_vg_name; pv_name = [ sys_part_path ] }
     else None
   in
-  { esp; boot; sys; lvm_info }
+  { root; var; home; esp; boot; lvm_info; pool }
 
 let mount layout =
-  Option.iter Storage_unit.mount layout.esp;
-  Storage_unit.mount layout.boot;
-  Storage_unit.mount layout.sys
+  Option.iter (Storage_unit.mount layout.pool) layout.esp;
+  Storage_unit.mount layout.pool layout.boot;
+  Storage_unit.mount layout.pool layout.root;
+  Option.iter (Storage_unit.mount layout.pool) layout.var;
+  Option.iter (Storage_unit.mount layout.pool) layout.home
 
 let unmount layout =
-  Option.iter Storage_unit.unmount layout.esp;
-  Storage_unit.unmount layout.boot;
-  Storage_unit.unmount layout.sys
+  Option.iter (Storage_unit.unmount layout.pool) layout.esp;
+  Storage_unit.unmount layout.pool layout.boot;
+  Storage_unit.unmount layout.pool layout.root;
+  Option.iter (Storage_unit.unmount layout.pool) layout.var;
+  Option.iter (Storage_unit.unmount layout.pool) layout.home

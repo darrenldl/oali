@@ -78,10 +78,10 @@ let lvm_vg_name = "vg_sys"
 
 let lvm_lv_name_sys = "lv_sys"
 
-let lvm_lv_root_perc = 25
+let lvm_lv_root_frac = 0.25
 
-let lvm_lv_root_max_size_GB = 25
+let lvm_lv_root_max_size_MiB = 25. *. 1024.
 
-let lvm_lv_var_perc = 25
+let lvm_lv_var_frac = 0.25
 
-let lvm_lv_var_max_size_GB = 20
+let lvm_lv_var_max_size_MiB = 20. *. 1024.
