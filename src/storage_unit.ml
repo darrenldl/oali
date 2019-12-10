@@ -67,6 +67,7 @@ type upper = {
 type lvm_lv = {
   lv_name : string;
   vg_name : string;
+  size : string;
 }
 
 type mid = lvm_lv option
@@ -214,9 +215,15 @@ end
 module Mid = struct
   let make_none () = None
 
-  let make_lvm ~lv_name ~vg_name = Some { lv_name; vg_name }
+  let make_lvm ~lv_name ~vg_name ~size = Some { lv_name; vg_name; size}
 
-  let set_up t : unit = failwith "Unimplemented"
+  let set_up pool t : unit =
+    let mid = Hashtbl.find pool.mid_pool t.mid_id in
+    match mid with
+    | None -> ()
+    | Some lvm ->
+      Printf.sprintf "lvcreate -L %s %s -n %s" lvm.size
+        lvm.vg_name lvm.lv_name |> exec
 end
 
 module Upper = struct
@@ -243,7 +250,7 @@ end
 let set_up pool t =
   assert (t.state = `Fresh);
   Lower.set_up pool t;
-  Mid.set_up t;
+  Mid.set_up pool t;
   Upper.set_up pool t;
   t.state <- `Unmounted
 
