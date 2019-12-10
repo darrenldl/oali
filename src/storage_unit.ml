@@ -204,6 +204,8 @@ module Mid = struct
   let make_none () = None
 
   let make_lvm ~lv_name ~vg_name = Some { lv_name; vg_name }
+
+  let set_up t : unit = failwith "Unimplemented"
 end
 
 module Upper = struct
@@ -230,6 +232,7 @@ end
 let set_up t =
   assert (t.state = `Fresh);
   Lower.set_up t;
+  Mid.set_up t;
   Upper.set_up t;
   t.state <- `Unmounted
 
