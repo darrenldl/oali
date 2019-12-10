@@ -1,14 +1,14 @@
 type lvm_info = {
-  vg_pv_map : string list String_map.t;
+  (* vg_pv_map : string list String_map.t; *)
   vg_name : string;
   pv_name : string list;
 }
 
 type t = {
-  sys_part : Storage_unit.t;
-  swap_part : Storage_unit.t option;
-  boot_part : Storage_unit.t;
-  esp_part : Storage_unit.t option;
+  sys : Storage_unit.t;
+  (* swap : Storage_unit.t option; *)
+  boot : Storage_unit.t;
+  esp : Storage_unit.t option;
   lvm_info : lvm_info option;
 }
 
@@ -164,7 +164,7 @@ type layout_choice =
  *   let lower = { path } in
  *   { lower; upper; state = Unformatted } *)
 
-let make_esp_storage_unit ~path =
+let make_esp ~path =
   let lower = Storage_unit.Lower.make_clear ~path in
   let mid = Storage_unit.Mid.make_none () in
   let upper =
@@ -172,7 +172,7 @@ let make_esp_storage_unit ~path =
   in
   Storage_unit.make lower mid upper
 
-let make_boot_storage_unit ~enc_params ~encrypt path =
+let make_boot ~enc_params ~encrypt path =
   let lower =
     if encrypt then
       let primary_key =
@@ -190,7 +190,7 @@ let make_boot_storage_unit ~enc_params ~encrypt path =
   in
   Storage_unit.make lower mid upper
 
-let make_sys_storage_unit ~enc_params ~encrypt ~use_lvm path =
+let make_sys ~enc_params ~encrypt ~use_lvm path =
   let lower =
     if encrypt then
       Storage_unit.Lower.make_luks ~path ~mapper_name:Config.sys_mapper_name
@@ -208,23 +208,32 @@ let make_sys_storage_unit ~enc_params ~encrypt ~use_lvm path =
   in
   Storage_unit.make lower mid upper
 
-(* let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
- *     ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt =
- *   let esp_part = Option.map (fun p -> make_esp_part p) esp_part_path in
- *   let boot_part =
- *     make_boot_part ~enc_params:boot_part_enc_params boot_encrypt boot_part_path
- *   in
- *   let sys_part =
- *     make_sys_part ~enc_params:sys_part_enc_params sys_encrypt sys_part_path
- *   in
- *   { esp_part; boot_part; sys_part } *)
+let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
+    ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt ~sys_lvm =
+  let esp =
+    Option.map (fun path -> make_esp ~path) esp_part_path in
+  let boot =
+    make_boot ~enc_params:boot_part_enc_params ~encrypt:boot_encrypt boot_part_path
+  in
+  let sys =
+    make_sys ~enc_params:sys_part_enc_params ~encrypt:sys_encrypt ~use_lvm:sys_lvm sys_part_path
+  in
+  let lvm_info =
+    (* let vg_pv_map = String_map.empty |> String_map.add Config.lvm_vg_name [sys_part_path] in *)
+    if sys_lvm then Some {
+      vg_name = Config.lvm_vg_name;
+      pv_name = [sys_part_path];
+    }
+    else None
+  in
+  { esp; boot; sys; lvm_info}
 
 let mount layout =
-  Option.iter  Storage_unit.mount layout.esp_part;
-  Storage_unit.mount layout.boot_part;
-  Storage_unit.mount layout.sys_part
+  Option.iter  Storage_unit.mount layout.esp;
+  Storage_unit.mount layout.boot;
+  Storage_unit.mount layout.sys
 
 let unmount layout =
-  Option.iter Storage_unit.unmount layout.esp_part;
-  Storage_unit.unmount layout.boot_part;
-  Storage_unit.unmount layout.sys_part
+  Option.iter Storage_unit.unmount layout.esp;
+  Storage_unit.unmount layout.boot;
+  Storage_unit.unmount layout.sys
