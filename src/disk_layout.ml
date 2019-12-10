@@ -1,3 +1,9 @@
+type lvm_info = {
+  vg_pv_map : string list String_map.t;
+  vg_name : string;
+  pv_name : string list;
+}
+
 type t = {
   sys_part : Storage_unit.t;
   swap_part : Storage_unit.t option;
