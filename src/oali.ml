@@ -740,7 +740,10 @@ let () =
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
        if Option.get config.encrypt_sys then
-         let sys_part_path = disk_layout.sys_part.lower.path in
+         match Disk_layout.get_sys_lower disk_layout with
+         | Clear _ -> failwith "Expected LUKS"
+         | Luks {path; _} ->
+         let sys_part_path = path in
          let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
          let default_grub_path =
            concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
@@ -757,8 +760,8 @@ let () =
                Printf.sprintf
                  "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
                   root=/dev/mapper/%s\""
-                 grub_cmdline_linux sys_part_uuid Config.root_mapper_name
-                 Config.sys_part_keyfile_name Config.root_mapper_name;
+                 grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                 Config.sys_part_keyfile_name Config.sys_mapper_name;
              ]
          in
          File.filter_map_lines ~file:default_grub_path update_grub_cmdline
@@ -801,8 +804,13 @@ let () =
                 --bootloader-id=GRUB --recheck"
                removable_flag Config.efi_dir)
         else
+          let boot_path =
+            match Disk_layout.get_boot_lower disk_layout with
+            | Clear { path} -> path
+            | Luks { path; _ } -> path
+          in
           let boot_disk =
-            Disk_utils.disk_of_part disk_layout.boot_part.lower.path
+            Disk_utils.disk_of_part boot_path
           in
           Arch_chroot.exec
             (Printf.sprintf
@@ -845,12 +853,20 @@ let () =
        if use_usb_key then (
          let encrypt_boot = Option.get config.encrypt_boot in
          let is_efi_mode = Option.get config.is_efi_mode in
-         let boot_part_path = disk_layout.boot_part.lower.path in
+         let boot_part_path =
+           match Disk_layout.get_boot_lower disk_layout with
+           | Clear { path } -> path
+           | Luks { path; _ } -> path
+         in
          let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
          let esp_part_path =
            Option.map
-             (fun part -> Disk_layout.(part.lower.path))
-             disk_layout.esp_part
+             (fun _part ->
+                match Disk_layout.get_esp_lower disk_layout with
+                | Clear { path } -> path
+                | Luks { path; _ } -> path
+             )
+             disk_layout.esp
          in
          let esp_part_uuid =
            Option.map (fun path -> Disk_utils.uuid_of_dev path) esp_part_path
