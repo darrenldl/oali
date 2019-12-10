@@ -99,16 +99,18 @@ let path_to_mid_for_upper (t : t) : string =
   | Some x -> Printf.sprintf "/dev/%s/%s" x.vg_name x.lv_name
 
 module Lower = struct
-  let make_lower_clear ~path : lower = Clear { path }
+  let make_clear ~path : lower = Clear { path }
 
-  let make_lower_luks ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
+  let make_luks ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
       ?(add_secondary_key = false) ?(version = `LuksV2) ~path ~mapper_name
       enc_params : lower =
     let luks : Luks_info.t =
       {
         enc_params =
           Option.value
-            ~default:({ iter_time_ms = None; key_size_bits = None } : Luks_info.enc_params)
+            ~default:
+              ( { iter_time_ms = None; key_size_bits = None }
+                : Luks_info.enc_params )
             enc_params;
         primary_key;
         secondary_key =
@@ -121,7 +123,7 @@ module Lower = struct
     in
     Luks { luks; path }
 
-  let open_lower (t : t) =
+  let mount (t : t) =
     match t.lower with
     | Clear _ -> ()
     | Luks { luks; path } ->
@@ -135,7 +137,7 @@ module Lower = struct
       f ();
       luks.state <- `Luks_opened
 
-  let close_lower (t : t) =
+  let unmount (t : t) =
     match t.lower with
     | Clear _ -> ()
     | Luks { luks; _ } ->
@@ -143,7 +145,7 @@ module Lower = struct
       Printf.sprintf "cryptsetup close %s" luks.mapper_name |> exec;
       luks.state <- `Luks_closed
 
-  let set_up_lower t =
+  let set_up t =
     match t.lower with
     | Clear _ -> ()
     | Luks { luks; path } -> (
@@ -185,7 +187,12 @@ module Lower = struct
           let stdin, f =
             String.concat " "
               [
-                "cryptsetup"; "luksAddKey"; "-y"; "--key-file=-"; path; tmp_path;
+                "cryptsetup";
+                "luksAddKey";
+                "-y";
+                "--key-file=-";
+                path;
+                tmp_path;
               ]
             |> exec_with_stdin
           in
@@ -197,22 +204,21 @@ module Mid = struct
   let make_mid_none () = None
 
   let make_mid_lvm ~lv_name ~vg_name = Some { lv_name; vg_name }
-
 end
 
 module Upper = struct
-  let make_upper ~mount_point fs = { mount_point; fs }
+  let make ~mount_point fs = { mount_point; fs }
 
-  let open_upper (t : t) =
+  let mount (t : t) =
     let { mount_point; _ } = t.upper in
     let mid_path = path_to_mid_for_upper t in
     Printf.sprintf "mount %s %s" mid_path mount_point |> exec
 
-  let close_upper (t : t) =
+  let unmount (t : t) =
     let { mount_point; _ } = t.upper in
     Printf.sprintf "umount %s" mount_point |> exec
 
-  let set_up_upper t =
+  let set_up t =
     let format_cmd fs part =
       match fs with
       | `Fat32 -> Printf.sprintf "mkfs.fat -F32 %s" part
@@ -221,16 +227,16 @@ module Upper = struct
     format_cmd t.upper.fs (path_to_mid_for_upper t) |> exec
 end
 
-let set_up_storage_unit t =
-  Lower.set_up_lower t;
-  Upper.set_up_upper t
+let set_up t =
+  Lower.set_up t;
+  Upper.set_up t
 
-let open_storage_unit t =
-  Lower.open_lower t;
-  Upper.open_upper t
+let mount t =
+  Lower.mount t;
+  Upper.mount t
 
-let close_storage_unit t =
-  Upper.close_upper t;
-  Lower.close_lower t
+let unmount t =
+  Upper.unmount t;
+  Lower.unmount t
 
 let make lower mid upper = { upper; mid; lower; state = `Unformatted }
