@@ -297,10 +297,10 @@ let unmount layout =
   Option.iter (Storage_unit.unmount layout.pool) layout.home
 
 let set_up_lvm layout =
-  Option.iter (fun lvm_info ->
-      Printf.sprintf "pvcreate %s" lvm_info.pv_name |> exec;
-      Printf.sprintf "vgcreate %s %s" lvm_info.vg_name lvm_info.pv_name |> exec
-    )
+  Option.iter
+    (fun lvm_info ->
+       Printf.sprintf "pvcreate %s" lvm_info.pv_name |> exec;
+       Printf.sprintf "vgcreate %s %s" lvm_info.vg_name lvm_info.pv_name |> exec)
     layout.lvm_info
 
 let set_up layout =
