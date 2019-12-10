@@ -164,7 +164,11 @@ let unmount_part ({ lower; upper; state } as p) =
  *   let lower = { path } in
  *   { lower; upper; state = Unformatted } *)
 
-let make_esp_part path = make_part ~path (Plain_FS Fat32)
+let make_esp_storage_unit ~path =
+  let lower = Storage_unit.make_lower_clear ~path in
+  let mid = Storage_unit.make_mid_none () in
+  let upper = Storage_unit.make_upper ~mount_point:Config.esp_mount_point `Fat32 in
+  make lower mid upper
 
 let make_boot_part ~enc_params encrypt path =
   if encrypt then

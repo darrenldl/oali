@@ -1,8 +1,6 @@
 open Proc_utils
 
-type fs =
-  | Fat32
-  | Ext4
+type fs = [ `Fat32 | `Ext4]
 
 (* type inner =
  *   | Fs of fs
@@ -183,8 +181,8 @@ let set_up_lower t =
 let set_up_upper t =
   let format_cmd fs part =
     match fs with
-    | Fat32 -> Printf.sprintf "mkfs.fat -F32 %s" part
-    | Ext4 -> Printf.sprintf "mkfs.ext4 %s" part
+    | `Fat32 -> Printf.sprintf "mkfs.fat -F32 %s" part
+    | `Ext4 -> Printf.sprintf "mkfs.ext4 %s" part
   in
   format_cmd t.upper.fs (path_to_mid_for_upper t) |> exec
 
@@ -211,3 +209,17 @@ let make_lower_luks ~enc_params ?(primary_key = Rand_utils.gen_rand_string ~len:
     state = Luks_closed;
   }
   in Luks { luks; path }
+
+let make_mid_none () = None
+
+let make_mid_lvm ~lv_name ~vg_name =
+  Some {lv_name; vg_name}
+
+let make_upper ~mount_point fs =
+  {
+    mount_point;
+    fs;
+  }
+
+let make lower mid upper =
+  { upper; mid; lower; state = Unformatted}
