@@ -293,8 +293,7 @@ let () =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt
-              ~use_lvm:false
+              ~sys_encrypt ~use_lvm:false
           in
           { config with disk_layout = Some disk_layout } )
         else
@@ -317,8 +316,7 @@ let () =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt
-              ~use_lvm:false
+              ~sys_encrypt ~use_lvm:false
           in
           { config with disk_layout = Some disk_layout }
       | Sys_part_plus_boot_plus_maybe_EFI ->
@@ -372,8 +370,7 @@ let () =
           make_layout ~esp_part_path ~boot_part_path
             ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
             ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-            ~sys_encrypt
-            ~use_lvm:false
+            ~sys_encrypt ~use_lvm:false
         in
         { config with disk_layout = Some disk_layout }
       | Sys_part_plus_usb_drive ->
@@ -458,8 +455,7 @@ let () =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt
-            ~use_lvm:false
+              ~sys_encrypt ~use_lvm:false
           in
           { config with disk_layout = Some disk_layout } )
         else
@@ -477,8 +473,7 @@ let () =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt
-              ~use_lvm:false
+              ~sys_encrypt ~use_lvm:false
           in
           { config with disk_layout = Some disk_layout });
   reg ~name:"Formatting disk" (fun _answer_store config ->
@@ -545,13 +540,17 @@ let () =
        then
          if Option.get config.encrypt_boot then (
            let disk_layout = Option.get config.disk_layout in
-           match Disk_layout.get_boot_lower disk_layout  with
+           match Disk_layout.get_boot_lower disk_layout with
            | Clear _ -> failwith "Expected LUKS"
-           | Luks {info; _} ->
+           | Luks { info; _ } ->
              let boot_secondary_key = Option.get info.secondary_key in
              let keyfile_path =
                concat_file_names
-                 [ Config.sys_mount_point; "root"; Config.boot_part_keyfile_name ]
+                 [
+                   Config.sys_mount_point;
+                   "root";
+                   Config.boot_part_keyfile_name;
+                 ]
              in
              let oc = open_out_bin keyfile_path in
              Fun.protect
@@ -567,8 +566,7 @@ let () =
            let boot_part_path =
              match Disk_layout.get_boot_lower disk_layout with
              | Clear _ -> failwith "Expected LUKS"
-             | Luks {path; _ } ->
-               path
+             | Luks { path; _ } -> path
            in
            let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
            let keyfile_path =
@@ -742,29 +740,31 @@ let () =
        if Option.get config.encrypt_sys then
          match Disk_layout.get_sys_lower disk_layout with
          | Clear _ -> failwith "Expected LUKS"
-         | Luks {path; _} ->
-         let sys_part_path = path in
-         let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
-         let default_grub_path =
-           concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
-         in
-         let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
-         let re =
-           Printf.sprintf "^%s=" grub_cmdline_linux |> Re.Posix.re |> Re.compile
-         in
-         let update_grub_cmdline s =
-           match Re.matches re s with
-           | [] -> [ s ]
-           | _ ->
-             [
-               Printf.sprintf
-                 "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                  root=/dev/mapper/%s\""
-                 grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                 Config.sys_part_keyfile_name Config.sys_mapper_name;
-             ]
-         in
-         File.filter_map_lines ~file:default_grub_path update_grub_cmdline
+         | Luks { path; _ } ->
+           let sys_part_path = path in
+           let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
+           let default_grub_path =
+             concat_file_names
+               [ Config.sys_mount_point; "etc"; "default"; "grub" ]
+           in
+           let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
+           let re =
+             Printf.sprintf "^%s=" grub_cmdline_linux
+             |> Re.Posix.re |> Re.compile
+           in
+           let update_grub_cmdline s =
+             match Re.matches re s with
+             | [] -> [ s ]
+             | _ ->
+               [
+                 Printf.sprintf
+                   "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                    root=/dev/mapper/%s\""
+                   grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                   Config.sys_part_keyfile_name Config.sys_mapper_name;
+               ]
+           in
+           File.filter_map_lines ~file:default_grub_path update_grub_cmdline
        else print_endline "Skipped";
        config);
   reg ~name:"Setting hardened kernel as default boot entry"
@@ -806,12 +806,10 @@ let () =
         else
           let boot_path =
             match Disk_layout.get_boot_lower disk_layout with
-            | Clear { path} -> path
+            | Clear { path } -> path
             | Luks { path; _ } -> path
           in
-          let boot_disk =
-            Disk_utils.disk_of_part boot_path
-          in
+          let boot_disk = Disk_utils.disk_of_part boot_path in
           Arch_chroot.exec
             (Printf.sprintf
                "grub-install %s --target=i386-pc --boot-directory=%s --recheck %s"
@@ -864,8 +862,7 @@ let () =
              (fun _part ->
                 match Disk_layout.get_esp_lower disk_layout with
                 | Clear { path } -> path
-                | Luks { path; _ } -> path
-             )
+                | Luks { path; _ } -> path)
              disk_layout.esp
          in
          let esp_part_uuid =

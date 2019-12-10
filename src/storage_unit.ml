@@ -93,9 +93,7 @@ type pool = {
 }
 
 let make_pool () =
-  { mid_pool = Hashtbl.create 100;
-    lower_pool = Hashtbl.create 100;
-  }
+  { mid_pool = Hashtbl.create 100; lower_pool = Hashtbl.create 100 }
 
 let luks_version_to_int ver = match ver with `LuksV1 -> 1 | `LuksV2 -> 2
 
@@ -133,34 +131,33 @@ module Lower = struct
         mapper_name;
       }
     in
-    Luks { info; path;
-      state = `Luks_closed; }
+    Luks { info; path; state = `Luks_closed }
 
   let mount pool (t : t) =
     match Hashtbl.find pool.lower_pool t.lower_id with
     | Clear _ -> ()
-    | Luks luks ->
-      match luks.state with
-      | `Luks_opened -> ()
-      | `Luks_closed ->
-        let stdin, f =
-          Printf.sprintf "cryptsetup open --key-file=- %s %s" luks.path
-            luks.info.mapper_name
-          |> exec_with_stdin
-        in
-        output_string stdin luks.info.primary_key;
-        f ();
-        luks.state <- `Luks_opened
+    | Luks luks -> (
+        match luks.state with
+        | `Luks_opened -> ()
+        | `Luks_closed ->
+          let stdin, f =
+            Printf.sprintf "cryptsetup open --key-file=- %s %s" luks.path
+              luks.info.mapper_name
+            |> exec_with_stdin
+          in
+          output_string stdin luks.info.primary_key;
+          f ();
+          luks.state <- `Luks_opened )
 
   let unmount pool (t : t) =
     match Hashtbl.find pool.lower_pool t.lower_id with
     | Clear _ -> ()
-    | Luks luks ->
-      match luks.state with
-      | `Luks_closed -> ()
-      | `Luks_opened ->
-        Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec;
-        luks.state <- `Luks_closed
+    | Luks luks -> (
+        match luks.state with
+        | `Luks_closed -> ()
+        | `Luks_opened ->
+          Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec;
+          luks.state <- `Luks_closed )
 
   let set_up pool t =
     match Hashtbl.find pool.lower_pool t.lower_id with
@@ -220,15 +217,16 @@ end
 module Mid = struct
   let make_none () = None
 
-  let make_lvm ~lv_name ~vg_name ~size = Some { lv_name; vg_name; size}
+  let make_lvm ~lv_name ~vg_name ~size = Some { lv_name; vg_name; size }
 
   let set_up pool t : unit =
     let mid = Hashtbl.find pool.mid_pool t.mid_id in
     match mid with
     | None -> ()
     | Some lvm ->
-      Printf.sprintf "lvcreate -L %s %s -n %s" lvm.size
-        lvm.vg_name lvm.lv_name |> exec
+      Printf.sprintf "lvcreate -L %s %s -n %s" lvm.size lvm.vg_name
+        lvm.lv_name
+      |> exec
 end
 
 module Upper = struct

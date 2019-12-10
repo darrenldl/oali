@@ -1,1 +1,1 @@
-include Map.Make(Int)
+include Map.Make (Int)

@@ -19,9 +19,10 @@ type layout_choice =
   | Single_disk
   | Sys_part_plus_boot_plus_maybe_EFI
   | Sys_part_plus_usb_drive
-  (* | Lvm_single_disk
-   * | Lvm_boot_plus_maybe_EFI_plus_pv_s
-   * | Lvm_usb_drive_plus_pv_s *)
+
+(* | Lvm_single_disk
+ * | Lvm_boot_plus_maybe_EFI_plus_pv_s
+ * | Lvm_usb_drive_plus_pv_s *)
 
 (* let make_lower ~disk ~part_num = {disk; part_num} *)
 
@@ -169,16 +170,19 @@ type layout_choice =
 
 module Params = struct
   let esp_lower_id = 0
+
   let esp_mid_id = 0
 
   let boot_lower_id = 1
+
   let boot_mid_id = 1
 
   let sys_lower_id = 2
+
   let sys_mid_id = 2
 end
 
-let get_esp_lower layout=
+let get_esp_lower layout =
   Hashtbl.find layout.pool.lower_pool Params.esp_lower_id
 
 let get_boot_lower layout =
@@ -187,20 +191,16 @@ let get_boot_lower layout =
 let get_sys_lower layout =
   Hashtbl.find layout.pool.lower_pool Params.sys_lower_id
 
-let get_esp_mid layout =
-  Hashtbl.find layout.pool.mid_pool Params.esp_mid_id
+let get_esp_mid layout = Hashtbl.find layout.pool.mid_pool Params.esp_mid_id
 
-let get_boot_mid layout =
-  Hashtbl.find layout.pool.mid_pool Params.boot_mid_id
+let get_boot_mid layout = Hashtbl.find layout.pool.mid_pool Params.boot_mid_id
 
-let get_sys_mid layout =
-  Hashtbl.find layout.pool.mid_pool Params.sys_mid_id
+let get_sys_mid layout = Hashtbl.find layout.pool.mid_pool Params.sys_mid_id
 
 let make_esp (pool : Storage_unit.pool) ~path =
   let lower_id = Params.esp_lower_id in
   let mid_id = Params.esp_mid_id in
-  Hashtbl.add pool.lower_pool lower_id
-    (Storage_unit.Lower.make_clear ~path);
+  Hashtbl.add pool.lower_pool lower_id (Storage_unit.Lower.make_clear ~path);
   Hashtbl.add pool.mid_pool mid_id (Storage_unit.Mid.make_none ());
   let upper =
     Storage_unit.Upper.make ~mount_point:Config.esp_mount_point `Fat32
@@ -211,43 +211,42 @@ let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
   let lower_id = Params.boot_lower_id in
   let mid_id = Params.boot_mid_id in
   Hashtbl.add pool.lower_pool lower_id
-    (if encrypt then
-      let primary_key =
-        Misc_utils.ask_string_confirm
-          ~is_valid:(fun x -> x <> "")
-          "Please enter passphrase for encryption"
-      in
-      Storage_unit.Lower.make_luks ~primary_key ~add_secondary_key:true
-        ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
-    else Storage_unit.Lower.make_clear ~path
-   );
-  Hashtbl.add pool.mid_pool mid_id
-    (Storage_unit.Mid.make_none ());
+    ( if encrypt then
+        let primary_key =
+          Misc_utils.ask_string_confirm
+            ~is_valid:(fun x -> x <> "")
+            "Please enter passphrase for encryption"
+        in
+        Storage_unit.Lower.make_luks ~primary_key ~add_secondary_key:true
+          ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
+      else Storage_unit.Lower.make_clear ~path );
+  Hashtbl.add pool.mid_pool mid_id (Storage_unit.Mid.make_none ());
   let upper =
     Storage_unit.Upper.make ~mount_point:Config.boot_mount_point `Ext4
   in
   Storage_unit.make ~lower_id ~mid_id upper
 
-let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm path : Storage_unit.t * Storage_unit.t option * Storage_unit.t option =
+let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
+    path : Storage_unit.t * Storage_unit.t option * Storage_unit.t option =
   let lower_id = Params.sys_lower_id in
   let mid_id = Params.sys_mid_id in
   Hashtbl.add pool.lower_pool lower_id
-    (if encrypt then
-      Storage_unit.Lower.make_luks ~path ~mapper_name:Config.sys_mapper_name
-        enc_params
-    else Storage_unit.Lower.make_clear ~path);
+    ( if encrypt then
+        Storage_unit.Lower.make_luks ~path ~mapper_name:Config.sys_mapper_name
+          enc_params
+      else Storage_unit.Lower.make_clear ~path );
   Hashtbl.add pool.mid_pool mid_id
-    (if use_lvm then
-       let part_size_MiB = Disk_utils.disk_size_MiB path in
-       let size_to_use_MiB =
-         min
-           (Config.lvm_lv_root_frac *. part_size_MiB)
-           Config.lvm_lv_root_max_size_MiB
-       in
-       let size = Printf.sprintf "%dM" (int_of_float size_to_use_MiB) in
-       Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
-         ~vg_name:Config.lvm_vg_name ~size
-     else Storage_unit.Mid.make_none ());
+    ( if use_lvm then
+        let part_size_MiB = Disk_utils.disk_size_MiB path in
+        let size_to_use_MiB =
+          min
+            (Config.lvm_lv_root_frac *. part_size_MiB)
+            Config.lvm_lv_root_max_size_MiB
+        in
+        let size = Printf.sprintf "%dM" (int_of_float size_to_use_MiB) in
+        Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
+          ~vg_name:Config.lvm_vg_name ~size
+      else Storage_unit.Mid.make_none () );
   let upper =
     Storage_unit.Upper.make ~mount_point:Config.sys_mount_point `Ext4
   in
@@ -279,11 +278,9 @@ let mount_root_var_home layout =
   Option.iter (Storage_unit.mount layout.pool) layout.var;
   Option.iter (Storage_unit.mount layout.pool) layout.home
 
-let mount_boot layout =
-  Storage_unit.mount layout.pool layout.boot
+let mount_boot layout = Storage_unit.mount layout.pool layout.boot
 
-let mount_esp layout =
-  Option.iter (Storage_unit.mount layout.pool) layout.esp
+let mount_esp layout = Option.iter (Storage_unit.mount layout.pool) layout.esp
 
 let mount layout =
   mount_root_var_home layout;
