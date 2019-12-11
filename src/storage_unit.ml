@@ -132,7 +132,7 @@ module Lower = struct
         mapper_name;
       }
     in
-    Luks { info; path; state = `Luks_closed }
+    Luks { info; path; state = `Luks_fresh }
 
   let mount pool (t : t) =
     match Hashtbl.find pool.lower_pool t.lower_id with
