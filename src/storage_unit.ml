@@ -11,6 +11,13 @@ type luks_state =
   | `Luks_closed
   ]
 
+type lvm_state =
+  [
+    `Lvm_fresh
+  | `Lvm_activated
+  | `Lvm_deactivated
+  ]
+
 (* type inner =
  *   | Fs of fs
  *   | Lvm of lvm *)
@@ -90,11 +97,17 @@ type t = {
 
 type pool = {
   mid_pool : (int, mid) Hashtbl.t;
+  mid_active_count : (int, int) Hashtbl.t;
   lower_pool : (int, lower) Hashtbl.t;
+  lower_active_count : (int, int) Hashtbl.t;
 }
 
 let make_pool () =
-  { mid_pool = Hashtbl.create 100; lower_pool = Hashtbl.create 100 }
+  { mid_pool = Hashtbl.create 100;
+    mid_active_count = Hashtbl.create 100;
+    lower_pool = Hashtbl.create 100;
+    lower_active_count = Hashtbl.create 100;
+  }
 
 let luks_version_to_int ver = match ver with `LuksV1 -> 1 | `LuksV2 -> 2
 
@@ -109,6 +122,10 @@ let path_to_mid_for_upper pool (t : t) : string =
   match mid with
   | None -> path_to_lower_for_mid pool t
   | Some x -> Printf.sprintf "/dev/%s/%s" x.vg_name x.lv_name
+
+let incre_active_count tbl id =
+  let x = Hashtbl.find tbl id in
+  Hashtbl.add tbl id (x + 1)
 
 module Lower = struct
   let make_clear ~path : lower = Clear { path }
@@ -134,13 +151,16 @@ module Lower = struct
     in
     Luks { info; path; state = `Luks_fresh }
 
+  let incre_active_count pool (t : t) =
+    incre_active_count pool.lower_active_count t.lower_id
+
   let mount pool (t : t) =
     match Hashtbl.find pool.lower_pool t.lower_id with
     | Clear _ -> ()
     | Luks luks -> (
         match luks.state with
         | `Luks_fresh -> failwith "Expected LUKS to be set up already"
-        | `Luks_opened -> ()
+        | `Luks_opened -> incre_active_count pool t
         | `Luks_closed ->
           let stdin, f =
             Printf.sprintf "cryptsetup open --key-file=- %s %s" luks.path
@@ -149,6 +169,7 @@ module Lower = struct
           in
           output_string stdin luks.info.primary_key;
           f ();
+          incre_active_count pool t;
           luks.state <- `Luks_opened )
 
   let unmount pool (t : t) =
@@ -227,6 +248,12 @@ module Mid = struct
 
   let make_lvm ~lv_name ~vg_name ~size_MiB = Some { lv_name; vg_name; size_MiB }
 
+  let incre_active_count pool (t : t) =
+    incre_active_count pool.mid_active_count t.mid_id
+
+  let mount pool (t : t) =
+    Printf.sprintf "vgchange -ay %s" t.
+
   let set_up pool t : unit =
     let mid = Hashtbl.find pool.mid_pool t.mid_id in
     match mid with
@@ -271,7 +298,6 @@ let set_up pool t =
   Lower.mount pool t;
   Mid.set_up pool t;
   Upper.set_up pool t;
-  Lower.unmount pool t;
   t.state <- `Unmounted
 
 let mount pool t =

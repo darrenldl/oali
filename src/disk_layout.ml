@@ -211,7 +211,9 @@ let make_esp (pool : Storage_unit.pool) ~path =
   let lower_id = Params.esp_lower_id in
   let mid_id = Params.esp_mid_id in
   Hashtbl.add pool.lower_pool lower_id (Storage_unit.Lower.make_clear ~path);
+  Hashtbl.add pool.lower_active_count lower_id 0;
   Hashtbl.add pool.mid_pool mid_id (Storage_unit.Mid.make_none ());
+  Hashtbl.add pool.mid_active_count mid_id 0;
   let upper =
     Storage_unit.Upper.make ~mount_point:Config.esp_mount_point `Fat32
   in
@@ -230,7 +232,9 @@ let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
         Storage_unit.Lower.make_luks ~primary_key ~add_secondary_key:true
           ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
       else Storage_unit.Lower.make_clear ~path );
+  Hashtbl.add pool.lower_active_count lower_id 0;
   Hashtbl.add pool.mid_pool mid_id (Storage_unit.Mid.make_none ());
+  Hashtbl.add pool.mid_active_count mid_id 0;
   let upper =
     Storage_unit.Upper.make ~mount_point:Config.boot_mount_point `Ext4
   in
@@ -244,6 +248,7 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
         Storage_unit.Lower.make_luks ~path ~mapper_name:Config.sys_mapper_name
           enc_params
       else Storage_unit.Lower.make_clear ~path );
+  Hashtbl.add pool.lower_active_count lower_id 0;
   let root_upper =
     Storage_unit.Upper.make ~mount_point:Config.sys_mount_point `Ext4
   in
@@ -256,9 +261,11 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
           Config.lvm_lv_root_max_size_MiB
         |> int_of_float |> Option.some
       in
-      Hashtbl.add pool.mid_pool Params.root_mid_id
+      let mid_id = Params.root_mid_id in
+      Hashtbl.add pool.mid_pool mid_id
         (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
            ~vg_name:Config.lvm_vg_name ~size_MiB);
+      Hashtbl.add pool.mid_active_count mid_id 0;
       Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id root_upper
     in
     let var =
@@ -271,23 +278,29 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
       let upper =
         Storage_unit.Upper.make ~mount_point:Config.var_mount_point `Ext4
       in
-      Hashtbl.add pool.mid_pool Params.root_mid_id
+      let mid_id = Params.var_mid_id in
+      Hashtbl.add pool.mid_pool mid_id
         (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
            ~vg_name:Config.lvm_vg_name ~size_MiB);
+      Hashtbl.add pool.mid_active_count mid_id 0;
       Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id upper
     in
     let home =
       let upper =
         Storage_unit.Upper.make ~mount_point:Config.home_mount_point `Ext4
       in
-      Hashtbl.add pool.mid_pool Params.root_mid_id
+      let mid_id = Params.home_mid_id in
+      Hashtbl.add pool.mid_pool mid_id
         (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
            ~vg_name:Config.lvm_vg_name ~size_MiB:None);
+      Hashtbl.add pool.mid_active_count mid_id 0;
       Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id upper
     in
     (root, Some var, Some home)
   else (
-    Hashtbl.add pool.mid_pool Params.root_mid_id (Storage_unit.Mid.make_none ());
+    let mid_id = Params.root_mid_id in
+    Hashtbl.add pool.mid_pool mid_id (Storage_unit.Mid.make_none ());
+    Hashtbl.add pool.mid_active_count mid_id 0;
     ( Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id root_upper,
       None,
       None ) )
