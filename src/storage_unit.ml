@@ -67,7 +67,7 @@ type upper = {
 type lvm_lv = {
   lv_name : string;
   vg_name : string;
-  size : string;
+  size_MiB : int option;
 }
 
 type mid = lvm_lv option
@@ -217,15 +217,21 @@ end
 module Mid = struct
   let make_none () = None
 
-  let make_lvm ~lv_name ~vg_name ~size = Some { lv_name; vg_name; size }
+  let make_lvm ~lv_name ~vg_name ~size_MiB = Some { lv_name; vg_name; size_MiB }
 
   let set_up pool t : unit =
     let mid = Hashtbl.find pool.mid_pool t.mid_id in
     match mid with
     | None -> ()
     | Some lvm ->
-      Printf.sprintf "lvcreate -L %s %s -n %s" lvm.size lvm.vg_name
-        lvm.lv_name
+      (match lvm.size_MiB with
+       | None ->
+         Printf.sprintf "lvcreate -l 100%%FREE %s -n %s" lvm.vg_name
+           lvm.lv_name
+       | Some size_MiB ->
+         Printf.sprintf "lvcreate -L %dM %s -n %s" size_MiB lvm.vg_name
+           lvm.lv_name
+      )
       |> exec
 end
 

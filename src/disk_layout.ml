@@ -181,7 +181,10 @@ module Params = struct
 
   let sys_lower_id = 2
 
-  let sys_mid_id = 2
+  let root_mid_id = 3
+
+  let var_mid_id = 4
+  let home_mid_id = 5
 end
 
 let get_esp_lower layout =
@@ -197,7 +200,9 @@ let get_esp_mid layout = Hashtbl.find layout.pool.mid_pool Params.esp_mid_id
 
 let get_boot_mid layout = Hashtbl.find layout.pool.mid_pool Params.boot_mid_id
 
-let get_sys_mid layout = Hashtbl.find layout.pool.mid_pool Params.sys_mid_id
+let get_root_mid layout = Hashtbl.find layout.pool.mid_pool Params.root_mid_id
+let get_var_mid layout = Hashtbl.find layout.pool.mid_pool Params.var_mid_id
+let get_home_mid layout = Hashtbl.find layout.pool.mid_pool Params.home_mid_id
 
 let make_esp (pool : Storage_unit.pool) ~path =
   let lower_id = Params.esp_lower_id in
@@ -231,29 +236,62 @@ let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
 let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
     path : Storage_unit.t * Storage_unit.t option * Storage_unit.t option =
   let lower_id = Params.sys_lower_id in
-  let mid_id = Params.sys_mid_id in
   Hashtbl.add pool.lower_pool lower_id
     ( if encrypt then
         Storage_unit.Lower.make_luks ~path ~mapper_name:Config.sys_mapper_name
           enc_params
       else Storage_unit.Lower.make_clear ~path );
-  Hashtbl.add pool.mid_pool mid_id
-    ( if use_lvm then
-        let part_size_MiB = Disk_utils.disk_size_MiB path in
-        let size_to_use_MiB =
-          min
-            (Config.lvm_lv_root_frac *. part_size_MiB)
-            Config.lvm_lv_root_max_size_MiB
-        in
-        let size = Printf.sprintf "%dM" (int_of_float size_to_use_MiB) in
-        Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
-          ~vg_name:Config.lvm_vg_name ~size
-      else Storage_unit.Mid.make_none () );
-  let upper =
+  let root_upper =
     Storage_unit.Upper.make ~mount_point:Config.sys_mount_point `Ext4
   in
-  let root = Storage_unit.make ~lower_id ~mid_id upper in
-  (root, None, None)
+  if use_lvm then (
+    let part_size_MiB = Disk_utils.disk_size_MiB path in
+    let root =
+      let size_MiB =
+        min
+          (Config.lvm_lv_root_frac *. part_size_MiB)
+          Config.lvm_lv_root_max_size_MiB
+        |> int_of_float
+        |> Option.some
+      in
+      Hashtbl.add pool.mid_pool Params.root_mid_id
+        (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
+           ~vg_name:Config.lvm_vg_name ~size_MiB);
+      Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id root_upper
+    in
+    let var =
+      let size_MiB =
+        min
+          (Config.lvm_lv_var_frac *. part_size_MiB)
+          Config.lvm_lv_var_max_size_MiB
+        |> int_of_float
+        |> Option.some
+      in
+      let upper =
+        Storage_unit.Upper.make ~mount_point:Config.var_mount_point
+          `Ext4
+      in
+      Hashtbl.add pool.mid_pool Params.root_mid_id
+        (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
+           ~vg_name:Config.lvm_vg_name ~size_MiB);
+      Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id upper
+    in
+    let home =
+      let upper =
+        Storage_unit.Upper.make ~mount_point:Config.home_mount_point
+          `Ext4
+      in
+      Hashtbl.add pool.mid_pool Params.root_mid_id
+        (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
+           ~vg_name:Config.lvm_vg_name ~size_MiB:None);
+      Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id upper
+    in
+    (root, Some var, Some home)
+  ) else (
+    Hashtbl.add pool.mid_pool Params.root_mid_id
+      (Storage_unit.Mid.make_none ());
+    Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id root_upper, None, None
+  )
 
 let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
     ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt ~use_lvm =
@@ -268,7 +306,6 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
       ~use_lvm sys_part_path
   in
   let lvm_info =
-    (* let vg_pv_map = String_map.empty |> String_map.add Config.lvm_vg_name [sys_part_path] in *)
     if use_lvm then
       Some { vg_name = Config.lvm_vg_name; pv_name = sys_part_path }
     else None
