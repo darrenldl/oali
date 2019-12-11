@@ -267,8 +267,10 @@ end
 let set_up pool t =
   assert (t.state = `Fresh);
   Lower.set_up pool t;
+  Lower.mount pool t;
   Mid.set_up pool t;
   Upper.set_up pool t;
+  Lower.unmount pool t;
   t.state <- `Unmounted
 
 let mount pool t =
