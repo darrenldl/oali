@@ -546,7 +546,9 @@ let () =
         | Luks { info; _ } ->
           let keyfile_path =
             concat_file_names
-              [ Config.root_mount_point; "root"; Config.sys_part_keyfile_name ]
+              [
+                Config.root_mount_point; "root"; Config.sys_part_keyfile_name;
+              ]
           in
           let oc = open_out_bin keyfile_path in
           Fun.protect
@@ -624,7 +626,8 @@ let () =
   reg ~name:"Adjusting mkinitcpio.conf" (fun _answer_store config ->
       if Option.get config.encrypt_sys then (
         let file =
-          concat_file_names [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
+          concat_file_names
+            [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
         in
         let fill_in_FILES =
           let re = "^FILES" |> Re.Posix.re |> Re.compile in
@@ -730,7 +733,8 @@ let () =
        let encrypt = Option.get config.encrypt_boot in
        ( if encrypt then
            let default_grub_path =
-             concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
+             concat_file_names
+               [ Config.root_mount_point; "etc"; "default"; "grub" ]
            in
            let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
            let enable_grub_enable_cryptodisk =
@@ -832,9 +836,7 @@ let () =
         else
           let boot_path =
             let boot = Disk_layout.get_boot disk_layout in
-            match boot.l1 with
-            | Clear { path } -> path
-            | Luks { path; _ } -> path
+            match boot.l1 with Clear { path } -> path | Luks { path; _ } -> path
           in
           let boot_disk = Disk_utils.disk_of_part boot_path in
           Arch_chroot.exec
@@ -864,7 +866,8 @@ let () =
       config);
   reg ~name:"Creating oali files folder" (fun _answer_store config ->
       let dst_path =
-        concat_file_names [ Config.root_mount_point; Config.oali_files_dir_path ]
+        concat_file_names
+          [ Config.root_mount_point; Config.oali_files_dir_path ]
       in
       FileUtil.mkdir dst_path;
       config);
@@ -880,9 +883,7 @@ let () =
          let is_efi_mode = Option.get config.is_efi_mode in
          let boot_part_path =
            let boot = Disk_layout.get_boot disk_layout in
-           match boot.l1 with
-           | Clear { path } -> path
-           | Luks { path; _ } -> path
+           match boot.l1 with Clear { path } -> path | Luks { path; _ } -> path
          in
          let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
          let esp_part_path =
@@ -931,7 +932,8 @@ let () =
   reg ~name:"Copying useradd helper scripts" (fun _answer_store config ->
       let cwd = Sys.getcwd () in
       let dst_path =
-        concat_file_names [ Config.root_mount_point; Config.oali_files_dir_path ]
+        concat_file_names
+          [ Config.root_mount_point; Config.oali_files_dir_path ]
       in
       FileUtil.cp
         [
@@ -1217,7 +1219,8 @@ let () =
       config);
   reg ~name:"Setting oali files permissions" (fun _answer_store config ->
       let path =
-        concat_file_names [ Config.root_mount_point; Config.oali_files_dir_path ]
+        concat_file_names
+          [ Config.root_mount_point; Config.oali_files_dir_path ]
       in
       exec (Printf.sprintf "chmod 700 %s/*" path);
       config);

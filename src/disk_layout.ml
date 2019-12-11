@@ -170,7 +170,6 @@ type layout_choice =
 
 module Params = struct
   module Esp = struct
-
     let l1_id = 0
 
     let l2_id = 0
@@ -208,6 +207,7 @@ module Params = struct
     include Sys
 
     let l3_id = 4
+
     let l4_id = 4
   end
 
@@ -215,6 +215,7 @@ module Params = struct
     include Sys
 
     let l3_id = 5
+
     let l4_id = 5
   end
 end
@@ -255,11 +256,8 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
           enc_params
       else Storage_unit.L1.make_clear ~path );
   Hashtbl.add pool.l2_pool Params.Sys.l2_id
-    ( if use_lvm then
-        Storage_unit.L2.make_lvm ~vg_name:Config.lvm_vg_name
-      else
-        Storage_unit.L2.make_none ()
-    );
+    ( if use_lvm then Storage_unit.L2.make_lvm ~vg_name:Config.lvm_vg_name
+      else Storage_unit.L2.make_none () );
   let part_size_MiB = Disk_utils.disk_size_MiB path in
   let root =
     let open Params.Root in
@@ -273,9 +271,7 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
           in
           Storage_unit.L3.make_lvm ~lv_name:Config.lvm_lv_root_name
             ~vg_name:Config.lvm_vg_name ~size_MiB
-        else
-          Storage_unit.L3.make_none ()
-      );
+        else Storage_unit.L3.make_none () );
     Hashtbl.add pool.l4_pool l4_id
       (Storage_unit.L4.make ~mount_point:Config.root_mount_point `Ext4);
     Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id
@@ -294,11 +290,8 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
            ~vg_name:Config.lvm_vg_name ~size_MiB);
       Hashtbl.add pool.l4_pool l4_id
         (Storage_unit.L4.make ~mount_point:Config.var_mount_point `Ext4);
-      Some (
-        Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id)
-    )
-    else
-      None
+      Some (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id) )
+    else None
   in
   let home =
     if use_lvm then (
@@ -308,11 +301,8 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
            ~vg_name:Config.lvm_vg_name ~size_MiB:None);
       Hashtbl.add pool.l4_pool l4_id
         (Storage_unit.L4.make ~mount_point:Config.home_mount_point `Ext4);
-      Some (
-        Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id)
-    )
-    else
-      None
+      Some (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id) )
+    else None
   in
   (root, var, home)
 
@@ -390,17 +380,12 @@ let set_up layout =
        Storage_unit.set_up layout.pool home)
     layout.home
 
-let get_esp t =
-  Option.map (Storage_unit.instantiate_from_pool t.pool) t.esp
+let get_esp t = Option.map (Storage_unit.instantiate_from_pool t.pool) t.esp
 
-let get_boot t =
-  Storage_unit.instantiate_from_pool t.pool t.boot
+let get_boot t = Storage_unit.instantiate_from_pool t.pool t.boot
 
-let get_root t =
-  Storage_unit.instantiate_from_pool t.pool t.root
+let get_root t = Storage_unit.instantiate_from_pool t.pool t.root
 
-let get_var t =
-  Option.map (Storage_unit.instantiate_from_pool t.pool) t.var
+let get_var t = Option.map (Storage_unit.instantiate_from_pool t.pool) t.var
 
-let get_home t =
-  Option.map (Storage_unit.instantiate_from_pool t.pool) t.home
+let get_home t = Option.map (Storage_unit.instantiate_from_pool t.pool) t.home

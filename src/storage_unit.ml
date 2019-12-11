@@ -87,7 +87,8 @@ type pool = {
 }
 
 let make_pool () =
-  { l4_pool = Hashtbl.create 100;
+  {
+    l4_pool = Hashtbl.create 100;
     l3_pool = Hashtbl.create 100;
     l2_pool = Hashtbl.create 100;
     l1_pool = Hashtbl.create 100;
@@ -143,30 +144,28 @@ module L1 = struct
     let instance = instantiate_from_pool pool t in
     match instance.l1 with
     | Clear _ -> ()
-    | Luks luks -> (
-        assert luks.initialized;
-        if luks.active_use_count = 0 then (
-          let stdin, f =
-            Printf.sprintf "cryptsetup open --key-file=- %s %s" luks.path
-              luks.info.mapper_name
-            |> exec_with_stdin
-          in
-          output_string stdin luks.info.primary_key;
-          f () );
-        luks.active_use_count <- luks.active_use_count + 1
-      )
+    | Luks luks ->
+      assert luks.initialized;
+      if luks.active_use_count = 0 then (
+        let stdin, f =
+          Printf.sprintf "cryptsetup open --key-file=- %s %s" luks.path
+            luks.info.mapper_name
+          |> exec_with_stdin
+        in
+        output_string stdin luks.info.primary_key;
+        f () );
+      luks.active_use_count <- luks.active_use_count + 1
 
   let unmount pool (t : t) =
     let instance = instantiate_from_pool pool t in
     match instance.l1 with
     | Clear _ -> ()
-    | Luks luks -> (
-        assert luks.initialized;
-        assert (luks.active_use_count > 0);
-        luks.active_use_count <- luks.active_use_count - 1;
-        if luks.active_use_count = 0 then
-          Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec;
-      )
+    | Luks luks ->
+      assert luks.initialized;
+      assert (luks.active_use_count > 0);
+      luks.active_use_count <- luks.active_use_count - 1;
+      if luks.active_use_count = 0 then
+        Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec
 
   let set_up pool t =
     let instance = instantiate_from_pool pool t in
@@ -224,16 +223,14 @@ module L1 = struct
             in
             output_string stdin luks.info.primary_key;
             f () );
-        luks.initialized <- true
-      )
+        luks.initialized <- true )
 end
 
 module L2 = struct
   let make_none () : l2 = None
 
-  let make_lvm ~vg_name : l2 = Some { vg_name;
-                                               initialized = false;
-                                               active_use_count = 0}
+  let make_lvm ~vg_name : l2 =
+    Some { vg_name; initialized = false; active_use_count = 0 }
 
   let mount pool (t : t) =
     let instance = instantiate_from_pool pool t in
@@ -265,8 +262,7 @@ module L2 = struct
         let pv_name = path_to_l1_for_up pool t in
         Printf.sprintf "pvcreate -f %s" pv_name |> exec;
         Printf.sprintf "vgcreate -f %s %s" lvm_vg.vg_name pv_name |> exec;
-        lvm_vg.initialized <- true
-      );
+        lvm_vg.initialized <- true );
       unmount pool t
 end
 
@@ -274,19 +270,15 @@ module L3 = struct
   let make_none () : l3 = None
 
   let make_lvm ~lv_name ~vg_name ~size_MiB : l3 =
-    Some { lv_name;
-           vg_name;
-           size_MiB;
-           initialized = false;
-           active_use_count = 0;
-           }
+    Some
+      { lv_name; vg_name; size_MiB; initialized = false; active_use_count = 0 }
 
   let mount pool t : unit =
     let instance = instantiate_from_pool pool t in
     match instance.l3 with
     | None -> ()
     | Some lvm_lv ->
-        assert lvm_lv.initialized;
+      assert lvm_lv.initialized;
       if lvm_lv.active_use_count = 0 then
         Printf.sprintf "lvchange -ay %s" lvm_lv.lv_name |> exec;
       lvm_lv.active_use_count <- lvm_lv.active_use_count + 1
@@ -315,8 +307,7 @@ module L3 = struct
             Printf.sprintf "lvcreate -L %dM %s -n %s" size_MiB lvm_lv.vg_name
               lvm_lv.lv_name )
         |> exec;
-        lvm_lv.initialized <- true
-      );
+        lvm_lv.initialized <- true );
       unmount pool t
 end
 
@@ -345,8 +336,7 @@ module L4 = struct
         | `Ext4 -> Printf.sprintf "mkfs.ext4 %s" part
       in
       format_cmd l4.fs (path_to_l3_for_up pool t) |> exec;
-      l4.initialized <- true
-    )
+      l4.initialized <- true )
 end
 
 let mount pool t =
