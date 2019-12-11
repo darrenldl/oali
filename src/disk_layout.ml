@@ -331,26 +331,46 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
   in
   { root; var; home; esp; boot; lvm_info; pool }
 
-let mount_root_var_home layout =
-  Storage_unit.mount layout.pool layout.root;
-  Option.iter (Storage_unit.mount layout.pool) layout.var;
-  Option.iter (Storage_unit.mount layout.pool) layout.home
-
-let mount_boot layout = Storage_unit.mount layout.pool layout.boot
-
-let mount_esp layout = Option.iter (Storage_unit.mount layout.pool) layout.esp
-
 let mount layout =
-  mount_root_var_home layout;
-  mount_boot layout;
-  mount_esp layout
+  print_endline "Mounting root";
+  Storage_unit.mount layout.pool layout.root;
+  Option.iter
+    (fun var ->
+       print_endline "Mounting var";
+       Storage_unit.mount layout.pool var)
+    layout.var;
+  Option.iter
+    (fun home ->
+       print_endline "Mounting home";
+       Storage_unit.mount layout.pool home)
+    layout.home;
+  Storage_unit.mount layout.pool layout.boot;
+  Option.iter
+    (fun esp ->
+       print_endline "Mounting esp";
+       Storage_unit.mount layout.pool esp)
+    layout.esp
 
 let unmount layout =
-  Option.iter (Storage_unit.unmount layout.pool) layout.esp;
+  Option.iter
+    (fun esp ->
+       print_endline "Unmounting esp";
+       Storage_unit.unmount layout.pool esp)
+    layout.esp;
+  print_endline "Unmounting boot";
   Storage_unit.unmount layout.pool layout.boot;
+  print_endline "Unmounting root";
   Storage_unit.unmount layout.pool layout.root;
-  Option.iter (Storage_unit.unmount layout.pool) layout.var;
-  Option.iter (Storage_unit.unmount layout.pool) layout.home
+  Option.iter
+    (fun var ->
+       print_endline "Unmounting var";
+       Storage_unit.unmount layout.pool var)
+    layout.var;
+  Option.iter
+    (fun home ->
+       print_endline "Unmounting home";
+       Storage_unit.unmount layout.pool home)
+    layout.home
 
 let set_up layout =
   (* ESP *)
