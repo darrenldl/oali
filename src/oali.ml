@@ -113,7 +113,7 @@ let () =
         "If enabled, a single physical volume and a single volume group will \
          be created";
       print_endline
-        "/, /var, /home are then allocated as logical volumes in the volume \
+        "/, /var, and /home are then allocated as logical volumes in the volume \
          group";
       print_newline ();
       let use_lvm =
