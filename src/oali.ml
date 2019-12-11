@@ -935,42 +935,40 @@ let () =
            ~finally:(fun () -> close_out oc)
            (fun () -> output_string oc script) );
        config);
-  reg ~name:"Copying useradd helper scripts" (fun _answer_store config ->
-      let cwd = Sys.getcwd () in
-      let dst_path =
-        concat_file_names
-          [ Config.root_mount_point; Config.oali_files_dir_path ]
-      in
-      FileUtil.cp
-        [
-          concat_file_names
-            [
-              cwd;
-              Option.get config.oali_profiles_repo_name;
-              Option.get config.oali_profile;
-              "scripts";
-              Config.useradd_helper_as_powerful_name;
-            ];
-        ]
-        dst_path;
-      FileUtil.cp
-        [
-          concat_file_names
-            [
-              cwd;
-              Option.get config.oali_profiles_repo_name;
-              Option.get config.oali_profile;
-              "scripts";
-              Config.useradd_helper_restricted_name;
-            ];
-        ]
-        dst_path;
-      Unix.chmod
-        (concat_file_names [ dst_path; Config.useradd_helper_as_powerful_name ])
-        0o660;
-      Unix.chmod
-        (concat_file_names [ dst_path; Config.useradd_helper_restricted_name ])
-        0o660;
+  reg ~name:"Generating useradd helper scripts" (fun _answer_store config ->
+      (let dst_path =
+         concat_file_names
+           [
+             Config.root_mount_point;
+             Config.oali_files_dir_path;
+             Config.useradd_helper_restricted_name;
+           ]
+       in
+       let script = Useradd_helper_restricted_script_template.gen () in
+       let oc = open_out dst_path in
+       Fun.protect
+         ~finally:(fun () -> close_out oc)
+         (fun () -> output_string oc script);
+       Unix.chmod
+         (concat_file_names [ dst_path; Config.useradd_helper_restricted_name ])
+         0o660);
+      (let dst_path =
+         concat_file_names
+           [
+             Config.root_mount_point;
+             Config.oali_files_dir_path;
+             Config.useradd_helper_restricted_name;
+           ]
+       in
+       let script = Useradd_helper_as_powerful_script_template.gen () in
+       let oc = open_out dst_path in
+       Fun.protect
+         ~finally:(fun () -> close_out oc)
+         (fun () -> output_string oc script);
+       Unix.chmod
+         (concat_file_names
+            [ dst_path; Config.useradd_helper_as_powerful_name ])
+         0o660);
       config);
   reg ~name:"Ask if enable SSH server" (fun answer_store config ->
       let enable_ssh_server =
