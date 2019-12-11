@@ -6,7 +6,8 @@ type fs =
   ]
 
 type luks_state =
-  [ `Luks_opened
+  [ `Luks_fresh
+  | `Luks_opened
   | `Luks_closed
   ]
 
@@ -138,6 +139,7 @@ module Lower = struct
     | Clear _ -> ()
     | Luks luks -> (
         match luks.state with
+        | `Luks_fresh -> failwith "Expected LUKS to be set up already"
         | `Luks_opened -> ()
         | `Luks_closed ->
           let stdin, f =
@@ -154,6 +156,7 @@ module Lower = struct
     | Clear _ -> ()
     | Luks luks -> (
         match luks.state with
+        | `Luks_fresh -> failwith "Expected LUKS to be set up already"
         | `Luks_closed -> ()
         | `Luks_opened ->
           Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec;
@@ -163,55 +166,58 @@ module Lower = struct
     match Hashtbl.find pool.lower_pool t.lower_id with
     | Clear _ -> ()
     | Luks luks -> (
-        let iter_time_ms_opt =
-          Option.map
-            (fun x -> [ "--iter-time"; string_of_int x ])
-            luks.info.enc_params.iter_time_ms
-          |> Option.value ~default:[]
-        in
-        let key_size_bits_opt =
-          Option.map
-            (fun x -> [ "--key-size"; string_of_int x ])
-            luks.info.enc_params.key_size_bits
-          |> Option.value ~default:[]
-        in
-        (let stdin, f =
-           String.concat " "
-             ( [
-               "cryptsetup";
-               "luksFormat";
-               "-y";
-               "--key-file=-";
-               "--type";
-               Printf.sprintf "luks%d" (luks_version_to_int luks.info.version);
-             ]
-               @ iter_time_ms_opt @ key_size_bits_opt @ [ luks.path ] )
-           |> exec_with_stdin
-         in
-         output_string stdin luks.info.primary_key;
-         f ());
-        match luks.info.secondary_key with
-        | None -> ()
-        | Some secondary_key ->
-          let tmp_path = Filename.temp_file "installer" "secondary_key" in
-          let tmp_oc = open_out tmp_path in
-          Fun.protect
-            ~finally:(fun () -> close_out tmp_oc)
-            (fun () -> output_string tmp_oc secondary_key);
-          let stdin, f =
-            String.concat " "
-              [
-                "cryptsetup";
-                "luksAddKey";
-                "-y";
-                "--key-file=-";
-                luks.path;
-                tmp_path;
-              ]
-            |> exec_with_stdin
+        match luks.state with
+        | `Luks_opened | `Luks_closed -> ()
+        | `Luks_fresh ->
+          let iter_time_ms_opt =
+            Option.map
+              (fun x -> [ "--iter-time"; string_of_int x ])
+              luks.info.enc_params.iter_time_ms
+            |> Option.value ~default:[]
           in
-          output_string stdin luks.info.primary_key;
-          f () )
+          let key_size_bits_opt =
+            Option.map
+              (fun x -> [ "--key-size"; string_of_int x ])
+              luks.info.enc_params.key_size_bits
+            |> Option.value ~default:[]
+          in
+          (let stdin, f =
+             String.concat " "
+               ( [
+                 "cryptsetup";
+                 "luksFormat";
+                 "-y";
+                 "--key-file=-";
+                 "--type";
+                 Printf.sprintf "luks%d" (luks_version_to_int luks.info.version);
+               ]
+                 @ iter_time_ms_opt @ key_size_bits_opt @ [ luks.path ] )
+             |> exec_with_stdin
+           in
+           output_string stdin luks.info.primary_key;
+           f ());
+          match luks.info.secondary_key with
+          | None -> ()
+          | Some secondary_key ->
+            let tmp_path = Filename.temp_file "installer" "secondary_key" in
+            let tmp_oc = open_out tmp_path in
+            Fun.protect
+              ~finally:(fun () -> close_out tmp_oc)
+              (fun () -> output_string tmp_oc secondary_key);
+            let stdin, f =
+              String.concat " "
+                [
+                  "cryptsetup";
+                  "luksAddKey";
+                  "-y";
+                  "--key-file=-";
+                  luks.path;
+                  tmp_path;
+                ]
+              |> exec_with_stdin
+            in
+            output_string stdin luks.info.primary_key;
+            f () )
 end
 
 module Mid = struct
