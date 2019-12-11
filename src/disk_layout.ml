@@ -305,8 +305,12 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
       ~use_lvm sys_part_path
   in
   let lvm_info =
-    if use_lvm then
-      Some { vg_name = Config.lvm_vg_name; pv_name = sys_part_path }
+    if use_lvm then (
+      if sys_encrypt then
+        Some { vg_name = Config.lvm_vg_name; pv_name = Printf.sprintf "/dev/mapper/%s" Config.sys_mapper_name }
+      else
+        Some { vg_name = Config.lvm_vg_name; pv_name = sys_part_path }
+    )
     else None
   in
   { root; var; home; esp; boot; lvm_info; pool }
