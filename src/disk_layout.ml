@@ -358,11 +358,9 @@ let set_up layout =
   print_endline "Setting up boot";
   Storage_unit.set_up layout.pool layout.boot;
   (* system *)
-  (match get_sys_lower layout with
-   | Clear _ -> ()
-   | Luks _ ->
-     print_endline "Setting up LUKS for system volume";
-  );
+  ( match get_sys_lower layout with
+    | Clear _ -> ()
+    | Luks _ -> print_endline "Setting up LUKS for system volume" );
   Storage_unit.Lower.set_up layout.pool layout.root;
   (* LVM *)
   set_up_lvm layout;
