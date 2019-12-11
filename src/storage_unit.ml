@@ -35,6 +35,7 @@ type l4 = {
   mount_point : string;
   fs : fs;
   mutable initialized : bool;
+  mutable active_use_count : int;
 }
 
 type lvm_lv = {
@@ -312,20 +313,24 @@ module L3 = struct
 end
 
 module L4 = struct
-  let make ~mount_point fs = { mount_point; fs; initialized = false }
+  let make ~mount_point fs = { mount_point; fs; initialized = false; active_use_count = 0; }
 
   let mount pool (t : t) =
     let l4 = (instantiate_from_pool pool t).l4 in
     assert l4.initialized;
+    assert (l4.active_use_count = 0);
     let l3_path = path_to_l3_for_up pool t in
     ( try Unix.mkdir l4.mount_point 0o744
       with Unix.Unix_error (Unix.EEXIST, _, _) -> () );
-    Printf.sprintf "mount %s %s" l3_path l4.mount_point |> exec
+    Printf.sprintf "mount %s %s" l3_path l4.mount_point |> exec;
+    l4.active_use_count <- l4.active_use_count + 1
 
   let unmount pool (t : t) =
     let l4 = (instantiate_from_pool pool t).l4 in
     assert l4.initialized;
-    Printf.sprintf "umount %s" l4.mount_point |> exec
+    assert (l4.active_use_count = 1);
+    Printf.sprintf "umount %s" l4.mount_point |> exec;
+    l4.active_use_count <- l4.active_use_count - 1
 
   let set_up pool t =
     let l4 = (instantiate_from_pool pool t).l4 in
@@ -368,8 +373,11 @@ let set_up pool t =
   L3.mount pool t;
   (* L4 set up *)
   L4.set_up pool t;
-  t.state <- `Mounted;
-  unmount pool t
+  (* unmount L3 to L1 *)
+  L3.unmount pool t;
+  L2.unmount pool t;
+  L1.unmount pool t;
+  t.state <- `Unmounted
 
 let make ~l1_id ~l2_id ~l3_id ~l4_id =
   { l1_id; l2_id; l3_id; l4_id; state = `Fresh }
