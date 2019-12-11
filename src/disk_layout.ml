@@ -305,12 +305,14 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
       ~use_lvm sys_part_path
   in
   let lvm_info =
-    if use_lvm then (
+    if use_lvm then
       if sys_encrypt then
-        Some { vg_name = Config.lvm_vg_name; pv_name = Printf.sprintf "/dev/mapper/%s" Config.sys_mapper_name }
-      else
-        Some { vg_name = Config.lvm_vg_name; pv_name = sys_part_path }
-    )
+        Some
+          {
+            vg_name = Config.lvm_vg_name;
+            pv_name = Printf.sprintf "/dev/mapper/%s" Config.sys_mapper_name;
+          }
+      else Some { vg_name = Config.lvm_vg_name; pv_name = sys_part_path }
     else None
   in
   { root; var; home; esp; boot; lvm_info; pool }
@@ -340,13 +342,29 @@ let set_up_lvm layout =
   Option.iter
     (fun lvm_info ->
        Printf.sprintf "pvcreate -f %s" lvm_info.pv_name |> exec;
-       Printf.sprintf "vgcreate -f %s %s" lvm_info.vg_name lvm_info.pv_name |> exec)
+       Printf.sprintf "vgcreate -f %s %s" lvm_info.vg_name lvm_info.pv_name
+       |> exec)
     layout.lvm_info
 
 let set_up layout =
+  print_endline "Setting up LVM";
   set_up_lvm layout;
-  Option.iter (Storage_unit.set_up layout.pool) layout.esp;
+  Option.iter
+    (fun esp ->
+       print_endline "Setting up ESP";
+       Storage_unit.set_up layout.pool esp)
+    layout.esp;
+  print_endline "Setting up boot";
   Storage_unit.set_up layout.pool layout.boot;
+  print_endline "Setting up root";
   Storage_unit.set_up layout.pool layout.root;
-  Option.iter (Storage_unit.set_up layout.pool) layout.var;
-  Option.iter (Storage_unit.set_up layout.pool) layout.home
+  Option.iter
+    (fun var ->
+       print_endline "Setting up var";
+       Storage_unit.set_up layout.pool var)
+    layout.var;
+  Option.iter
+    (fun home ->
+       print_endline "Setting up home";
+       Storage_unit.set_up layout.pool home)
+    layout.home

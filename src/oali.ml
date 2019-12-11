@@ -113,8 +113,8 @@ let () =
         "If enabled, a single physical volume and a single volume group will \
          be created";
       print_endline
-        "/, /var, and /home are then allocated as logical volumes in the volume \
-         group";
+        "/, /var, and /home are then allocated as logical volumes in the \
+         volume group";
       print_newline ();
       let use_lvm =
         ask_yn_confirm ~answer_store
@@ -497,7 +497,7 @@ let () =
               ~sys_encrypt ~use_lvm
           in
           { config with disk_layout = Some disk_layout });
-  reg ~name:"Formatting disk" (fun _answer_store config ->
+  reg ~name:"Setting up disk" (fun _answer_store config ->
       let disk_layout = Option.get config.disk_layout in
       Disk_layout.set_up disk_layout;
       config);
