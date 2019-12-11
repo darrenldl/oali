@@ -218,7 +218,8 @@ module Lower = struct
                 |> exec_with_stdin
               in
               output_string stdin luks.info.primary_key;
-              f () ) )
+              f ();
+              luks.state <- `Luks_closed ) )
 end
 
 module Mid = struct
