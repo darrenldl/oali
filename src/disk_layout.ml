@@ -362,6 +362,7 @@ let set_up layout =
     | Clear _ -> ()
     | Luks _ -> print_endline "Setting up LUKS for system volume" );
   Storage_unit.Lower.set_up layout.pool layout.root;
+  Storage_unit.Lower.mount layout.pool layout.root;
   (* LVM *)
   set_up_lvm layout;
   (* root *)
