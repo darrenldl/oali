@@ -339,7 +339,8 @@ module L3 = struct
 end
 
 module L4 = struct
-  let make ~mount_point fs = { mount_point; fs; initialized = false; active_use_count = 0; }
+  let make ~mount_point fs =
+    { mount_point; fs; initialized = false; active_use_count = 0 }
 
   let mount pool (t : t) =
     let l4 = (instantiate_from_pool pool t).l4 in
