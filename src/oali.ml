@@ -499,7 +499,13 @@ let () =
           { config with disk_layout = Some disk_layout });
   reg ~name:"Setting up disk" (fun _answer_store config ->
       let disk_layout = Option.get config.disk_layout in
-      Disk_layout.set_up disk_layout;
+      (try
+         Disk_layout.set_up disk_layout
+       with
+       | e ->
+         Disk_layout.reset disk_layout;
+         raise e
+      );
       config);
   reg ~name:"Mounting disk" (fun _answer_store config ->
       (* let is_efi_mode = Option.get config.is_efi_mode in *)

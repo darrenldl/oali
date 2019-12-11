@@ -389,3 +389,10 @@ let get_root t = Storage_unit.instantiate_from_pool t.pool t.root
 let get_var t = Option.map (Storage_unit.instantiate_from_pool t.pool) t.var
 
 let get_home t = Option.map (Storage_unit.instantiate_from_pool t.pool) t.home
+
+let reset layout =
+  Option.iter (Storage_unit.reset layout.pool) layout.esp;
+  Storage_unit.reset layout.pool layout.boot;
+  Storage_unit.reset layout.pool layout.root;
+  Option.iter (Storage_unit.reset layout.pool) layout.var;
+  Option.iter (Storage_unit.reset layout.pool) layout.home

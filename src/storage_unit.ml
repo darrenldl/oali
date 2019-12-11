@@ -225,6 +225,14 @@ module L1 = struct
             output_string stdin luks.info.primary_key;
             f () );
         luks.initialized <- true )
+
+  let reset pool t =
+    let instance = instantiate_from_pool pool t in
+    match instance.l1 with
+    | Clear _ -> ()
+    | Luks luks ->
+      luks.initialized <- false;
+      luks.active_use_count <- 0
 end
 
 module L2 = struct
@@ -265,6 +273,14 @@ module L2 = struct
         Printf.sprintf "vgcreate -f %s %s" lvm_vg.vg_name pv_name |> exec;
         lvm_vg.initialized <- true );
       unmount pool t
+
+  let reset pool t =
+    let instance = instantiate_from_pool pool t in
+    match instance.l2 with
+    | None -> ()
+    | Some lvm_vg ->
+      lvm_vg.initialized <- false;
+      lvm_vg.active_use_count <- 0
 end
 
 module L3 = struct
@@ -310,6 +326,14 @@ module L3 = struct
         |> exec;
         lvm_lv.initialized <- true );
       unmount pool t
+
+  let reset pool t =
+    let instance = instantiate_from_pool pool t in
+    match instance.l3 with
+    | None -> ()
+    | Some lvm_lv ->
+      lvm_lv.initialized <- false;
+      lvm_lv.active_use_count <- 0
 end
 
 module L4 = struct
@@ -342,6 +366,11 @@ module L4 = struct
       in
       format_cmd l4.fs (path_to_l3_for_up pool t) |> exec;
       l4.initialized <- true )
+
+  let reset pool t =
+    let l4 = (instantiate_from_pool pool t).l4 in
+    l4.initialized <- false;
+    l4.active_use_count <- 0
 end
 
 let mount pool t =
@@ -381,3 +410,9 @@ let set_up pool t =
 
 let make ~l1_id ~l2_id ~l3_id ~l4_id =
   { l1_id; l2_id; l3_id; l4_id; state = `Fresh }
+
+let reset pool t =
+  L4.reset pool t;
+  L3.reset pool t;
+  L2.reset pool t;
+  L1.reset pool t
