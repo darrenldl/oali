@@ -32,9 +32,9 @@ let () =
   reg ~name:"Updating pacman database in live CD" (fun _answer_store config ->
       pacman "-Sy";
       config);
-  reg ~name:"Asking if want to use reflector" (fun _answer_store config ->
+  reg ~name:"Asking if want to use reflector" (fun answer_store config ->
       let use_reflector =
-        ask_yn
+        ask_yn ~answer_store
           "Do you want to use reflector to automatically sort mirrorlist by \
            rate"
         = `Yes
