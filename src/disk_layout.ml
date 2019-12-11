@@ -1,5 +1,3 @@
-open Proc_utils
-
 type lvm_info = {
   (* vg_pv_map : string list String_map.t; *)
   vg_name : string;
@@ -171,139 +169,152 @@ type layout_choice =
  *   { lower; upper; state = Unformatted } *)
 
 module Params = struct
-  let esp_lower_id = 0
+  module Esp = struct
 
-  let esp_mid_id = 0
+    let l1_id = 0
 
-  let boot_lower_id = 1
+    let l2_id = 0
 
-  let boot_mid_id = 1
+    let l3_id = 0
 
-  let sys_lower_id = 2
+    let l4_id = 0
+  end
 
-  let root_mid_id = 3
+  module Boot = struct
+    let l1_id = 1
 
-  let var_mid_id = 4
+    let l2_id = 1
 
-  let home_mid_id = 5
+    let l3_id = 1
+
+    let l4_id = 1
+  end
+
+  module Sys = struct
+    let l1_id = 2
+
+    let l2_id = 2
+  end
+
+  module Root = struct
+    include Sys
+
+    let l3_id = 3
+
+    let l4_id = 3
+  end
+
+  module Var = struct
+    include Sys
+
+    let l3_id = 4
+    let l4_id = 4
+  end
+
+  module Home = struct
+    include Sys
+
+    let l3_id = 5
+    let l4_id = 5
+  end
 end
 
-let get_esp_lower layout =
-  Hashtbl.find layout.pool.lower_pool Params.esp_lower_id
-
-let get_boot_lower layout =
-  Hashtbl.find layout.pool.lower_pool Params.boot_lower_id
-
-let get_sys_lower layout =
-  Hashtbl.find layout.pool.lower_pool Params.sys_lower_id
-
-let get_esp_mid layout = Hashtbl.find layout.pool.mid_pool Params.esp_mid_id
-
-let get_boot_mid layout = Hashtbl.find layout.pool.mid_pool Params.boot_mid_id
-
-let get_root_mid layout = Hashtbl.find layout.pool.mid_pool Params.root_mid_id
-
-let get_var_mid layout = Hashtbl.find layout.pool.mid_pool Params.var_mid_id
-
-let get_home_mid layout = Hashtbl.find layout.pool.mid_pool Params.home_mid_id
-
 let make_esp (pool : Storage_unit.pool) ~path =
-  let lower_id = Params.esp_lower_id in
-  let mid_id = Params.esp_mid_id in
-  Hashtbl.add pool.lower_pool lower_id (Storage_unit.Lower.make_clear ~path);
-  Hashtbl.add pool.lower_active_count lower_id 0;
-  Hashtbl.add pool.mid_pool mid_id (Storage_unit.Mid.make_none ());
-  Hashtbl.add pool.mid_active_count mid_id 0;
-  let upper =
-    Storage_unit.Upper.make ~mount_point:Config.esp_mount_point `Fat32
-  in
-  Storage_unit.make ~lower_id ~mid_id upper
+  let open Params.Esp in
+  Hashtbl.add pool.l1_pool l1_id (Storage_unit.L1.make_clear ~path);
+  Hashtbl.add pool.l2_pool l2_id (Storage_unit.L2.make_none ());
+  Hashtbl.add pool.l3_pool l3_id (Storage_unit.L3.make_none ());
+  Hashtbl.add pool.l4_pool l4_id
+    (Storage_unit.L4.make ~mount_point:Config.esp_mount_point `Fat32);
+  Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id
 
 let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
-  let lower_id = Params.boot_lower_id in
-  let mid_id = Params.boot_mid_id in
-  Hashtbl.add pool.lower_pool lower_id
+  let open Params.Boot in
+  Hashtbl.add pool.l1_pool l1_id
     ( if encrypt then
         let primary_key =
           Misc_utils.ask_string_confirm
             ~is_valid:(fun x -> x <> "")
             "Please enter passphrase for encryption"
         in
-        Storage_unit.Lower.make_luks ~primary_key ~add_secondary_key:true
+        Storage_unit.L1.make_luks ~primary_key ~add_secondary_key:true
           ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
-      else Storage_unit.Lower.make_clear ~path );
-  Hashtbl.add pool.lower_active_count lower_id 0;
-  Hashtbl.add pool.mid_pool mid_id (Storage_unit.Mid.make_none ());
-  Hashtbl.add pool.mid_active_count mid_id 0;
-  let upper =
-    Storage_unit.Upper.make ~mount_point:Config.boot_mount_point `Ext4
-  in
-  Storage_unit.make ~lower_id ~mid_id upper
+      else Storage_unit.L1.make_clear ~path );
+  Hashtbl.add pool.l2_pool l2_id (Storage_unit.L2.make_none ());
+  Hashtbl.add pool.l3_pool l3_id (Storage_unit.L3.make_none ());
+  Hashtbl.add pool.l4_pool l4_id
+    (Storage_unit.L4.make ~mount_point:Config.boot_mount_point `Ext4);
+  Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id
 
 let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
     path : Storage_unit.t * Storage_unit.t option * Storage_unit.t option =
-  let lower_id = Params.sys_lower_id in
-  Hashtbl.add pool.lower_pool lower_id
+  (* common components *)
+  Hashtbl.add pool.l1_pool Params.Sys.l1_id
     ( if encrypt then
-        Storage_unit.Lower.make_luks ~path ~mapper_name:Config.sys_mapper_name
+        Storage_unit.L1.make_luks ~path ~mapper_name:Config.sys_mapper_name
           enc_params
-      else Storage_unit.Lower.make_clear ~path );
-  Hashtbl.add pool.lower_active_count lower_id 0;
-  let root_upper =
-    Storage_unit.Upper.make ~mount_point:Config.sys_mount_point `Ext4
+      else Storage_unit.L1.make_clear ~path );
+  Hashtbl.add pool.l2_pool Params.Sys.l2_id
+    ( if use_lvm then
+        Storage_unit.L2.make_lvm ~vg_name:Config.lvm_vg_name
+      else
+        Storage_unit.L2.make_none ()
+    );
+  let part_size_MiB = Disk_utils.disk_size_MiB path in
+  let root =
+    let open Params.Root in
+    Hashtbl.add pool.l3_pool l3_id
+      ( if use_lvm then
+          let size_MiB =
+            min
+              (Config.lvm_lv_root_frac *. part_size_MiB)
+              Config.lvm_lv_root_max_size_MiB
+            |> int_of_float |> Option.some
+          in
+          Storage_unit.L3.make_lvm ~lv_name:Config.lvm_lv_root_name
+            ~vg_name:Config.lvm_vg_name ~size_MiB
+        else
+          Storage_unit.L3.make_none ()
+      );
+    Hashtbl.add pool.l4_pool l4_id
+      (Storage_unit.L4.make ~mount_point:Config.root_mount_point `Ext4);
+    Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id
   in
-  if use_lvm then
-    let part_size_MiB = Disk_utils.disk_size_MiB path in
-    let root =
-      let size_MiB =
-        min
-          (Config.lvm_lv_root_frac *. part_size_MiB)
-          Config.lvm_lv_root_max_size_MiB
-        |> int_of_float |> Option.some
-      in
-      let mid_id = Params.root_mid_id in
-      Hashtbl.add pool.mid_pool mid_id
-        (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
-           ~vg_name:Config.lvm_vg_name ~size_MiB);
-      Hashtbl.add pool.mid_active_count mid_id 0;
-      Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id root_upper
-    in
-    let var =
+  let var =
+    if use_lvm then (
+      let open Params.Var in
       let size_MiB =
         min
           (Config.lvm_lv_var_frac *. part_size_MiB)
           Config.lvm_lv_var_max_size_MiB
         |> int_of_float |> Option.some
       in
-      let upper =
-        Storage_unit.Upper.make ~mount_point:Config.var_mount_point `Ext4
-      in
-      let mid_id = Params.var_mid_id in
-      Hashtbl.add pool.mid_pool mid_id
-        (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
+      Hashtbl.add pool.l3_pool l3_id
+        (Storage_unit.L3.make_lvm ~lv_name:Config.lvm_lv_var_name
            ~vg_name:Config.lvm_vg_name ~size_MiB);
-      Hashtbl.add pool.mid_active_count mid_id 0;
-      Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id upper
-    in
-    let home =
-      let upper =
-        Storage_unit.Upper.make ~mount_point:Config.home_mount_point `Ext4
-      in
-      let mid_id = Params.home_mid_id in
-      Hashtbl.add pool.mid_pool mid_id
-        (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
+      Hashtbl.add pool.l4_pool l4_id
+        (Storage_unit.L4.make ~mount_point:Config.var_mount_point `Ext4);
+      Some (
+        Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id)
+    )
+    else
+      None
+  in
+  let home =
+    if use_lvm then (
+      let open Params.Home in
+      Hashtbl.add pool.l3_pool l3_id
+        (Storage_unit.L3.make_lvm ~lv_name:Config.lvm_lv_home_name
            ~vg_name:Config.lvm_vg_name ~size_MiB:None);
-      Hashtbl.add pool.mid_active_count mid_id 0;
-      Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id upper
-    in
-    (root, Some var, Some home)
-  else (
-    let mid_id = Params.root_mid_id in
-    Hashtbl.add pool.mid_pool mid_id (Storage_unit.Mid.make_none ());
-    Hashtbl.add pool.mid_active_count mid_id 0;
-    ( Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id root_upper,
-      None,
-      None ) )
+      Hashtbl.add pool.l4_pool l4_id
+        (Storage_unit.L4.make ~mount_point:Config.home_mount_point `Ext4);
+      Some (
+        Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id)
+    )
+    else
+      None
+  in
+  (root, var, home)
 
 let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
     ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt ~use_lvm =
@@ -351,15 +362,6 @@ let unmount layout =
   Option.iter (Storage_unit.unmount layout.pool) layout.var;
   Option.iter (Storage_unit.unmount layout.pool) layout.home
 
-let set_up_lvm layout =
-  Option.iter
-    (fun lvm_info ->
-       print_endline "Setting up LVM";
-       Printf.sprintf "pvcreate -f %s" lvm_info.pv_name |> exec;
-       Printf.sprintf "vgcreate -f %s %s" lvm_info.vg_name lvm_info.pv_name
-       |> exec)
-    layout.lvm_info
-
 let set_up layout =
   (* ESP *)
   Option.iter
@@ -371,13 +373,7 @@ let set_up layout =
   print_endline "Setting up boot";
   Storage_unit.set_up layout.pool layout.boot;
   (* system *)
-  ( match get_sys_lower layout with
-    | Clear _ -> ()
-    | Luks _ -> print_endline "Setting up LUKS for system volume" );
-  Storage_unit.Lower.set_up layout.pool layout.root;
-  Storage_unit.Lower.mount layout.pool layout.root;
-  (* LVM *)
-  set_up_lvm layout;
+  print_endline "Setting up system volume";
   (* root *)
   print_endline "Setting up root";
   Storage_unit.set_up layout.pool layout.root;
@@ -393,3 +389,18 @@ let set_up layout =
        print_endline "Setting up home";
        Storage_unit.set_up layout.pool home)
     layout.home
+
+let get_esp t =
+  Option.map (Storage_unit.instantiate_from_pool t.pool) t.esp
+
+let get_boot t =
+  Storage_unit.instantiate_from_pool t.pool t.boot
+
+let get_root t =
+  Storage_unit.instantiate_from_pool t.pool t.root
+
+let get_var t =
+  Option.map (Storage_unit.instantiate_from_pool t.pool) t.var
+
+let get_home t =
+  Option.map (Storage_unit.instantiate_from_pool t.pool) t.home

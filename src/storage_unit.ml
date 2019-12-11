@@ -49,7 +49,6 @@ type l3 = lvm_lv option
 
 type lvm_vg = {
   vg_name : string;
-  pv_name : string;
   mutable initialized : bool;
   mutable active_use_count : int;
 }
@@ -232,7 +231,7 @@ end
 module L2 = struct
   let make_none () : l2 = None
 
-  let make_lvm ~vg_name ~pv_name : l2 = Some { vg_name; pv_name;
+  let make_lvm ~vg_name : l2 = Some { vg_name;
                                                initialized = false;
                                                active_use_count = 0}
 
@@ -263,8 +262,9 @@ module L2 = struct
     | None -> ()
     | Some lvm_vg ->
       if not lvm_vg.initialized then (
-        Printf.sprintf "pvcreate -f %s" lvm_vg.pv_name |> exec;
-        Printf.sprintf "vgcreate -f %s %s" lvm_vg.vg_name lvm_vg.pv_name |> exec;
+        let pv_name = path_to_l1_for_up pool t in
+        Printf.sprintf "pvcreate -f %s" pv_name |> exec;
+        Printf.sprintf "vgcreate -f %s %s" lvm_vg.vg_name pv_name |> exec;
         lvm_vg.initialized <- true
       );
       unmount pool t

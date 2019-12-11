@@ -516,14 +516,14 @@ let () =
     (fun _answer_store config ->
        exec_no_capture
          (Printf.sprintf "pacstrap %s base linux base-devel"
-            Config.sys_mount_point);
+            Config.root_mount_point);
        config);
   reg ~name:"Generating fstab" (fun _answer_store config ->
       let fstab_path =
-        concat_file_names [ Config.sys_mount_point; "etc"; "fstab" ]
+        concat_file_names [ Config.root_mount_point; "etc"; "fstab" ]
       in
       exec
-        (Printf.sprintf "genfstab -U %s >> %s" Config.sys_mount_point
+        (Printf.sprintf "genfstab -U %s >> %s" Config.root_mount_point
            fstab_path);
       if
         Option.get config.disk_layout_choice
@@ -540,12 +540,13 @@ let () =
   reg ~name:"Installing keyfile for /" (fun _answer_store config ->
       if Option.get config.encrypt_sys then (
         let disk_layout = Option.get config.disk_layout in
-        match Disk_layout.get_sys_lower disk_layout with
+        let root = Disk_layout.get_root disk_layout in
+        match root.l1 with
         | Clear _ -> failwith "Expected LUKS"
         | Luks { info; _ } ->
           let keyfile_path =
             concat_file_names
-              [ Config.sys_mount_point; "root"; Config.sys_part_keyfile_name ]
+              [ Config.root_mount_point; "root"; Config.sys_part_keyfile_name ]
           in
           let oc = open_out_bin keyfile_path in
           Fun.protect
@@ -562,14 +563,15 @@ let () =
        then
          if Option.get config.encrypt_boot then (
            let disk_layout = Option.get config.disk_layout in
-           match Disk_layout.get_boot_lower disk_layout with
+           let boot = Disk_layout.get_boot disk_layout in
+           match boot.l1 with
            | Clear _ -> failwith "Expected LUKS"
            | Luks { info; _ } ->
              let boot_secondary_key = Option.get info.secondary_key in
              let keyfile_path =
                concat_file_names
                  [
-                   Config.sys_mount_point;
+                   Config.root_mount_point;
                    "root";
                    Config.boot_part_keyfile_name;
                  ]
@@ -586,7 +588,8 @@ let () =
        ( if Option.get config.encrypt_boot then
            let disk_layout = Option.get config.disk_layout in
            let boot_part_path =
-             match Disk_layout.get_boot_lower disk_layout with
+             let boot = Disk_layout.get_boot disk_layout in
+             match boot.l1 with
              | Clear _ -> failwith "Expected LUKS"
              | Luks { path; _ } -> path
            in
@@ -609,7 +612,7 @@ let () =
            in
            let crypttab_oc =
              open_out_gen [ Open_append; Open_text ] 0o600
-               (concat_file_names [ Config.sys_mount_point; "etc"; "crypttab" ])
+               (concat_file_names [ Config.root_mount_point; "etc"; "crypttab" ])
            in
            Fun.protect
              ~finally:(fun () -> close_out crypttab_oc)
@@ -621,7 +624,7 @@ let () =
   reg ~name:"Adjusting mkinitcpio.conf" (fun _answer_store config ->
       if Option.get config.encrypt_sys then (
         let file =
-          concat_file_names [ Config.sys_mount_point; "etc"; "mkinitcpio.conf" ]
+          concat_file_names [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
         in
         let fill_in_FILES =
           let re = "^FILES" |> Re.Posix.re |> Re.compile in
@@ -666,7 +669,7 @@ let () =
   reg ~name:"Setting up hostname" (fun _answer_store config ->
       let oc =
         open_out
-          (concat_file_names [ Config.sys_mount_point; "etc"; "hostname" ])
+          (concat_file_names [ Config.root_mount_point; "etc"; "hostname" ])
       in
       Fun.protect
         ~finally:(fun () -> close_out oc)
@@ -692,13 +695,13 @@ let () =
        in
        File.filter_map_lines
          ~file:
-           (concat_file_names [ Config.sys_mount_point; "etc"; "locale.gen" ])
+           (concat_file_names [ Config.root_mount_point; "etc"; "locale.gen" ])
          uncommet_locales);
       (let en_us_locale_conf = "en_US.UTF-8" in
        let en_dk_locale_conf = "en_DK.UTF-8" in
        let oc =
          open_out
-           (concat_file_names [ Config.sys_mount_point; "etc"; "locale.conf" ])
+           (concat_file_names [ Config.root_mount_point; "etc"; "locale.conf" ])
        in
        Fun.protect
          ~finally:(fun () -> close_out oc)
@@ -727,7 +730,7 @@ let () =
        let encrypt = Option.get config.encrypt_boot in
        ( if encrypt then
            let default_grub_path =
-             concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
+             concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
            in
            let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
            let enable_grub_enable_cryptodisk =
@@ -760,14 +763,15 @@ let () =
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
        if Option.get config.encrypt_sys then
-         match Disk_layout.get_sys_lower disk_layout with
+         let root = Disk_layout.get_root disk_layout in
+         match root.l1 with
          | Clear _ -> failwith "Expected LUKS"
          | Luks { path; _ } ->
            let sys_part_path = path in
            let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
            let default_grub_path =
              concat_file_names
-               [ Config.sys_mount_point; "etc"; "default"; "grub" ]
+               [ Config.root_mount_point; "etc"; "default"; "grub" ]
            in
            let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
            let re =
@@ -792,7 +796,7 @@ let () =
   reg ~name:"Setting hardened kernel as default boot entry"
     (fun _answer_store config ->
        let file =
-         concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
+         concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
        in
        ( if Option.get config.hardened_as_default then
            let update_grub_default =
@@ -827,7 +831,8 @@ let () =
                removable_flag Config.efi_dir)
         else
           let boot_path =
-            match Disk_layout.get_boot_lower disk_layout with
+            let boot = Disk_layout.get_boot disk_layout in
+            match boot.l1 with
             | Clear { path } -> path
             | Luks { path; _ } -> path
           in
@@ -859,7 +864,7 @@ let () =
       config);
   reg ~name:"Creating oali files folder" (fun _answer_store config ->
       let dst_path =
-        concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
+        concat_file_names [ Config.root_mount_point; Config.oali_files_dir_path ]
       in
       FileUtil.mkdir dst_path;
       config);
@@ -874,18 +879,19 @@ let () =
          let encrypt_boot = Option.get config.encrypt_boot in
          let is_efi_mode = Option.get config.is_efi_mode in
          let boot_part_path =
-           match Disk_layout.get_boot_lower disk_layout with
+           let boot = Disk_layout.get_boot disk_layout in
+           match boot.l1 with
            | Clear { path } -> path
            | Luks { path; _ } -> path
          in
          let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
          let esp_part_path =
            Option.map
-             (fun _part ->
-                match Disk_layout.get_esp_lower disk_layout with
+             (fun (esp : Storage_unit.instance) ->
+                match esp.l1 with
                 | Clear { path } -> path
                 | Luks { path; _ } -> path)
-             disk_layout.esp
+             (Disk_layout.get_esp disk_layout)
          in
          let esp_part_uuid =
            Option.map (fun path -> Disk_utils.uuid_of_dev path) esp_part_path
@@ -893,7 +899,7 @@ let () =
          (let dst_path =
             concat_file_names
               [
-                Config.sys_mount_point;
+                Config.root_mount_point;
                 Config.oali_files_dir_path;
                 Config.usb_key_mount_script_name;
               ]
@@ -909,7 +915,7 @@ let () =
          let dst_path =
            concat_file_names
              [
-               Config.sys_mount_point;
+               Config.root_mount_point;
                Config.oali_files_dir_path;
                Config.usb_key_unmount_script_name;
              ]
@@ -925,7 +931,7 @@ let () =
   reg ~name:"Copying useradd helper scripts" (fun _answer_store config ->
       let cwd = Sys.getcwd () in
       let dst_path =
-        concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
+        concat_file_names [ Config.root_mount_point; Config.oali_files_dir_path ]
       in
       FileUtil.cp
         [
@@ -990,7 +996,7 @@ let () =
         let user_name = Option.get config.user_name in
         let user_ssh_dir_path =
           concat_file_names
-            [ Config.sys_mount_point; "home"; user_name; ".ssh" ]
+            [ Config.root_mount_point; "home"; user_name; ".ssh" ]
         in
         FileUtil.mkdir user_ssh_dir_path;
         let user_ssh_authorized_keys_path =
@@ -1098,7 +1104,7 @@ let () =
         let dst_path =
           concat_file_names
             [
-              Config.sys_mount_point;
+              Config.root_mount_point;
               Config.oali_files_dir_path;
               Config.salt_exec_script_name;
             ]
@@ -1173,7 +1179,7 @@ let () =
             |> List.map (fun s -> concat_file_names [ salt_files_path; s ])
           in
           FileUtil.cp ~recurse:true folders
-            (Filename.concat Config.sys_mount_point "srv") );
+            (Filename.concat Config.root_mount_point "srv") );
       config);
   reg ~name:"Customising SaltStack files" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
@@ -1181,7 +1187,7 @@ let () =
           let user_name = Option.get config.user_name in
           let dst_path =
             concat_file_names
-              [ Config.sys_mount_point; "srv"; "pillar"; "user.sls" ]
+              [ Config.root_mount_point; "srv"; "pillar"; "user.sls" ]
           in
           let script = User_sls_template.gen ~user_name in
           let oc = open_out dst_path in
@@ -1198,7 +1204,7 @@ let () =
       let dst_path =
         concat_file_names
           [
-            Config.sys_mount_point;
+            Config.root_mount_point;
             Config.oali_files_dir_path;
             Config.oali_setup_note_name;
           ]
@@ -1211,7 +1217,7 @@ let () =
       config);
   reg ~name:"Setting oali files permissions" (fun _answer_store config ->
       let path =
-        concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
+        concat_file_names [ Config.root_mount_point; Config.oali_files_dir_path ]
       in
       exec (Printf.sprintf "chmod 700 %s/*" path);
       config);
