@@ -1,5 +1,3 @@
-open Sexplib.Std
-
 type task = Answer_store.t -> Task_config.t -> Task_config.t
 
 exception End_install

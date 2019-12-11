@@ -14,8 +14,11 @@ let retry ?answer_store (f : unit -> 'a retry) : 'a =
     match f () with
     | Stop x -> x
     | Retry ->
-      print_endline "Wiping answer store";
-      Option.iter Hashtbl.reset answer_store;
+      Option.iter
+        (fun store ->
+           print_endline "Wiping answer store";
+           Hashtbl.reset store)
+        answer_store;
       aux f
   in
   aux f

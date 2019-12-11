@@ -32,9 +32,9 @@ let () =
   reg ~name:"Updating pacman database in live CD" (fun _answer_store config ->
       pacman "-Sy";
       config);
-  reg ~name:"Asking if want to use reflector" (fun _answer_store config ->
+  reg ~name:"Asking if want to use reflector" (fun answer_store config ->
       let use_reflector =
-        ask_yn
+        ask_yn ~answer_store
           "Do you want to use reflector to automatically sort mirrorlist by \
            rate"
         = `Yes
@@ -108,9 +108,24 @@ let () =
         add_hardened = Some add_hardened;
         hardened_as_default = Some hardened_as_default;
       });
+  reg ~name:"Pick whether to enable LVM" (fun answer_store config ->
+      print_endline
+        "If enabled, a single physical volume and a single volume group will \
+         be created";
+      print_endline
+        "/, /var, and /home are then allocated as logical volumes in the \
+         volume group";
+      print_newline ();
+      let use_lvm =
+        ask_yn_confirm ~answer_store
+          "Enable LVM for system partitions (does not include /boot, /esp)?"
+        = `Yes
+      in
+      { config with use_lvm = Some use_lvm });
   reg ~name:"Pick whether to encrypt BOOT partition" (fun answer_store config ->
       let encrypt =
-        ask_yn ~answer_store "Enable encryption for BOOT (/boot) partition?"
+        ask_yn_confirm ~answer_store
+          "Enable encryption for BOOT (/boot) partition?"
         = `Yes
       in
       { config with encrypt_boot = Some encrypt });
@@ -147,21 +162,26 @@ let () =
            boot_part_enc_params = Some { iter_time_ms; key_size_bits };
          }
        else config);
-  reg ~name:"Pick whether to encrypt ROOT partition" (fun answer_store config ->
-      let encrypt_boot = Option.get config.encrypt_boot in
-      let encrypt =
-        retry ~answer_store (fun () ->
-            let encrypt_sys =
-              ask_yn ~answer_store "Enable encryption for ROOT (/) partition?"
-              = `Yes
-            in
-            if encrypt_boot && not encrypt_sys then
-              print_boxed_msg
-                "WARNING : boot was configured to be encrypted, but you \
-                 selected to not encrypt root";
-            confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
-      in
-      { config with encrypt_sys = Some encrypt });
+  reg
+    ~name:"Pick whether to encrypt ROOT partition (or physical volume for LVM)"
+    (fun answer_store config ->
+       let use_lvm = Option.get config.use_lvm in
+       let encrypt_boot = Option.get config.encrypt_boot in
+       let encrypt =
+         retry ~answer_store (fun () ->
+             let encrypt_sys =
+               ask_yn ~answer_store
+                 ( if use_lvm then "Enable encryption for system physical volume?"
+                   else "Enable encryption for ROOT (/) partition?" )
+               = `Yes
+             in
+             if encrypt_boot && not encrypt_sys then
+               print_boxed_msg
+                 "WARNING : boot was configured to be encrypted, but you \
+                  selected to not encrypt root";
+             confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
+       in
+       { config with encrypt_sys = Some encrypt });
   reg ~name:"Adjusting cryptsetup parameters for root partition"
     (fun answer_store config ->
        if Option.get config.encrypt_sys then
@@ -213,6 +233,7 @@ let () =
       { config with is_efi_mode = Some is_efi_mode });
   reg ~name:"Configure disk setup parameters" (fun _answer_store config ->
       let open Disk_layout in
+      let use_lvm = Option.get config.use_lvm in
       let boot_encrypt = Option.get config.encrypt_boot in
       let sys_encrypt = Option.get config.encrypt_sys in
       let is_efi_mode = Option.get config.is_efi_mode in
@@ -293,7 +314,7 @@ let () =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt
+              ~sys_encrypt ~use_lvm
           in
           { config with disk_layout = Some disk_layout } )
         else
@@ -316,7 +337,7 @@ let () =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt
+              ~sys_encrypt ~use_lvm
           in
           { config with disk_layout = Some disk_layout }
       | Sys_part_plus_boot_plus_maybe_EFI ->
@@ -370,7 +391,7 @@ let () =
           make_layout ~esp_part_path ~boot_part_path
             ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
             ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-            ~sys_encrypt
+            ~sys_encrypt ~use_lvm
         in
         { config with disk_layout = Some disk_layout }
       | Sys_part_plus_usb_drive ->
@@ -455,7 +476,7 @@ let () =
             make_layout ~esp_part_path ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt
+              ~sys_encrypt ~use_lvm
           in
           { config with disk_layout = Some disk_layout } )
         else
@@ -473,35 +494,39 @@ let () =
             make_layout ~esp_part_path:None ~boot_part_path
               ~boot_part_enc_params:config.boot_part_enc_params ~boot_encrypt
               ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
-              ~sys_encrypt
+              ~sys_encrypt ~use_lvm
           in
           { config with disk_layout = Some disk_layout });
-  reg ~name:"Formatting disk" (fun _answer_store config ->
+  reg ~name:"Setting up disk" (fun _answer_store config ->
       let disk_layout = Option.get config.disk_layout in
-      Disk_layout.format disk_layout;
+      ( try Disk_layout.set_up disk_layout
+        with e ->
+          Disk_layout.reset disk_layout;
+          raise e );
       config);
   reg ~name:"Mounting disk" (fun _answer_store config ->
-      let is_efi_mode = Option.get config.is_efi_mode in
+      (* let is_efi_mode = Option.get config.is_efi_mode in *)
       let disk_layout = Option.get config.disk_layout in
-      Disk_layout.mount_sys_part disk_layout;
-      Unix.mkdir Config.boot_mount_point 0o744;
-      Disk_layout.mount_boot_part disk_layout;
-      if is_efi_mode then (
-        Unix.mkdir Config.esp_mount_point 0o744;
-        Disk_layout.mount_esp_part disk_layout );
+      Disk_layout.mount disk_layout;
+      (* Disk_layout.mount_root_var_home disk_layout;
+       * Unix.mkdir Config.boot_mount_point 0o744;
+       * Disk_layout.mount_boot disk_layout;
+       * if is_efi_mode then (
+       *   Unix.mkdir Config.esp_mount_point 0o744;
+       *   Disk_layout.mount_esp disk_layout ); *)
       config);
   reg ~name:"Installing base system (base linux base-devel)"
     (fun _answer_store config ->
        exec_no_capture
          (Printf.sprintf "pacstrap %s base linux base-devel"
-            Config.sys_mount_point);
+            Config.root_mount_point);
        config);
   reg ~name:"Generating fstab" (fun _answer_store config ->
       let fstab_path =
-        concat_file_names [ Config.sys_mount_point; "etc"; "fstab" ]
+        concat_file_names [ Config.root_mount_point; "etc"; "fstab" ]
       in
       exec
-        (Printf.sprintf "genfstab -U %s >> %s" Config.sys_mount_point
+        (Printf.sprintf "genfstab -U %s >> %s" Config.root_mount_point
            fstab_path);
       if
         Option.get config.disk_layout_choice
@@ -518,20 +543,21 @@ let () =
   reg ~name:"Installing keyfile for /" (fun _answer_store config ->
       if Option.get config.encrypt_sys then (
         let disk_layout = Option.get config.disk_layout in
-        let sys_part_luks =
-          match disk_layout.sys_part.upper with
-          | Plain_FS _ -> failwith "Expected LUKS"
-          | Luks luks -> luks
-        in
-        let keyfile_path =
-          concat_file_names
-            [ Config.sys_mount_point; "root"; Config.sys_part_keyfile_name ]
-        in
-        let oc = open_out_bin keyfile_path in
-        Fun.protect
-          ~finally:(fun () -> close_out oc)
-          (fun () -> output_string oc sys_part_luks.primary_key);
-        Unix.chmod keyfile_path 0o000 )
+        let root = Disk_layout.get_root disk_layout in
+        match root.l1 with
+        | Clear _ -> failwith "Expected LUKS"
+        | Luks { info; _ } ->
+          let keyfile_path =
+            concat_file_names
+              [
+                Config.root_mount_point; "root"; Config.sys_part_keyfile_name;
+              ]
+          in
+          let oc = open_out_bin keyfile_path in
+          Fun.protect
+            ~finally:(fun () -> close_out oc)
+            (fun () -> output_string oc info.primary_key);
+          Unix.chmod keyfile_path 0o000 )
       else print_endline "Skipped";
       config);
   reg ~name:"Installing keyfile for unlocking /boot after boot"
@@ -542,28 +568,36 @@ let () =
        then
          if Option.get config.encrypt_boot then (
            let disk_layout = Option.get config.disk_layout in
-           let boot_part_luks =
-             match disk_layout.boot_part.upper with
-             | Plain_FS _ -> failwith "Expected LUKS"
-             | Luks luks -> luks
-           in
-           let boot_secondary_key = Option.get boot_part_luks.secondary_key in
-           let keyfile_path =
-             concat_file_names
-               [ Config.sys_mount_point; "root"; Config.boot_part_keyfile_name ]
-           in
-           let oc = open_out_bin keyfile_path in
-           Fun.protect
-             ~finally:(fun () -> close_out oc)
-             (fun () -> output_string oc boot_secondary_key);
-           () )
+           let boot = Disk_layout.get_boot disk_layout in
+           match boot.l1 with
+           | Clear _ -> failwith "Expected LUKS"
+           | Luks { info; _ } ->
+             let boot_secondary_key = Option.get info.secondary_key in
+             let keyfile_path =
+               concat_file_names
+                 [
+                   Config.root_mount_point;
+                   "root";
+                   Config.boot_part_keyfile_name;
+                 ]
+             in
+             let oc = open_out_bin keyfile_path in
+             Fun.protect
+               ~finally:(fun () -> close_out oc)
+               (fun () -> output_string oc boot_secondary_key);
+             () )
          else print_endline "Skipped";
        config);
   reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot"
     (fun _answer_store config ->
        ( if Option.get config.encrypt_boot then
            let disk_layout = Option.get config.disk_layout in
-           let boot_part_path = disk_layout.boot_part.lower.path in
+           let boot_part_path =
+             let boot = Disk_layout.get_boot disk_layout in
+             match boot.l1 with
+             | Clear _ -> failwith "Expected LUKS"
+             | Luks { path; _ } -> path
+           in
            let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
            let keyfile_path =
              concat_file_names [ "/root"; Config.boot_part_keyfile_name ]
@@ -583,7 +617,7 @@ let () =
            in
            let crypttab_oc =
              open_out_gen [ Open_append; Open_text ] 0o600
-               (concat_file_names [ Config.sys_mount_point; "etc"; "crypttab" ])
+               (concat_file_names [ Config.root_mount_point; "etc"; "crypttab" ])
            in
            Fun.protect
              ~finally:(fun () -> close_out crypttab_oc)
@@ -595,7 +629,8 @@ let () =
   reg ~name:"Adjusting mkinitcpio.conf" (fun _answer_store config ->
       if Option.get config.encrypt_sys then (
         let file =
-          concat_file_names [ Config.sys_mount_point; "etc"; "mkinitcpio.conf" ]
+          concat_file_names
+            [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
         in
         let fill_in_FILES =
           let re = "^FILES" |> Re.Posix.re |> Re.compile in
@@ -624,6 +659,9 @@ let () =
         File.filter_map_lines ~file fill_in_HOOKS )
       else print_endline "Skipped";
       config);
+  reg ~name:"Installing lvm2 onto system on disk" (fun _answer_store config ->
+      if Option.get config.use_lvm then Arch_chroot.install [ "lvm2" ];
+      config);
   reg ~name:"Recreating images" (fun _answer_store config ->
       if Option.get config.encrypt_sys then
         Arch_chroot.exec "mkinitcpio -p linux"
@@ -640,7 +678,7 @@ let () =
   reg ~name:"Setting up hostname" (fun _answer_store config ->
       let oc =
         open_out
-          (concat_file_names [ Config.sys_mount_point; "etc"; "hostname" ])
+          (concat_file_names [ Config.root_mount_point; "etc"; "hostname" ])
       in
       Fun.protect
         ~finally:(fun () -> close_out oc)
@@ -666,13 +704,13 @@ let () =
        in
        File.filter_map_lines
          ~file:
-           (concat_file_names [ Config.sys_mount_point; "etc"; "locale.gen" ])
+           (concat_file_names [ Config.root_mount_point; "etc"; "locale.gen" ])
          uncommet_locales);
       (let en_us_locale_conf = "en_US.UTF-8" in
        let en_dk_locale_conf = "en_DK.UTF-8" in
        let oc =
          open_out
-           (concat_file_names [ Config.sys_mount_point; "etc"; "locale.conf" ])
+           (concat_file_names [ Config.root_mount_point; "etc"; "locale.conf" ])
        in
        Fun.protect
          ~finally:(fun () -> close_out oc)
@@ -701,7 +739,8 @@ let () =
        let encrypt = Option.get config.encrypt_boot in
        ( if encrypt then
            let default_grub_path =
-             concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
+             concat_file_names
+               [ Config.root_mount_point; "etc"; "default"; "grub" ]
            in
            let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
            let enable_grub_enable_cryptodisk =
@@ -734,34 +773,40 @@ let () =
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
        if Option.get config.encrypt_sys then
-         let sys_part_path = disk_layout.sys_part.lower.path in
-         let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
-         let default_grub_path =
-           concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
-         in
-         let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
-         let re =
-           Printf.sprintf "^%s=" grub_cmdline_linux |> Re.Posix.re |> Re.compile
-         in
-         let update_grub_cmdline s =
-           match Re.matches re s with
-           | [] -> [ s ]
-           | _ ->
-             [
-               Printf.sprintf
-                 "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                  root=/dev/mapper/%s\""
-                 grub_cmdline_linux sys_part_uuid Config.root_mapper_name
-                 Config.sys_part_keyfile_name Config.root_mapper_name;
-             ]
-         in
-         File.filter_map_lines ~file:default_grub_path update_grub_cmdline
+         let root = Disk_layout.get_root disk_layout in
+         match root.l1 with
+         | Clear _ -> failwith "Expected LUKS"
+         | Luks { path; _ } ->
+           let sys_part_path = path in
+           let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
+           let default_grub_path =
+             concat_file_names
+               [ Config.root_mount_point; "etc"; "default"; "grub" ]
+           in
+           let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
+           let re =
+             Printf.sprintf "^%s=" grub_cmdline_linux
+             |> Re.Posix.re |> Re.compile
+           in
+           let update_grub_cmdline s =
+             match Re.matches re s with
+             | [] -> [ s ]
+             | _ ->
+               [
+                 Printf.sprintf
+                   "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                    root=/dev/mapper/%s\""
+                   grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                   Config.sys_part_keyfile_name Config.sys_mapper_name;
+               ]
+           in
+           File.filter_map_lines ~file:default_grub_path update_grub_cmdline
        else print_endline "Skipped";
        config);
   reg ~name:"Setting hardened kernel as default boot entry"
     (fun _answer_store config ->
        let file =
-         concat_file_names [ Config.sys_mount_point; "etc"; "default"; "grub" ]
+         concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
        in
        ( if Option.get config.hardened_as_default then
            let update_grub_default =
@@ -795,9 +840,11 @@ let () =
                 --bootloader-id=GRUB --recheck"
                removable_flag Config.efi_dir)
         else
-          let boot_disk =
-            Disk_utils.disk_of_part disk_layout.boot_part.lower.path
+          let boot_path =
+            let boot = Disk_layout.get_boot disk_layout in
+            match boot.l1 with Clear { path } -> path | Luks { path; _ } -> path
           in
+          let boot_disk = Disk_utils.disk_of_part boot_path in
           Arch_chroot.exec
             (Printf.sprintf
                "grub-install %s --target=i386-pc --boot-directory=%s --recheck %s"
@@ -825,7 +872,8 @@ let () =
       config);
   reg ~name:"Creating oali files folder" (fun _answer_store config ->
       let dst_path =
-        concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
+        concat_file_names
+          [ Config.root_mount_point; Config.oali_files_dir_path ]
       in
       FileUtil.mkdir dst_path;
       config);
@@ -839,12 +887,18 @@ let () =
        if use_usb_key then (
          let encrypt_boot = Option.get config.encrypt_boot in
          let is_efi_mode = Option.get config.is_efi_mode in
-         let boot_part_path = disk_layout.boot_part.lower.path in
+         let boot_part_path =
+           let boot = Disk_layout.get_boot disk_layout in
+           match boot.l1 with Clear { path } -> path | Luks { path; _ } -> path
+         in
          let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
          let esp_part_path =
            Option.map
-             (fun part -> Disk_layout.(part.lower.path))
-             disk_layout.esp_part
+             (fun (esp : Storage_unit.instance) ->
+                match esp.l1 with
+                | Clear { path } -> path
+                | Luks { path; _ } -> path)
+             (Disk_layout.get_esp disk_layout)
          in
          let esp_part_uuid =
            Option.map (fun path -> Disk_utils.uuid_of_dev path) esp_part_path
@@ -852,7 +906,7 @@ let () =
          (let dst_path =
             concat_file_names
               [
-                Config.sys_mount_point;
+                Config.root_mount_point;
                 Config.oali_files_dir_path;
                 Config.usb_key_mount_script_name;
               ]
@@ -868,7 +922,7 @@ let () =
          let dst_path =
            concat_file_names
              [
-               Config.sys_mount_point;
+               Config.root_mount_point;
                Config.oali_files_dir_path;
                Config.usb_key_unmount_script_name;
              ]
@@ -881,41 +935,40 @@ let () =
            ~finally:(fun () -> close_out oc)
            (fun () -> output_string oc script) );
        config);
-  reg ~name:"Copying useradd helper scripts" (fun _answer_store config ->
-      let cwd = Sys.getcwd () in
-      let dst_path =
-        concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
-      in
-      FileUtil.cp
-        [
-          concat_file_names
-            [
-              cwd;
-              Option.get config.oali_profiles_repo_name;
-              Option.get config.oali_profile;
-              "scripts";
-              Config.useradd_helper_as_powerful_name;
-            ];
-        ]
-        dst_path;
-      FileUtil.cp
-        [
-          concat_file_names
-            [
-              cwd;
-              Option.get config.oali_profiles_repo_name;
-              Option.get config.oali_profile;
-              "scripts";
-              Config.useradd_helper_restricted_name;
-            ];
-        ]
-        dst_path;
-      Unix.chmod
-        (concat_file_names [ dst_path; Config.useradd_helper_as_powerful_name ])
-        0o660;
-      Unix.chmod
-        (concat_file_names [ dst_path; Config.useradd_helper_restricted_name ])
-        0o660;
+  reg ~name:"Generating useradd helper scripts" (fun _answer_store config ->
+      (let dst_path =
+         concat_file_names
+           [
+             Config.root_mount_point;
+             Config.oali_files_dir_path;
+             Config.useradd_helper_restricted_name;
+           ]
+       in
+       let script = Useradd_helper_restricted_script_template.gen () in
+       let oc = open_out dst_path in
+       Fun.protect
+         ~finally:(fun () -> close_out oc)
+         (fun () -> output_string oc script);
+       Unix.chmod
+         (concat_file_names [ dst_path; Config.useradd_helper_restricted_name ])
+         0o660);
+      (let dst_path =
+         concat_file_names
+           [
+             Config.root_mount_point;
+             Config.oali_files_dir_path;
+             Config.useradd_helper_restricted_name;
+           ]
+       in
+       let script = Useradd_helper_as_powerful_script_template.gen () in
+       let oc = open_out dst_path in
+       Fun.protect
+         ~finally:(fun () -> close_out oc)
+         (fun () -> output_string oc script);
+       Unix.chmod
+         (concat_file_names
+            [ dst_path; Config.useradd_helper_as_powerful_name ])
+         0o660);
       config);
   reg ~name:"Ask if enable SSH server" (fun answer_store config ->
       let enable_ssh_server =
@@ -949,7 +1002,7 @@ let () =
         let user_name = Option.get config.user_name in
         let user_ssh_dir_path =
           concat_file_names
-            [ Config.sys_mount_point; "home"; user_name; ".ssh" ]
+            [ Config.root_mount_point; "home"; user_name; ".ssh" ]
         in
         FileUtil.mkdir user_ssh_dir_path;
         let user_ssh_authorized_keys_path =
@@ -1057,7 +1110,7 @@ let () =
         let dst_path =
           concat_file_names
             [
-              Config.sys_mount_point;
+              Config.root_mount_point;
               Config.oali_files_dir_path;
               Config.salt_exec_script_name;
             ]
@@ -1132,7 +1185,7 @@ let () =
             |> List.map (fun s -> concat_file_names [ salt_files_path; s ])
           in
           FileUtil.cp ~recurse:true folders
-            (Filename.concat Config.sys_mount_point "srv") );
+            (Filename.concat Config.root_mount_point "srv") );
       config);
   reg ~name:"Customising SaltStack files" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
@@ -1140,7 +1193,7 @@ let () =
           let user_name = Option.get config.user_name in
           let dst_path =
             concat_file_names
-              [ Config.sys_mount_point; "srv"; "pillar"; "user.sls" ]
+              [ Config.root_mount_point; "srv"; "pillar"; "user.sls" ]
           in
           let script = User_sls_template.gen ~user_name in
           let oc = open_out dst_path in
@@ -1157,7 +1210,7 @@ let () =
       let dst_path =
         concat_file_names
           [
-            Config.sys_mount_point;
+            Config.root_mount_point;
             Config.oali_files_dir_path;
             Config.oali_setup_note_name;
           ]
@@ -1170,7 +1223,8 @@ let () =
       config);
   reg ~name:"Setting oali files permissions" (fun _answer_store config ->
       let path =
-        concat_file_names [ Config.sys_mount_point; Config.oali_files_dir_path ]
+        concat_file_names
+          [ Config.root_mount_point; Config.oali_files_dir_path ]
       in
       exec (Printf.sprintf "chmod 700 %s/*" path);
       config);

@@ -1,4 +1,4 @@
-let sys_mount_point = "/mnt"
+let root_mount_point = "/mnt"
 
 let esp_part_size_MiB = 550.0
 
@@ -6,7 +6,7 @@ let esp_part_max_frac = 0.25
 
 let efi_dir = "/efi"
 
-let esp_mount_point = Misc_utils.concat_file_names [ sys_mount_point; efi_dir ]
+let esp_mount_point = Misc_utils.concat_file_names [ root_mount_point; efi_dir ]
 
 let boot_part_size_MiB = 500.0
 
@@ -17,7 +17,7 @@ let total_disk_usage_frac = 0.75
 let boot_dir = "/boot"
 
 let boot_mount_point =
-  Misc_utils.concat_file_names [ sys_mount_point; boot_dir ]
+  Misc_utils.concat_file_names [ root_mount_point; boot_dir ]
 
 let sys_part_keyfile_name = "sys_part.key"
 
@@ -25,13 +25,13 @@ let boot_part_keyfile_name = "boot_part.key"
 
 let boot_mapper_name = "crypt_boot"
 
-let root_mapper_name = "crypt_root"
+let sys_mapper_name = "crypt_sys"
 
 let livecd_mirrorlist_path =
   Misc_utils.concat_file_names [ "/etc"; "pacman.d"; "mirrorlist" ]
 
 let etc_ssh_dir_path =
-  Misc_utils.concat_file_names [ sys_mount_point; "etc"; "ssh" ]
+  Misc_utils.concat_file_names [ root_mount_point; "etc"; "ssh" ]
 
 let oali_files_dir_path = Misc_utils.concat_file_names [ "/root"; "oali_pack" ]
 
@@ -73,3 +73,23 @@ let mkinitcpio_hooks =
     "filesystems";
     "fsck";
   ]
+
+let lvm_vg_name = "vg_sys"
+
+let lvm_lv_root_name = "lv_root"
+
+let lvm_lv_root_frac = 0.25
+
+let lvm_lv_root_max_size_MiB = 25. *. 1024.
+
+let lvm_lv_var_name = "lv_var"
+
+let lvm_lv_var_frac = 0.25
+
+let lvm_lv_var_max_size_MiB = 20. *. 1024.
+
+let lvm_lv_home_name = "lv_home"
+
+let var_mount_point = Misc_utils.concat_file_names [ root_mount_point; "var" ]
+
+let home_mount_point = Misc_utils.concat_file_names [ root_mount_point; "home" ]
