@@ -659,6 +659,9 @@ let () =
         File.filter_map_lines ~file fill_in_HOOKS )
       else print_endline "Skipped";
       config);
+  reg ~name:"Installing lvm2 onto system on disk" (fun _answer_store config ->
+      if Option.get config.use_lvm then Arch_chroot.install [ "lvm2" ];
+      config);
   reg ~name:"Recreating images" (fun _answer_store config ->
       if Option.get config.encrypt_sys then
         Arch_chroot.exec "mkinitcpio -p linux"
