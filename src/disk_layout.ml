@@ -341,28 +341,41 @@ let unmount layout =
 let set_up_lvm layout =
   Option.iter
     (fun lvm_info ->
+       print_endline "Setting up LVM";
        Printf.sprintf "pvcreate -f %s" lvm_info.pv_name |> exec;
        Printf.sprintf "vgcreate -f %s %s" lvm_info.vg_name lvm_info.pv_name
        |> exec)
     layout.lvm_info
 
 let set_up layout =
-  print_endline "Setting up LVM";
-  set_up_lvm layout;
+  (* ESP *)
   Option.iter
     (fun esp ->
        print_endline "Setting up ESP";
        Storage_unit.set_up layout.pool esp)
     layout.esp;
+  (* boot *)
   print_endline "Setting up boot";
   Storage_unit.set_up layout.pool layout.boot;
+  (* system *)
+  (match get_sys_lower layout with
+   | Clear _ -> ()
+   | Luks _ ->
+     print_endline "Setting up LUKS for system volume";
+  );
+  Storage_unit.Lower.set_up layout.pool layout.root;
+  (* LVM *)
+  set_up_lvm layout;
+  (* root *)
   print_endline "Setting up root";
   Storage_unit.set_up layout.pool layout.root;
+  (* var *)
   Option.iter
     (fun var ->
        print_endline "Setting up var";
        Storage_unit.set_up layout.pool var)
     layout.var;
+  (* home *)
   Option.iter
     (fun home ->
        print_endline "Setting up home";
