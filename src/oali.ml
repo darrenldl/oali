@@ -118,7 +118,7 @@ let () =
       print_newline ();
       let use_lvm =
         ask_yn_confirm ~answer_store
-          "Enable LUKS for system partitions (does not include /boot, /esp)?"
+          "Enable LVM for system partitions (does not include /boot, /esp)?"
         = `Yes
       in
       { config with use_lvm = Some use_lvm });
