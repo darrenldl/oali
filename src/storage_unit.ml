@@ -271,9 +271,9 @@ module L2 = struct
         let pv_name = path_to_l1_for_up pool t in
         Printf.sprintf "pvcreate -f %s" pv_name |> exec;
         Printf.sprintf "vgcreate -f %s %s" lvm_vg.vg_name pv_name |> exec;
-        lvm_vg.initialized <- true );
-      lvm_vg.active_use_count <- lvm_vg.active_use_count + 1;
-      unmount pool t
+        lvm_vg.initialized <- true;
+        lvm_vg.active_use_count <- lvm_vg.active_use_count + 1;
+        unmount pool t )
 
   let reset pool t =
     let instance = instantiate_from_pool pool t in
@@ -325,9 +325,9 @@ module L3 = struct
             Printf.sprintf "lvcreate -L %dM %s -n %s" size_MiB lvm_lv.vg_name
               lvm_lv.lv_name )
         |> exec;
-        lvm_lv.initialized <- true );
-      lvm_lv.active_use_count <- lvm_lv.active_use_count + 1;
-      unmount pool t
+        lvm_lv.initialized <- true;
+        lvm_lv.active_use_count <- lvm_lv.active_use_count + 1;
+        unmount pool t )
 
   let reset pool t =
     let instance = instantiate_from_pool pool t in
