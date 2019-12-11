@@ -109,22 +109,23 @@ let () =
         hardened_as_default = Some hardened_as_default;
       });
   reg ~name:"Pick whether to enable LVM" (fun answer_store config ->
-      print_endline "If enabled, a single physical volume and a single volume group will be created";
-      print_endline "/, /var, /home are then allocated as logical volumes in the volume group";
+      print_endline
+        "If enabled, a single physical volume and a single volume group will \
+         be created";
+      print_endline
+        "/, /var, /home are then allocated as logical volumes in the volume \
+         group";
       print_newline ();
       let use_lvm =
         ask_yn_confirm ~answer_store
           "Enable LUKS for system partitions (does not include /boot, /esp)?"
-          = `Yes
+        = `Yes
       in
-      {
-        config with
-        use_lvm = Some use_lvm
-      }
-    );
+      { config with use_lvm = Some use_lvm });
   reg ~name:"Pick whether to encrypt BOOT partition" (fun answer_store config ->
       let encrypt =
-        ask_yn_confirm ~answer_store "Enable encryption for BOOT (/boot) partition?"
+        ask_yn_confirm ~answer_store
+          "Enable encryption for BOOT (/boot) partition?"
         = `Yes
       in
       { config with encrypt_boot = Some encrypt });
@@ -161,24 +162,26 @@ let () =
            boot_part_enc_params = Some { iter_time_ms; key_size_bits };
          }
        else config);
-  reg ~name:"Pick whether to encrypt ROOT partition (or physical volume for LVM)" (fun answer_store config ->
-      let use_lvm = Option.get config.use_lvm in
-      let encrypt_boot = Option.get config.encrypt_boot in
-      let encrypt =
-        retry ~answer_store (fun () ->
-            let encrypt_sys =
-              ask_yn ~answer_store
-                (if use_lvm then "Enable encryption for system physical volume?"
-                 else "Enable encryption for ROOT (/) partition?")
-              = `Yes
-            in
-            if encrypt_boot && not encrypt_sys then
-              print_boxed_msg
-                "WARNING : boot was configured to be encrypted, but you \
-                 selected to not encrypt root";
-            confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
-      in
-      { config with encrypt_sys = Some encrypt });
+  reg
+    ~name:"Pick whether to encrypt ROOT partition (or physical volume for LVM)"
+    (fun answer_store config ->
+       let use_lvm = Option.get config.use_lvm in
+       let encrypt_boot = Option.get config.encrypt_boot in
+       let encrypt =
+         retry ~answer_store (fun () ->
+             let encrypt_sys =
+               ask_yn ~answer_store
+                 ( if use_lvm then "Enable encryption for system physical volume?"
+                   else "Enable encryption for ROOT (/) partition?" )
+               = `Yes
+             in
+             if encrypt_boot && not encrypt_sys then
+               print_boxed_msg
+                 "WARNING : boot was configured to be encrypted, but you \
+                  selected to not encrypt root";
+             confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
+       in
+       { config with encrypt_sys = Some encrypt });
   reg ~name:"Adjusting cryptsetup parameters for root partition"
     (fun answer_store config ->
        if Option.get config.encrypt_sys then

@@ -184,6 +184,7 @@ module Params = struct
   let root_mid_id = 3
 
   let var_mid_id = 4
+
   let home_mid_id = 5
 end
 
@@ -201,7 +202,9 @@ let get_esp_mid layout = Hashtbl.find layout.pool.mid_pool Params.esp_mid_id
 let get_boot_mid layout = Hashtbl.find layout.pool.mid_pool Params.boot_mid_id
 
 let get_root_mid layout = Hashtbl.find layout.pool.mid_pool Params.root_mid_id
+
 let get_var_mid layout = Hashtbl.find layout.pool.mid_pool Params.var_mid_id
+
 let get_home_mid layout = Hashtbl.find layout.pool.mid_pool Params.home_mid_id
 
 let make_esp (pool : Storage_unit.pool) ~path =
@@ -244,15 +247,14 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
   let root_upper =
     Storage_unit.Upper.make ~mount_point:Config.sys_mount_point `Ext4
   in
-  if use_lvm then (
+  if use_lvm then
     let part_size_MiB = Disk_utils.disk_size_MiB path in
     let root =
       let size_MiB =
         min
           (Config.lvm_lv_root_frac *. part_size_MiB)
           Config.lvm_lv_root_max_size_MiB
-        |> int_of_float
-        |> Option.some
+        |> int_of_float |> Option.some
       in
       Hashtbl.add pool.mid_pool Params.root_mid_id
         (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
@@ -264,12 +266,10 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
         min
           (Config.lvm_lv_var_frac *. part_size_MiB)
           Config.lvm_lv_var_max_size_MiB
-        |> int_of_float
-        |> Option.some
+        |> int_of_float |> Option.some
       in
       let upper =
-        Storage_unit.Upper.make ~mount_point:Config.var_mount_point
-          `Ext4
+        Storage_unit.Upper.make ~mount_point:Config.var_mount_point `Ext4
       in
       Hashtbl.add pool.mid_pool Params.root_mid_id
         (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
@@ -278,8 +278,7 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
     in
     let home =
       let upper =
-        Storage_unit.Upper.make ~mount_point:Config.home_mount_point
-          `Ext4
+        Storage_unit.Upper.make ~mount_point:Config.home_mount_point `Ext4
       in
       Hashtbl.add pool.mid_pool Params.root_mid_id
         (Storage_unit.Mid.make_lvm ~lv_name:Config.lvm_lv_name_sys
@@ -287,11 +286,11 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
       Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id upper
     in
     (root, Some var, Some home)
-  ) else (
-    Hashtbl.add pool.mid_pool Params.root_mid_id
-      (Storage_unit.Mid.make_none ());
-    Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id root_upper, None, None
-  )
+  else (
+    Hashtbl.add pool.mid_pool Params.root_mid_id (Storage_unit.Mid.make_none ());
+    ( Storage_unit.make ~lower_id ~mid_id:Params.root_mid_id root_upper,
+      None,
+      None ) )
 
 let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
     ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt ~use_lvm =

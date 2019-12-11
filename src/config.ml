@@ -86,6 +86,6 @@ let lvm_lv_var_frac = 0.25
 
 let lvm_lv_var_max_size_MiB = 20. *. 1024.
 
-let var_mount_point = Misc_utils.concat_file_names [sys_mount_point; "var"]
+let var_mount_point = Misc_utils.concat_file_names [ sys_mount_point; "var" ]
 
-let home_mount_point = Misc_utils.concat_file_names [sys_mount_point; "home"]
+let home_mount_point = Misc_utils.concat_file_names [ sys_mount_point; "home" ]
