@@ -382,10 +382,10 @@ end
 
 let mount pool t =
   assert (t.state = `Unmounted);
-  L4.mount pool t;
-  L3.mount pool t;
-  L2.mount pool t;
   L1.mount pool t;
+  L2.mount pool t;
+  L3.mount pool t;
+  L4.mount pool t;
   t.state <- `Mounted
 
 let unmount pool t =
