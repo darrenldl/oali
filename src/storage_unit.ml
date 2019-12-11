@@ -241,6 +241,11 @@ module Upper = struct
   let mount pool (t : t) =
     let { mount_point; _ } = t.upper in
     let mid_path = path_to_mid_for_upper pool t in
+    (try
+       Unix.mkdir mount_point 0o744
+     with
+     | Unix.Unix_error (Unix.EEXIST, _, _) -> ()
+    );
     Printf.sprintf "mount %s %s" mid_path mount_point |> exec
 
   let unmount (t : t) =

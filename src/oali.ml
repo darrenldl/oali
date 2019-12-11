@@ -499,14 +499,15 @@ let () =
       Disk_layout.set_up disk_layout;
       config);
   reg ~name:"Mounting disk" (fun _answer_store config ->
-      let is_efi_mode = Option.get config.is_efi_mode in
+      (* let is_efi_mode = Option.get config.is_efi_mode in *)
       let disk_layout = Option.get config.disk_layout in
-      Disk_layout.mount_root_var_home disk_layout;
-      Unix.mkdir Config.boot_mount_point 0o744;
-      Disk_layout.mount_boot disk_layout;
-      if is_efi_mode then (
-        Unix.mkdir Config.esp_mount_point 0o744;
-        Disk_layout.mount_esp disk_layout );
+      Disk_layout.mount disk_layout;
+      (* Disk_layout.mount_root_var_home disk_layout;
+       * Unix.mkdir Config.boot_mount_point 0o744;
+       * Disk_layout.mount_boot disk_layout;
+       * if is_efi_mode then (
+       *   Unix.mkdir Config.esp_mount_point 0o744;
+       *   Disk_layout.mount_esp disk_layout ); *)
       config);
   reg ~name:"Installing base system (base linux base-devel)"
     (fun _answer_store config ->
