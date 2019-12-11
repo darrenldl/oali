@@ -418,4 +418,5 @@ let reset pool t =
   L4.reset pool t;
   L3.reset pool t;
   L2.reset pool t;
-  L1.reset pool t
+  L1.reset pool t;
+  t.state <- `Fresh
