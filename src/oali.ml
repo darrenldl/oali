@@ -974,19 +974,16 @@ let () =
       if Option.get config.enable_ssh_server then
         Arch_chroot.install [ "openssh" ];
       config);
-  reg ~name:"Copying sshd_config over" (fun _answer_store config ->
-      let sshd_config_path_in_repo =
-        Misc_utils.concat_file_names
-          [
-            Option.get config.oali_profiles_repo_name;
-            Option.get config.oali_profile;
-            "saltstack";
-            "salt";
-            "sshd_config";
-          ]
-      in
-      if Option.get config.enable_ssh_server then
-        FileUtil.cp [ sshd_config_path_in_repo ] Config.etc_ssh_dir_path;
+  reg ~name:"Generating sshd_config" (fun _answer_store config ->
+      if Option.get config.enable_ssh_server then (
+        let script = Sshd_config_template.gen ~port:Config.sshd_port in
+        let dst_path = Config.etc_ssh_dir_path in
+        let oc = open_out dst_path in
+        Fun.protect
+          ~finally:(fun () -> close_out oc)
+          (fun () -> output_string oc script);
+        Unix.chmod dst_path 0o600
+      );
       config);
   reg ~name:"Enabling SSH server" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then

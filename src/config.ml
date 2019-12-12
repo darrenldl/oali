@@ -55,8 +55,7 @@ let oali_setup_note_name = "oali_setup_note"
 
 let oali_answer_store_dir = "oali_answers"
 
-let sshd_config_path_in_repo =
-  Misc_utils.concat_file_names [ "saltstack"; "salt"; "sshd_config" ]
+let sshd_port = 40010
 
 let mkinitcpio_hooks =
   [
