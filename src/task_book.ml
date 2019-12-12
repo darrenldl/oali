@@ -111,7 +111,7 @@ let rec run_single_task task_book task_record : unit =
         s1 s2;
       (false, task_book.config)
     | FileUtilCP.CpError msg ->
-      Printf.printf "FileUtilCP.CpError : %s" msg;
+      Printf.printf "FileUtilCP.CpError : %s\n" msg;
       (false, task_book.config)
   in
   if not succeeded then (
