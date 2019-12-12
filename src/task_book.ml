@@ -107,8 +107,8 @@ let rec run_single_task task_book task_record : unit =
       Printf.printf "Sys_error : %s\n" msg;
       (false, task_book.config)
     | Unix.Unix_error (err, s1, s2) ->
-      Printf.printf "Unix.Unix_error : %s, %s, %s" (Unix.error_message err) s1
-        s2;
+      Printf.printf "Unix.Unix_error : %s, %s, %s\n" (Unix.error_message err)
+        s1 s2;
       (false, task_book.config)
     | FileUtilCP.CpError msg ->
       Printf.printf "FileUtilCP.CpError : %s" msg;
