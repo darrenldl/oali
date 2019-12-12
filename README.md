@@ -9,20 +9,39 @@ It is difficult to test an installer targeting a live CD automatically, so right
 Please do **NOT** use it for anything serious yet
 
 ## Description
-Oali is an installer written in OCaml which sets up a Arch Linux installation with following variations
+Oali is an installer written in OCaml which sets up a (very opinionated) Arch Linux installation with following variations
+
 - 3 disk layouts
+
   - Single system disk (installer does partitioning for you)
+
   - You pick the partitions for `/boot`, `/` etc manually 
+
   - Single system partition (you pick an existing partition on a disk) + USB key (partitioned by installer)
+
 - Optional full disk encryption
+
+- Optional LVM for system partitions (`/`, `/var`, `/home` are installed in separate logical volumes if enabled)
+
 - Optional `linux-hardened` kernel installation
 
+You may pick any combination of above choices and Oali will adjust the parameters accordingly
+
 Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below for more information.
+
+## On the topic of "installer"
+I am aware that installers are not supported by the Arch community in any form, and also
+calling Oali an "installer" is very arguable as it's very opinionated
+
+The original intention was defintely for personal use, but it's published here just in case it's useful to someone else
+as well who largely wants a similar setup, or willing to customise via forking
 
 ## TODO
 
 - Resumable installation (add logging etc)
+
 - Static config file support (so installation is fully automated)
+
 - Whatever is missing from the original script
 
 ## Getting started
@@ -41,10 +60,12 @@ Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics
 
   - If you are using **Single system partition + USB key**
 
-    - then you need to have a single system partition ready somewhere, and a USB key. The USB key will be automatically partitioned, during which the partition table will be wiped
+    - then you need to have a single system partition ready somewhere, and a USB key.
+      The USB key will be automatically partitioned, during which the partition table will be wiped
 
 #### Space requirement
-- USB key
+
+- USB key (if needed)
 
   - 1 GiB USB drive will be very sufficient
 
@@ -62,26 +83,40 @@ Simply run the downloaded binary (i.e. `oali`) in live CD to get started
 The static binaries of the installer are built via Travis CI using `ocaml/opam2:alpine` Docker image, and should be able to run on Arch Linux live CD without any further setup
 
 ## Answers to some "Why?" questions
+
 - Why make an installer to begin with?
-  - Mildly complex FDE setups are really laborious and error prone to set up, and unfortunately you can't really afford human errors during these set ups depending on the nature of installation
-  - A lot of decisions are based on information processing and very mechanical - no point in having a human devoted to repeating deterministic steps
+
+  - Mildly complex FDE setups, especially with LVM, are really laborious and error prone to set up,
+    and unfortunately you can't really afford human errors during these set ups depending on the nature of installation
+
+  - A lot of decisions are based on information processing and very mechanical - no point in having a human
+    devoted to repeating deterministic steps
+
 - Why not bash?
+
   - The previous iteration of this installer was written in bash actually (see `laptop/scripts/setup.sh` at [oali-profiles](https://github.com/darrenldl/oali-profiles)), but it only supported one disk layout and always have encryption
+
   - Adding a lot of decision making code and information handling code to bash code was really tedious and difficult
+
 - Why OCaml?
+
   - I know I can do OCaml/Rust reasonably fast, but slow to a crawl with dynamically typed langs
+
   - Here is mostly a lot of handling of immutable information (e.g. processing of system information), where Rust doesn't carry a significant advantage over OCaml, and the overhead didn't seem worth it to me
 
 ## Specifics
 #### Answer remembering
 Oali remembers answers to dialogues when appropriate, i.e. for relatively static information like
+
 - choice of editor
+
 - hostname
+
 - encryption parameters
 
-The answers are stored in `oali-answers` folder in JSON format. Each task has its own JSON file with a normalised/santised name.
+The answers are stored in `oali_answers` folder in JSON format. Each task has its own JSON file with a normalised/santised name.
 
-In each session, Oali will try to retrieve answers from the folder and the specific JSOn file. Missing files/answers are treated
+In each session, Oali will try to retrieve answers from the folder and the specific JSON file. Missing files/answers are treated
 as not being stored.
 
 #### EFI/BIOS
@@ -95,7 +130,9 @@ Oali automatically adjusts dialogues and settings based on whether the live CD i
 **Single system partition + USB key** - Oali installs ESP (if in EFI mode), boot partitions on USB key, and root partition on the provided system partition
 
 Oali will handle encryption along with other chores automatically with the disk layout you picked in mind, such as
+
 - `/etc/crypttab` is set up only if the disk layout doesn't involve USB key
+
 - `/etc/fstab` is adjusted to disable USB key partitions if disk layout uses USB key so USB key can be unplugged safely after booting up
 
 #### Encryption specifics
@@ -104,6 +141,11 @@ Oali uses `cryptsetup` for LUKS setup, and allows you to toggle boot and root pa
 Note that it will ask for confirmation if you choose to encrypt boot but not root (which is a silly setup, but it'll oblige if you insist)
 
 Oali will ask if you want to change the key iteration time (in millisec) and key size
+
+#### LVM
+Oali sets up a single physical volume and a single volume group, and three logical volumes for `/`, `/var`, and `/home`
+
+The physical volume is encrypted if LUKS is enabled
 
 #### Boot partitions
 If in UEFI mode, the ESP partition will be present but is never (and cannot be) encrypted
@@ -115,7 +157,7 @@ If system/root partition encryption is enabled, then it is protected by a keyfil
 
 The keyfile is stored in within the initramfs in boot partition
 
-#### Profiles
+#### Profiles (optional)
 Profiles are prebuilt SaltStack and script files that might suit specific scenarios
 
 Currently there are 2 profiles
