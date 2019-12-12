@@ -773,6 +773,7 @@ let () =
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
        if Option.get config.encrypt_sys then
+         let use_lvm = Option.get config.use_lvm in
          let root = Disk_layout.get_root disk_layout in
          match root.l1 with
          | Clear _ -> failwith "Expected LUKS"
@@ -792,13 +793,23 @@ let () =
              match Re.matches re s with
              | [] -> [ s ]
              | _ ->
-               [
-                 Printf.sprintf
-                   "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                    root=/dev/mapper/%s\""
-                   grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                   Config.sys_part_keyfile_name Config.sys_mapper_name;
-               ]
+               if use_lvm then
+                 [
+                   Printf.sprintf
+                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                      root=/dev/%s/%s\""
+                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                     Config.sys_part_keyfile_name Config.lvm_vg_name
+                     Config.sys_mapper_name;
+                 ]
+               else
+                 [
+                   Printf.sprintf
+                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                      root=/dev/mapper/%s\""
+                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                     Config.sys_part_keyfile_name Config.sys_mapper_name;
+                 ]
            in
            File.filter_map_lines ~file:default_grub_path update_grub_cmdline
        else print_endline "Skipped";
