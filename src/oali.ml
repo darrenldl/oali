@@ -800,7 +800,7 @@ let () =
                       root=/dev/%s/%s\""
                      grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
                      Config.sys_part_keyfile_name Config.lvm_vg_name
-                     Config.sys_mapper_name;
+                     Config.lvm_lv_root_name;
                  ]
                else
                  [
