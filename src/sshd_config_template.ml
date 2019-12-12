@@ -1,5 +1,6 @@
-let gen ~port = Printf.sprintf {|
-#	$OpenBSD: sshd_config,v 1.102 2018/02/16 02:32:40 djm Exp $
+let gen ~port =
+  Printf.sprintf
+    {|#	$OpenBSD: sshd_config,v 1.102 2018/02/16 02:32:40 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -119,4 +120,4 @@ Subsystem	sftp	/usr/lib/ssh/sftp-server
 #	PermitTTY no
 #	ForceCommand cvs server
 |}
-port
+    port

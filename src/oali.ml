@@ -982,8 +982,7 @@ let () =
         Fun.protect
           ~finally:(fun () -> close_out oc)
           (fun () -> output_string oc script);
-        Unix.chmod dst_path 0o600
-      );
+        Unix.chmod dst_path 0o600 );
       config);
   reg ~name:"Enabling SSH server" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then
