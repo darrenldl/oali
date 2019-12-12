@@ -949,15 +949,13 @@ let () =
        Fun.protect
          ~finally:(fun () -> close_out oc)
          (fun () -> output_string oc script);
-       Unix.chmod
-         (concat_file_names [ dst_path; Config.useradd_helper_restricted_name ])
-         0o660);
+       Unix.chmod dst_path 0o660);
       (let dst_path =
          concat_file_names
            [
              Config.root_mount_point;
              Config.oali_files_dir_path;
-             Config.useradd_helper_restricted_name;
+             Config.useradd_helper_as_powerful_name;
            ]
        in
        let script = Useradd_helper_as_powerful_script_template.gen () in
@@ -965,10 +963,7 @@ let () =
        Fun.protect
          ~finally:(fun () -> close_out oc)
          (fun () -> output_string oc script);
-       Unix.chmod
-         (concat_file_names
-            [ dst_path; Config.useradd_helper_as_powerful_name ])
-         0o660);
+       Unix.chmod dst_path 0o660);
       config);
   reg ~name:"Ask if enable SSH server" (fun answer_store config ->
       let enable_ssh_server =
