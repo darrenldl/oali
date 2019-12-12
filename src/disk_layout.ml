@@ -359,18 +359,18 @@ let unmount layout =
     layout.esp;
   print_endline "Unmounting boot";
   Storage_unit.unmount layout.pool layout.boot;
-  print_endline "Unmounting root";
-  Storage_unit.unmount layout.pool layout.root;
+  Option.iter
+    (fun home ->
+       print_endline "Unmounting home";
+       Storage_unit.unmount layout.pool home)
+    layout.home;
   Option.iter
     (fun var ->
        print_endline "Unmounting var";
        Storage_unit.unmount layout.pool var)
     layout.var;
-  Option.iter
-    (fun home ->
-       print_endline "Unmounting home";
-       Storage_unit.unmount layout.pool home)
-    layout.home
+  print_endline "Unmounting root";
+  Storage_unit.unmount layout.pool layout.root
 
 let set_up layout =
   (* ESP *)
