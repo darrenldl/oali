@@ -31,9 +31,10 @@ Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics
 
 ## On the topic of "installer"
 I am aware that installers are not supported by the Arch community in any form, and also
-calling Oali an "installer" is very arguable as it's very opinionated
+calling Oali an "Arch installer" is arguable as it's very opinionated
 
-The original intention was defintely for personal use, but it's published here just in case it's useful to someone else
+The original intention was defintely for personal use than general use,
+but it's published here just in case it's useful to someone else
 as well who largely wants a similar setup, or willing to customise via forking
 
 ## TODO
