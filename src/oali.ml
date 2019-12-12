@@ -967,7 +967,7 @@ let () =
       config);
   reg ~name:"Ask if enable SSH server" (fun answer_store config ->
       let enable_ssh_server =
-        ask_yn ~answer_store "Do you want to enable SSH server?" = `Yes
+        ask_yn_confirm ~answer_store "Do you want to enable SSH server?" = `Yes
       in
       { config with enable_ssh_server = Some enable_ssh_server });
   reg ~name:"Installing SSH server" (fun _answer_store config ->
