@@ -180,9 +180,5 @@ After initial installation, several files will be present in `/root/oali_pack` (
 - `usb_key_umount.sh` allows you to unmount your USB key easily and reliably
 - `useradd_helper_restructed.sh` and `useradd_helper_as_powerful.sh` allow you to add more users in the same manner as used by setup.sh
 
-#### Misc. notes
-Saltstack files related
-- currently linux-lts is enabled in the salt state files as a measure to avoid lock out due to kernel updates
-
 ## License
 MIT
