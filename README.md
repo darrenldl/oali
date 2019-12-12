@@ -2,14 +2,16 @@
 [![Build Status](https://travis-ci.org/darrenldl/oali.svg?branch=master)](https://travis-ci.org/darrenldl/oali)
 
 ## Warning
-Oali is still extremely early in development, and still WIP
+Oali is primarily developed for my personal use, so it is not designed to be general.
+If you require it to follow a vastly different workflow, consider forking it and adjusting it accordingly.
 
-It is difficult to test an installer targeting a live CD automatically, so right now it's still a lot of manual testing
+Oali is not supported by Arch Linux devs or the community, and you should not ask anything
+about it at Arch Linux reddit or forum
 
-Please do **NOT** use it for anything serious yet
+Anyhow, if you think your desired installation is quite close to mine, then continue reading
 
 ## Description
-Oali is an installer written in OCaml which sets up a (very opinionated) Arch Linux installation with following variations
+Oali is an installer written in OCaml which sets up a (very) opinionated Arch Linux installation with following variations
 
 - 3 disk layouts
 
@@ -25,17 +27,9 @@ Oali is an installer written in OCaml which sets up a (very opinionated) Arch Li
 
 - Optional `linux-hardened` kernel installation
 
-You may pick any combination of above choices and Oali will adjust the parameters accordingly
+You may pick any combination of above choices and Oali will take the appropriate actions accordingly
 
 Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below for more information.
-
-## On the topic of "installer"
-I am aware that installers are not supported by the Arch community in any form, and also
-calling Oali an "Arch installer" is arguable as it's very opinionated
-
-The original intention was defintely for personal use than general use,
-but it's published here just in case it's useful to someone else
-as well who largely wants a similar setup, or willing to customise via forking
 
 ## TODO
 
