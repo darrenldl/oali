@@ -977,7 +977,7 @@ let () =
   reg ~name:"Generating sshd_config" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then (
         let script = Sshd_config_template.gen ~port:Config.sshd_port in
-        let dst_path = Config.etc_ssh_dir_path in
+        let dst_path = Config.etc_sshd_config_path in
         let oc = open_out dst_path in
         Fun.protect
           ~finally:(fun () -> close_out oc)

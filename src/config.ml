@@ -33,6 +33,9 @@ let livecd_mirrorlist_path =
 let etc_ssh_dir_path =
   Misc_utils.concat_file_names [ root_mount_point; "etc"; "ssh" ]
 
+let etc_sshd_config_path =
+  Misc_utils.concat_file_names [ etc_ssh_dir_path; "sshd_config" ]
+
 let oali_files_dir_path = Misc_utils.concat_file_names [ "/root"; "oali_pack" ]
 
 let useradd_helper_as_powerful_name = "useradd_helper_as_powerful.sh"
