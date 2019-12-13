@@ -87,7 +87,9 @@ type pool = {
   l1_pool : (int, l1) Hashtbl.t;
 }
 
-let print_msg msg = Printf.printf "storage unit : %s\n" msg
+(* let print_msg msg = Printf.printf "storage unit : %s\n" msg *)
+
+let print_msg _msg = ()
 
 let vgscan () =
   for _ = 0 to 1 do
