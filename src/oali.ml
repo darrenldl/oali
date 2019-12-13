@@ -772,47 +772,67 @@ let () =
   reg ~name:"Updating GRUB config: GRUB_CMDLINE_LINUX"
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
-       if Option.get config.encrypt_sys then
-         let use_lvm = Option.get config.use_lvm in
-         let root = Disk_layout.get_root disk_layout in
-         match root.l1 with
-         | Clear _ -> failwith "Expected LUKS"
-         | Luks { path; _ } ->
-           let sys_part_path = path in
-           let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
-           let default_grub_path =
-             concat_file_names
-               [ Config.root_mount_point; "etc"; "default"; "grub" ]
-           in
-           let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
-           let re =
-             Printf.sprintf "^%s=" grub_cmdline_linux
-             |> Re.Posix.re |> Re.compile
-           in
-           let update_grub_cmdline s =
-             match Re.matches re s with
-             | [] -> [ s ]
-             | _ ->
-               if use_lvm then
-                 [
-                   Printf.sprintf
-                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                      root=/dev/%s/%s\""
-                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                     Config.sys_part_keyfile_name Config.lvm_vg_name
-                     Config.lvm_lv_root_name;
-                 ]
-               else
-                 [
-                   Printf.sprintf
-                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                      root=/dev/mapper/%s\""
-                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                     Config.sys_part_keyfile_name Config.sys_mapper_name;
-                 ]
-           in
-           File.filter_map_lines ~file:default_grub_path update_grub_cmdline
-       else print_endline "Skipped";
+       let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
+       let use_lvm = Option.get config.use_lvm in
+       let re =
+         Printf.sprintf "^%s=" grub_cmdline_linux
+         |> Re.Posix.re |> Re.compile
+       in
+       let default_grub_path =
+         concat_file_names
+           [ Config.root_mount_point; "etc"; "default"; "grub" ]
+       in
+       let root = Disk_layout.get_root disk_layout in
+       (match root.l1 with
+       | Clear { path } ->
+         let sys_part_path = path in
+         let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
+         let update_grub_cmdline s =
+           match Re.matches re s with
+           | [] -> [ s ]
+           | _ ->
+             if use_lvm then
+               [
+                 Printf.sprintf
+                   "%s=\"root=/dev/%s/%s\""
+                   grub_cmdline_linux Config.lvm_vg_name
+                   Config.lvm_lv_root_name;
+               ]
+             else
+               [
+                 Printf.sprintf
+                   "%s=\"root=UUID=%s\""
+                   grub_cmdline_linux sys_part_uuid;
+               ]
+         in
+         File.filter_map_lines ~file:default_grub_path update_grub_cmdline
+       | Luks { path; _ } ->
+         let sys_part_path = path in
+         let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
+         let update_grub_cmdline s =
+           match Re.matches re s with
+           | [] -> [ s ]
+           | _ ->
+             if use_lvm then
+               [
+                 Printf.sprintf
+                   "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                    root=/dev/%s/%s\""
+                   grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                   Config.sys_part_keyfile_name Config.lvm_vg_name
+                   Config.lvm_lv_root_name;
+               ]
+             else
+               [
+                 Printf.sprintf
+                   "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                    root=/dev/mapper/%s\""
+                   grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                   Config.sys_part_keyfile_name Config.sys_mapper_name;
+               ]
+         in
+         File.filter_map_lines ~file:default_grub_path update_grub_cmdline
+       );
        config);
   reg ~name:"Setting hardened kernel as default boot entry"
     (fun _answer_store config ->
