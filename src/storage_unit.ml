@@ -87,6 +87,12 @@ type pool = {
   l1_pool : (int, l1) Hashtbl.t;
 }
 
+let vgscan () =
+  for _ = 0 to 1 do
+    "vgscan" |> exec;
+    Unix.sleep 2
+  done
+
 let make_pool () =
   {
     l4_pool = Hashtbl.create 100;
@@ -248,7 +254,7 @@ module L2 = struct
     | Some lvm_vg ->
       assert lvm_vg.initialized;
       if lvm_vg.active_use_count = 0 then (
-        "vgscan" |> exec;
+        vgscan ();
         Printf.sprintf "vgchange -ay %s" lvm_vg.vg_name |> exec );
       lvm_vg.active_use_count <- lvm_vg.active_use_count + 1
 
@@ -261,7 +267,7 @@ module L2 = struct
       assert (lvm_vg.active_use_count > 0);
       lvm_vg.active_use_count <- lvm_vg.active_use_count - 1;
       if lvm_vg.active_use_count = 0 then (
-        "vgscan" |> exec;
+        vgscan ();
         Printf.sprintf "vgchange -an %s" lvm_vg.vg_name |> exec )
 
   let set_up pool t : unit =
@@ -300,7 +306,7 @@ module L3 = struct
     | Some lvm_lv ->
       assert lvm_lv.initialized;
       if lvm_lv.active_use_count = 0 then (
-        "vgscan" |> exec;
+        vgscan ();
         Printf.sprintf "lvchange -ay %s" lvm_lv.lv_name |> exec );
       lvm_lv.active_use_count <- lvm_lv.active_use_count + 1
 
@@ -312,7 +318,7 @@ module L3 = struct
       assert lvm_lv.initialized;
       assert (lvm_lv.active_use_count > 0);
       if lvm_lv.active_use_count = 0 then (
-        "vgscan" |> exec;
+        vgscan ();
         Printf.sprintf "lvchange -an %s" lvm_lv.lv_name |> exec )
 
   let set_up pool t : unit =

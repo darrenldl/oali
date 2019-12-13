@@ -773,6 +773,7 @@ let () =
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
        if Option.get config.encrypt_sys then
+         let use_lvm = Option.get config.use_lvm in
          let root = Disk_layout.get_root disk_layout in
          match root.l1 with
          | Clear _ -> failwith "Expected LUKS"
@@ -792,13 +793,23 @@ let () =
              match Re.matches re s with
              | [] -> [ s ]
              | _ ->
-               [
-                 Printf.sprintf
-                   "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                    root=/dev/mapper/%s\""
-                   grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                   Config.sys_part_keyfile_name Config.sys_mapper_name;
-               ]
+               if use_lvm then
+                 [
+                   Printf.sprintf
+                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                      root=/dev/%s/%s\""
+                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                     Config.sys_part_keyfile_name Config.lvm_vg_name
+                     Config.lvm_lv_root_name;
+                 ]
+               else
+                 [
+                   Printf.sprintf
+                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                      root=/dev/mapper/%s\""
+                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                     Config.sys_part_keyfile_name Config.sys_mapper_name;
+                 ]
            in
            File.filter_map_lines ~file:default_grub_path update_grub_cmdline
        else print_endline "Skipped";
@@ -949,15 +960,13 @@ let () =
        Fun.protect
          ~finally:(fun () -> close_out oc)
          (fun () -> output_string oc script);
-       Unix.chmod
-         (concat_file_names [ dst_path; Config.useradd_helper_restricted_name ])
-         0o660);
+       Unix.chmod dst_path 0o660);
       (let dst_path =
          concat_file_names
            [
              Config.root_mount_point;
              Config.oali_files_dir_path;
-             Config.useradd_helper_restricted_name;
+             Config.useradd_helper_as_powerful_name;
            ]
        in
        let script = Useradd_helper_as_powerful_script_template.gen () in
@@ -965,33 +974,26 @@ let () =
        Fun.protect
          ~finally:(fun () -> close_out oc)
          (fun () -> output_string oc script);
-       Unix.chmod
-         (concat_file_names
-            [ dst_path; Config.useradd_helper_as_powerful_name ])
-         0o660);
+       Unix.chmod dst_path 0o660);
       config);
   reg ~name:"Ask if enable SSH server" (fun answer_store config ->
       let enable_ssh_server =
-        ask_yn ~answer_store "Do you want to enable SSH server?" = `Yes
+        ask_yn_confirm ~answer_store "Do you want to enable SSH server?" = `Yes
       in
       { config with enable_ssh_server = Some enable_ssh_server });
   reg ~name:"Installing SSH server" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then
         Arch_chroot.install [ "openssh" ];
       config);
-  reg ~name:"Copying sshd_config over" (fun _answer_store config ->
-      let sshd_config_path_in_repo =
-        Misc_utils.concat_file_names
-          [
-            Option.get config.oali_profiles_repo_name;
-            Option.get config.oali_profile;
-            "saltstack";
-            "salt";
-            "sshd_config";
-          ]
-      in
-      if Option.get config.enable_ssh_server then
-        FileUtil.cp [ sshd_config_path_in_repo ] Config.etc_ssh_dir_path;
+  reg ~name:"Generating sshd_config" (fun _answer_store config ->
+      if Option.get config.enable_ssh_server then (
+        let script = Sshd_config_template.gen ~port:Config.sshd_port in
+        let dst_path = Config.etc_sshd_config_path in
+        let oc = open_out dst_path in
+        Fun.protect
+          ~finally:(fun () -> close_out oc)
+          (fun () -> output_string oc script);
+        Unix.chmod dst_path 0o600 );
       config);
   reg ~name:"Enabling SSH server" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then

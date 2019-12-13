@@ -79,13 +79,14 @@ let pick_task task_book =
   in
   Misc_utils.pick_choice_num ~header:"Tasks" choices
 
-let rec run_single_task task_book task_record : unit =
+let rec run_single_task task_book task_index task_record : unit =
   let task_name = task_record.name in
   let task = task_record.task in
   let answer_store = Answer_store.load ~task_name in
   Proc_utils.clear ();
-  print_endline task_name;
-  for _ = 0 to String.length task_name - 1 do
+  let title = Printf.sprintf "%2d. %s" task_index task_name in
+  print_endline title;
+  for _ = 0 to String.length title - 1 do
     print_string "="
   done;
   print_newline ();
@@ -107,11 +108,11 @@ let rec run_single_task task_book task_record : unit =
       Printf.printf "Sys_error : %s\n" msg;
       (false, task_book.config)
     | Unix.Unix_error (err, s1, s2) ->
-      Printf.printf "Unix.Unix_error : %s, %s, %s" (Unix.error_message err) s1
-        s2;
+      Printf.printf "Unix.Unix_error : %s, %s, %s\n" (Unix.error_message err)
+        s1 s2;
       (false, task_book.config)
     | FileUtilCP.CpError msg ->
-      Printf.printf "FileUtilCP.CpError : %s" msg;
+      Printf.printf "FileUtilCP.CpError : %s\n" msg;
       (false, task_book.config)
   in
   if not succeeded then (
@@ -120,7 +121,7 @@ let rec run_single_task task_book task_record : unit =
     in
     let choice = Misc_utils.pick_choice_kv ~confirm:true choices in
     match choice with
-    | Retry -> run_single_task task_book task_record
+    | Retry -> run_single_task task_book task_index task_record
     | Skip -> task_record.stats.result <- Skipped
     | End_install ->
       task_record.stats.result <- Failed;
@@ -137,21 +138,21 @@ let pick_installer_action () =
   in
   Misc_utils.pick_choice_kv ~header:"Actions" choices
 
-let pick_tasks_to_run task_book =
+let pick_tasks_to_run task_book : (int * task_record array) option =
   let tasks = Option.get task_book.tasks_to_run in
   let task_count = Array.length tasks in
   match pick_installer_action () with
-  | Run_everything -> Some tasks
+  | Run_everything -> Some (0, tasks)
   | Run_skip_to_task ->
     let skip_to = pick_task task_book in
-    Some (Array.sub tasks skip_to (task_count - skip_to))
+    Some (skip_to, Array.sub tasks skip_to (task_count - skip_to))
   | Terminate -> None
 
 let run task_book =
   let rec aux task_book =
     match pick_tasks_to_run task_book with
     | None -> ()
-    | Some tasks -> (
+    | Some (first_index, tasks) -> (
         Sys.set_signal Sys.sigint
           (Sys.Signal_handle
              (fun _ ->
@@ -160,9 +161,10 @@ let run task_book =
                 raise End_install));
         try
           Array.iteri
-            (fun cur_task task_record ->
-               task_book.cur_task <- Some cur_task;
-               run_single_task task_book task_record)
+            (fun i task_record ->
+               let cur_task_index = first_index + i in
+               task_book.cur_task <- Some cur_task_index;
+               run_single_task task_book cur_task_index task_record)
             tasks;
           print_endline "All tasks were executed successfully"
         with End_install ->
