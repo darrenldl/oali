@@ -1108,7 +1108,7 @@ let () =
       config);
   reg ~name:"Ask if set up SaltStack" (fun answer_store config ->
       let use_saltstack =
-        ask_yn ~answer_store
+        ask_yn_confirm ~answer_store
           "Do you want to use SaltStack for package management?"
         = `Yes
       in
