@@ -307,7 +307,8 @@ module L3 = struct
       assert lvm_lv.initialized;
       if lvm_lv.active_use_count = 0 then (
         vgscan ();
-        Printf.sprintf "lvchange -ay %s" lvm_lv.lv_name |> exec );
+        Printf.sprintf "lvchange -ay %s/%s" lvm_lv.vg_name lvm_lv.lv_name
+        |> exec );
       lvm_lv.active_use_count <- lvm_lv.active_use_count + 1
 
   let unmount pool t : unit =
@@ -319,7 +320,8 @@ module L3 = struct
       assert (lvm_lv.active_use_count > 0);
       if lvm_lv.active_use_count = 0 then (
         vgscan ();
-        Printf.sprintf "lvchange -an %s" lvm_lv.lv_name |> exec )
+        Printf.sprintf "lvchange -an %s/%s" lvm_lv.vg_name lvm_lv.lv_name
+        |> exec )
 
   let set_up pool t : unit =
     let instance = instantiate_from_pool pool t in
