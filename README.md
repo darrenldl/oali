@@ -33,9 +33,16 @@ Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics
 
 ## TODO
 
+- Documentation of each task so user can determine if the actions
+  to be taken are appropriate for their use case
+
 - Resumable installation (add logging etc)
 
+  - Partially fulfilled by answer remembering
+
 - Static config file support (so installation is fully automated)
+
+  - Partially fulfilled by answer remembering
 
 - Whatever is missing from the original script
 
