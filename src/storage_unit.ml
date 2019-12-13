@@ -87,9 +87,13 @@ type pool = {
   l1_pool : (int, l1) Hashtbl.t;
 }
 
+(* let print_msg msg = Printf.printf "storage unit : %s\n" msg *)
+
+let print_msg _msg = ()
+
 let vgscan () =
   for _ = 0 to 1 do
-    "vgscan" |> exec;
+    "vgscan" |> exec_no_capture;
     Unix.sleep 2
   done
 
@@ -154,6 +158,7 @@ module L1 = struct
     | Luks luks ->
       assert luks.initialized;
       if luks.active_use_count = 0 then (
+        print_msg (Printf.sprintf " L1 - opening LUKS volume at %s" luks.path);
         let stdin, f =
           Printf.sprintf "cryptsetup open --key-file=- %s %s" luks.path
             luks.info.mapper_name
@@ -171,8 +176,9 @@ module L1 = struct
       assert luks.initialized;
       assert (luks.active_use_count > 0);
       luks.active_use_count <- luks.active_use_count - 1;
-      if luks.active_use_count = 0 then
-        Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec
+      if luks.active_use_count = 0 then (
+        print_msg (Printf.sprintf " L1 - closing LUKS volume at %s" luks.path);
+        Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec )
 
   let set_up pool t =
     let instance = instantiate_from_pool pool t in
@@ -180,6 +186,8 @@ module L1 = struct
     | Clear _ -> ()
     | Luks luks ->
       if not luks.initialized then (
+        print_msg
+          (Printf.sprintf " L1 - setting up LUKS volume at %s" luks.path);
         let iter_time_ms_opt =
           Option.map
             (fun x -> [ "--iter-time"; string_of_int x ])
@@ -254,8 +262,11 @@ module L2 = struct
     | Some lvm_vg ->
       assert lvm_vg.initialized;
       if lvm_vg.active_use_count = 0 then (
+        print_msg
+          (Printf.sprintf "L2 - activating LVM volume group %s"
+             lvm_vg.vg_name);
         vgscan ();
-        Printf.sprintf "vgchange -ay %s" lvm_vg.vg_name |> exec );
+        Printf.sprintf "vgchange -ay %s" lvm_vg.vg_name |> exec_no_capture );
       lvm_vg.active_use_count <- lvm_vg.active_use_count + 1
 
   let unmount pool (t : t) =
@@ -267,8 +278,11 @@ module L2 = struct
       assert (lvm_vg.active_use_count > 0);
       lvm_vg.active_use_count <- lvm_vg.active_use_count - 1;
       if lvm_vg.active_use_count = 0 then (
+        print_msg
+          (Printf.sprintf "L2 - deactivating LVM volume group %s"
+             lvm_vg.vg_name);
         vgscan ();
-        Printf.sprintf "vgchange -an %s" lvm_vg.vg_name |> exec )
+        Printf.sprintf "vgchange -an %s" lvm_vg.vg_name |> exec_no_capture )
 
   let set_up pool t : unit =
     let instance = instantiate_from_pool pool t in
@@ -277,8 +291,14 @@ module L2 = struct
     | Some lvm_vg ->
       if not lvm_vg.initialized then (
         let pv_name = path_to_l1_for_up pool t in
-        Printf.sprintf "pvcreate -f %s" pv_name |> exec;
-        Printf.sprintf "vgcreate -f %s %s" lvm_vg.vg_name pv_name |> exec;
+        print_msg
+          (Printf.sprintf "L2 - setting up LVM physical volume at %s" pv_name);
+        Printf.sprintf "pvcreate -f %s" pv_name |> exec_no_capture;
+        print_msg
+          (Printf.sprintf "L2 - setting up LVM volume group %s"
+             lvm_vg.vg_name);
+        Printf.sprintf "vgcreate -f %s %s" lvm_vg.vg_name pv_name
+        |> exec_no_capture;
         lvm_vg.initialized <- true;
         lvm_vg.active_use_count <- lvm_vg.active_use_count + 1;
         unmount pool t )
@@ -306,8 +326,12 @@ module L3 = struct
     | Some lvm_lv ->
       assert lvm_lv.initialized;
       if lvm_lv.active_use_count = 0 then (
+        print_msg
+          (Printf.sprintf "L3 - activating LVM logical volume %s/%s"
+             lvm_lv.vg_name lvm_lv.lv_name);
         vgscan ();
-        Printf.sprintf "lvchange -ay %s" lvm_lv.lv_name |> exec );
+        Printf.sprintf "lvchange -a y %s/%s" lvm_lv.vg_name lvm_lv.lv_name
+        |> exec_no_capture );
       lvm_lv.active_use_count <- lvm_lv.active_use_count + 1
 
   let unmount pool t : unit =
@@ -318,8 +342,12 @@ module L3 = struct
       assert lvm_lv.initialized;
       assert (lvm_lv.active_use_count > 0);
       if lvm_lv.active_use_count = 0 then (
+        print_msg
+          (Printf.sprintf "L3 - deactivating LVM logical volume %s/%s"
+             lvm_lv.vg_name lvm_lv.lv_name);
         vgscan ();
-        Printf.sprintf "lvchange -an %s" lvm_lv.lv_name |> exec )
+        Printf.sprintf "lvchange -a n %s/%s" lvm_lv.vg_name lvm_lv.lv_name
+        |> exec_no_capture )
 
   let set_up pool t : unit =
     let instance = instantiate_from_pool pool t in
@@ -327,6 +355,9 @@ module L3 = struct
     | None -> ()
     | Some lvm_lv ->
       if not lvm_lv.initialized then (
+        print_msg
+          (Printf.sprintf "L3 - setting up LVM logical volume %s/%s"
+             lvm_lv.vg_name lvm_lv.lv_name);
         ( match lvm_lv.size_MiB with
           | None ->
             Printf.sprintf "lvcreate -l 100%%FREE %s -n %s" lvm_lv.vg_name
@@ -334,7 +365,7 @@ module L3 = struct
           | Some size_MiB ->
             Printf.sprintf "lvcreate -L %dM %s -n %s" size_MiB lvm_lv.vg_name
               lvm_lv.lv_name )
-        |> exec;
+        |> exec_no_capture;
         lvm_lv.initialized <- true;
         lvm_lv.active_use_count <- lvm_lv.active_use_count + 1;
         unmount pool t )
@@ -359,6 +390,7 @@ module L4 = struct
     let l3_path = path_to_l3_for_up pool t in
     ( try Unix.mkdir l4.mount_point 0o744
       with Unix.Unix_error (Unix.EEXIST, _, _) -> () );
+    print_msg (Printf.sprintf "L4 - mounting %s at %s" l3_path l4.mount_point);
     Printf.sprintf "mount %s %s" l3_path l4.mount_point |> exec;
     l4.active_use_count <- l4.active_use_count + 1
 
@@ -366,18 +398,22 @@ module L4 = struct
     let l4 = (instantiate_from_pool pool t).l4 in
     assert l4.initialized;
     assert (l4.active_use_count = 1);
+    let l3_path = path_to_l3_for_up pool t in
+    print_msg
+      (Printf.sprintf "L4 - unmounting %s (mounted at at %s)" l3_path
+         l4.mount_point);
     Printf.sprintf "umount %s" l4.mount_point |> exec;
     l4.active_use_count <- l4.active_use_count - 1
 
   let set_up pool t =
     let l4 = (instantiate_from_pool pool t).l4 in
     if not l4.initialized then (
-      let format_cmd fs part =
-        match fs with
-        | `Fat32 -> Printf.sprintf "mkfs.fat -F32 %s" part
-        | `Ext4 -> Printf.sprintf "mkfs.ext4 %s" part
-      in
-      format_cmd l4.fs (path_to_l3_for_up pool t) |> exec;
+      let l3_path = path_to_l3_for_up pool t in
+      print_msg (Printf.sprintf "L4 - formatting %s" l3_path);
+      ( match l4.fs with
+        | `Fat32 -> Printf.sprintf "mkfs.fat -F32 %s" l3_path
+        | `Ext4 -> Printf.sprintf "mkfs.ext4 %s" l3_path )
+      |> exec_no_capture;
       l4.initialized <- true )
 
   let reset pool t =

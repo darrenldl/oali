@@ -627,53 +627,53 @@ let () =
                 output_string crypttab_oc "\n") );
        config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun _answer_store config ->
-      if Option.get config.encrypt_sys then (
-        let file =
-          concat_file_names
-            [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
-        in
-        let fill_in_FILES =
-          let re = "^FILES" |> Re.Posix.re |> Re.compile in
-          fun s ->
-            match Re.matches re s with
-            | [] -> [ s ]
-            | _ ->
+      let encrypt_sys = Option.get config.encrypt_sys in
+      let use_lvm = Option.get config.use_lvm in
+      let file =
+        concat_file_names [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
+      in
+      let fill_in_FILES =
+        let re = "^FILES" |> Re.Posix.re |> Re.compile in
+        fun s ->
+          match Re.matches re s with
+          | [] -> [ s ]
+          | _ ->
+            if encrypt_sys then
               [
                 Printf.sprintf "FILES=(%s)"
                   (concat_file_names
                      [ "/root"; Config.sys_part_keyfile_name ]);
               ]
-        in
-        let fill_in_HOOKS =
-          let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
-          fun s ->
-            match Re.matches re s with
-            | [] -> [ s ]
-            | _ ->
-              [
-                Printf.sprintf "HOOKS=(%s)"
-                  (String.concat " " Config.mkinitcpio_hooks);
-              ]
-        in
-        File.filter_map_lines ~file fill_in_FILES;
-        File.filter_map_lines ~file fill_in_HOOKS )
-      else print_endline "Skipped";
+            else [ s ]
+      in
+      let fill_in_HOOKS =
+        let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
+        fun s ->
+          match Re.matches re s with
+          | [] -> [ s ]
+          | _ ->
+            [
+              Printf.sprintf "HOOKS=(%s)"
+                (String.concat " "
+                   (Config.gen_mkinitcpio_hooks ~encrypt_sys ~use_lvm));
+            ]
+      in
+      File.filter_map_lines ~file fill_in_FILES;
+      File.filter_map_lines ~file fill_in_HOOKS;
       config);
   reg ~name:"Installing lvm2 onto system on disk" (fun _answer_store config ->
       if Option.get config.use_lvm then Arch_chroot.install [ "lvm2" ];
       config);
   reg ~name:"Recreating images" (fun _answer_store config ->
-      if Option.get config.encrypt_sys then
-        Arch_chroot.exec "mkinitcpio -p linux"
-      else print_endline "Skipped";
-      config);
-  reg ~name:"Updating initramfs permissions" (fun _answer_store config ->
-      exec
-        (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
+      Arch_chroot.exec "mkinitcpio -p linux";
       config);
   reg ~name:"Installing hardened kernel" (fun _answer_store config ->
       if Option.get config.add_hardened then
         Arch_chroot.install [ "linux-hardened"; "linux-hardened-headers" ];
+      config);
+  reg ~name:"Updating initramfs permissions" (fun _answer_store config ->
+      exec
+        (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
       config);
   reg ~name:"Setting up hostname" (fun _answer_store config ->
       let oc =
@@ -772,23 +772,37 @@ let () =
   reg ~name:"Updating GRUB config: GRUB_CMDLINE_LINUX"
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
-       if Option.get config.encrypt_sys then
-         let use_lvm = Option.get config.use_lvm in
-         let root = Disk_layout.get_root disk_layout in
-         match root.l1 with
-         | Clear _ -> failwith "Expected LUKS"
+       let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
+       let use_lvm = Option.get config.use_lvm in
+       let re =
+         Printf.sprintf "^%s=" grub_cmdline_linux |> Re.Posix.re |> Re.compile
+       in
+       let default_grub_path =
+         concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
+       in
+       let root = Disk_layout.get_root disk_layout in
+       ( match root.l1 with
+         | Clear _ -> ()
+         (* | Clear { path } ->
+          *   let update_grub_cmdline s =
+          *     match Re.matches re s with
+          *     | [] -> [ s ]
+          *     | _ ->
+          *       if use_lvm then
+          *         [
+          *           Printf.sprintf "%s=\"root=/dev/%s/%s\"" grub_cmdline_linux
+          *             Config.lvm_vg_name Config.lvm_lv_root_name;
+          *         ]
+          *       else
+          *         let sys_part_uuid = Disk_utils.uuid_of_dev path in
+          *         [
+          *           Printf.sprintf "%s=\"root=UUID=%s\"" grub_cmdline_linux
+          *             sys_part_uuid;
+          *         ]
+          *   in
+          *   File.filter_map_lines ~file:default_grub_path update_grub_cmdline *)
          | Luks { path; _ } ->
-           let sys_part_path = path in
-           let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
-           let default_grub_path =
-             concat_file_names
-               [ Config.root_mount_point; "etc"; "default"; "grub" ]
-           in
-           let grub_cmdline_linux = "GRUB_CMDLINE_LINUX" in
-           let re =
-             Printf.sprintf "^%s=" grub_cmdline_linux
-             |> Re.Posix.re |> Re.compile
-           in
+           let sys_part_uuid = Disk_utils.uuid_of_dev path in
            let update_grub_cmdline s =
              match Re.matches re s with
              | [] -> [ s ]
@@ -811,8 +825,7 @@ let () =
                      Config.sys_part_keyfile_name Config.sys_mapper_name;
                  ]
            in
-           File.filter_map_lines ~file:default_grub_path update_grub_cmdline
-       else print_endline "Skipped";
+           File.filter_map_lines ~file:default_grub_path update_grub_cmdline );
        config);
   reg ~name:"Setting hardened kernel as default boot entry"
     (fun _answer_store config ->
@@ -1097,7 +1110,7 @@ let () =
       config);
   reg ~name:"Ask if set up SaltStack" (fun answer_store config ->
       let use_saltstack =
-        ask_yn ~answer_store
+        ask_yn_confirm ~answer_store
           "Do you want to use SaltStack for package management?"
         = `Yes
       in

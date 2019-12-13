@@ -383,7 +383,7 @@ let set_up layout =
   print_endline "Setting up boot";
   Storage_unit.set_up layout.pool layout.boot;
   (* system *)
-  print_endline "Setting up system volume";
+  print_endline "Setting up system volume(s)";
   (* root *)
   print_endline "Setting up root";
   Storage_unit.set_up layout.pool layout.root;

@@ -9,21 +9,21 @@ type yn =
 
 let not_empty s = s <> ""
 
-let retry ?answer_store (f : unit -> 'a retry) : 'a =
-  let rec aux f =
-    match f () with
-    | Stop x -> x
-    | Retry ->
-      Option.iter
-        (fun store ->
-           print_endline "Wiping answer store";
-           Hashtbl.reset store)
-        answer_store;
-      aux f
-  in
-  aux f
-
 module Internal = struct
+  let retry ~answer_store (f : unit -> 'a retry) : 'a =
+    let rec aux f =
+      match f () with
+      | Stop x -> x
+      | Retry ->
+        Option.iter
+          (fun store ->
+             print_endline "Wiping answer store";
+             Hashtbl.reset store)
+          answer_store;
+        aux f
+    in
+    aux f
+
   let ask_string ?(is_valid = fun _ -> true)
       ~(answer_store : (string, string) Hashtbl.t option) prompt =
     let answer =
@@ -36,7 +36,7 @@ module Internal = struct
       Printf.printf "%s -> using stored answer : %s\n" prompt x;
       x
     | None ->
-      retry (fun () ->
+      retry ~answer_store:None (fun () ->
           Printf.printf "%s : " prompt;
           let res = try read_line () with End_of_file -> "" in
           if is_valid res then (
@@ -49,7 +49,7 @@ module Internal = struct
             Retry ))
 
   let ask_yn ~answer_store prompt =
-    retry (fun () ->
+    retry ~answer_store (fun () ->
         let s =
           ask_string ~is_valid:not_empty ~answer_store
             (Printf.sprintf "%s y/n" prompt)
@@ -103,18 +103,18 @@ let confirm_answer_is_correct_end_retry ~ret =
   ask_yn_end_retry ~ret "Is the answer correct?"
 
 let ask_yn_confirm ?answer_store prompt =
-  retry (fun () ->
+  Internal.retry ~answer_store (fun () ->
       let ret = Internal.ask_yn ~answer_store prompt in
       confirm_answer_is_correct_end_retry ~ret)
 
 let ask_string_confirm ?(is_valid = fun _ -> true) ?answer_store prompt =
-  retry (fun () ->
+  Internal.retry ~answer_store (fun () ->
       let ret = Internal.ask_string ~is_valid ~answer_store prompt in
       confirm_answer_is_correct_end_retry ~ret)
 
 let pick_choice_num ?(confirm = true) ?(header = "Options")
     (choices : string list) : int =
-  retry (fun () ->
+  Internal.retry ~answer_store:None (fun () ->
       assert (List.length choices > 0);
       print_endline header;
       print_newline ();
@@ -144,7 +144,7 @@ let pick_choice_value ?(confirm = true) ?(header = "Options")
 
 let pick_choice_grouped_num ?(confirm = true) ?(first_header = "Options")
     ?(second_header = "Options") (choices : (string * string list) list) =
-  retry (fun () ->
+  Internal.retry ~answer_store:None (fun () ->
       let first_layer = List.map (fun (x, _) -> x) choices in
       let choice1 =
         pick_choice_num ~confirm:false ~header:first_header first_layer
@@ -177,6 +177,9 @@ let pick_choice_grouped_value ?(confirm = true) ?(first_header = "Options")
   in
   let _, layer2 = List.nth choices c1 in
   List.nth layer2 c2
+
+let retry ?answer_store (f : unit -> 'a retry) : 'a =
+  Internal.retry ~answer_store f
 
 let list_no_nth l n =
   let rec aux acc l n =
