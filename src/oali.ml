@@ -627,37 +627,36 @@ let () =
                 output_string crypttab_oc "\n") );
        config);
   reg ~name:"Adjusting mkinitcpio.conf" (fun _answer_store config ->
-      if Option.get config.encrypt_sys then (
-        let file =
-          concat_file_names
-            [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
-        in
-        let fill_in_FILES =
-          let re = "^FILES" |> Re.Posix.re |> Re.compile in
-          fun s ->
-            match Re.matches re s with
-            | [] -> [ s ]
-            | _ ->
-              [
-                Printf.sprintf "FILES=(%s)"
-                  (concat_file_names
-                     [ "/root"; Config.sys_part_keyfile_name ]);
-              ]
-        in
-        let fill_in_HOOKS =
-          let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
-          fun s ->
-            match Re.matches re s with
-            | [] -> [ s ]
-            | _ ->
-              [
-                Printf.sprintf "HOOKS=(%s)"
-                  (String.concat " " Config.mkinitcpio_hooks);
-              ]
-        in
-        File.filter_map_lines ~file fill_in_FILES;
-        File.filter_map_lines ~file fill_in_HOOKS )
-      else print_endline "Skipped";
+      let encrypt_sys = Option.get config.encrypt_sys in
+      let use_lvm = Option.get config.use_lvm in
+      let file =
+        concat_file_names [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
+      in
+      let fill_in_FILES =
+        let re = "^FILES" |> Re.Posix.re |> Re.compile in
+        fun s ->
+          match Re.matches re s with
+          | [] -> [ s ]
+          | _ ->
+            [
+              Printf.sprintf "FILES=(%s)"
+                (concat_file_names [ "/root"; Config.sys_part_keyfile_name ]);
+            ]
+      in
+      let fill_in_HOOKS =
+        let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
+        fun s ->
+          match Re.matches re s with
+          | [] -> [ s ]
+          | _ ->
+            [
+              Printf.sprintf "HOOKS=(%s)"
+                (String.concat " "
+                   (Config.gen_mkinitcpio_hooks ~encrypt_sys ~use_lvm));
+            ]
+      in
+      File.filter_map_lines ~file fill_in_FILES;
+      File.filter_map_lines ~file fill_in_HOOKS;
       config);
   reg ~name:"Installing lvm2 onto system on disk" (fun _answer_store config ->
       if Option.get config.use_lvm then Arch_chroot.install [ "lvm2" ];

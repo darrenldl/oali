@@ -60,22 +60,24 @@ let oali_answer_store_dir = "oali_answers"
 
 let sshd_port = 40010
 
-let mkinitcpio_hooks =
-  [
-    "base";
-    "udev";
-    "usr";
-    "autodetect";
-    "keyboard";
-    "keymap";
-    "consolefont";
-    "modconf";
-    "block";
-    "lvm2";
-    "encrypt";
-    "filesystems";
-    "fsck";
-  ]
+let gen_mkinitcpio_hooks ~encrypt_sys ~use_lvm =
+  List.filter_map
+    (fun x -> x)
+    [
+      Some "base";
+      Some "udev";
+      (if use_lvm then Some "usr" else None);
+      Some "autodetect";
+      Some "keyboard";
+      Some "keymap";
+      Some "consolefont";
+      Some "modconf";
+      Some "block";
+      (if encrypt_sys then Some "encrypt" else None);
+      (if use_lvm then Some "lvm2" else None);
+      Some "filesystems";
+      Some "fsck";
+    ]
 
 let lvm_vg_name = "vg_sys"
 
