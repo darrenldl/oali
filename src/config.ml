@@ -64,6 +64,7 @@ let mkinitcpio_hooks =
   [
     "base";
     "udev";
+    "usr";
     "autodetect";
     "keyboard";
     "keymap";
