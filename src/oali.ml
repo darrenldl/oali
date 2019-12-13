@@ -664,13 +664,13 @@ let () =
   reg ~name:"Recreating images" (fun _answer_store config ->
       Arch_chroot.exec "mkinitcpio -p linux";
       config);
-  reg ~name:"Updating initramfs permissions" (fun _answer_store config ->
-      exec
-        (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
-      config);
   reg ~name:"Installing hardened kernel" (fun _answer_store config ->
       if Option.get config.add_hardened then
         Arch_chroot.install [ "linux-hardened"; "linux-hardened-headers" ];
+      config);
+  reg ~name:"Updating initramfs permissions" (fun _answer_store config ->
+      exec
+        (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
       config);
   reg ~name:"Setting up hostname" (fun _answer_store config ->
       let oc =
