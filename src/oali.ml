@@ -663,9 +663,7 @@ let () =
       if Option.get config.use_lvm then Arch_chroot.install [ "lvm2" ];
       config);
   reg ~name:"Recreating images" (fun _answer_store config ->
-      if Option.get config.encrypt_sys then
-        Arch_chroot.exec "mkinitcpio -p linux"
-      else print_endline "Skipped";
+      Arch_chroot.exec "mkinitcpio -p linux";
       config);
   reg ~name:"Updating initramfs permissions" (fun _answer_store config ->
       exec
@@ -782,24 +780,25 @@ let () =
        in
        let root = Disk_layout.get_root disk_layout in
        ( match root.l1 with
-         | Clear { path } ->
-           let update_grub_cmdline s =
-             match Re.matches re s with
-             | [] -> [ s ]
-             | _ ->
-               if use_lvm then
-                 [
-                   Printf.sprintf "%s=\"root=/dev/%s/%s\"" grub_cmdline_linux
-                     Config.lvm_vg_name Config.lvm_lv_root_name;
-                 ]
-               else
-                 let sys_part_uuid = Disk_utils.uuid_of_dev path in
-                 [
-                   Printf.sprintf "%s=\"root=UUID=%s\"" grub_cmdline_linux
-                     sys_part_uuid;
-                 ]
-           in
-           File.filter_map_lines ~file:default_grub_path update_grub_cmdline
+         | Clear _ -> ()
+         (* | Clear { path } ->
+          *   let update_grub_cmdline s =
+          *     match Re.matches re s with
+          *     | [] -> [ s ]
+          *     | _ ->
+          *       if use_lvm then
+          *         [
+          *           Printf.sprintf "%s=\"root=/dev/%s/%s\"" grub_cmdline_linux
+          *             Config.lvm_vg_name Config.lvm_lv_root_name;
+          *         ]
+          *       else
+          *         let sys_part_uuid = Disk_utils.uuid_of_dev path in
+          *         [
+          *           Printf.sprintf "%s=\"root=UUID=%s\"" grub_cmdline_linux
+          *             sys_part_uuid;
+          *         ]
+          *   in
+          *   File.filter_map_lines ~file:default_grub_path update_grub_cmdline *)
          | Luks { path; _ } ->
            let sys_part_uuid = Disk_utils.uuid_of_dev path in
            let update_grub_cmdline s =
