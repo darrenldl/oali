@@ -783,8 +783,6 @@ let () =
        let root = Disk_layout.get_root disk_layout in
        ( match root.l1 with
          | Clear { path } ->
-           let sys_part_path = path in
-           let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
            let update_grub_cmdline s =
              match Re.matches re s with
              | [] -> [ s ]
@@ -795,6 +793,7 @@ let () =
                      Config.lvm_vg_name Config.lvm_lv_root_name;
                  ]
                else
+                 let sys_part_uuid = Disk_utils.uuid_of_dev path in
                  [
                    Printf.sprintf "%s=\"root=UUID=%s\"" grub_cmdline_linux
                      sys_part_uuid;
@@ -802,8 +801,7 @@ let () =
            in
            File.filter_map_lines ~file:default_grub_path update_grub_cmdline
          | Luks { path; _ } ->
-           let sys_part_path = path in
-           let sys_part_uuid = Disk_utils.uuid_of_dev sys_part_path in
+           let sys_part_uuid = Disk_utils.uuid_of_dev path in
            let update_grub_cmdline s =
              match Re.matches re s with
              | [] -> [ s ]
