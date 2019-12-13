@@ -66,7 +66,6 @@ let gen_mkinitcpio_hooks ~encrypt_sys ~use_lvm =
     [
       Some "base";
       Some "udev";
-      (if use_lvm then Some "usr" else None);
       Some "autodetect";
       Some "keyboard";
       Some "keymap";
