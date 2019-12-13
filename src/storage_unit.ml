@@ -277,8 +277,8 @@ module L2 = struct
     | Some lvm_vg ->
       if not lvm_vg.initialized then (
         let pv_name = path_to_l1_for_up pool t in
-        Printf.sprintf "pvcreate -f %s" pv_name |> exec;
-        Printf.sprintf "vgcreate -f %s %s" lvm_vg.vg_name pv_name |> exec;
+        Printf.sprintf "pvcreate -ff %s" pv_name |> exec;
+        Printf.sprintf "vgcreate -ff %s %s" lvm_vg.vg_name pv_name |> exec;
         lvm_vg.initialized <- true;
         lvm_vg.active_use_count <- lvm_vg.active_use_count + 1;
         unmount pool t )
