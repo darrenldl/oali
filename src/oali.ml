@@ -638,10 +638,13 @@ let () =
           match Re.matches re s with
           | [] -> [ s ]
           | _ ->
-            [
-              Printf.sprintf "FILES=(%s)"
-                (concat_file_names [ "/root"; Config.sys_part_keyfile_name ]);
-            ]
+            if encrypt_sys then
+              [
+                Printf.sprintf "FILES=(%s)"
+                  (concat_file_names
+                     [ "/root"; Config.sys_part_keyfile_name ]);
+              ]
+            else [ s ]
       in
       let fill_in_HOOKS =
         let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
