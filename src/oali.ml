@@ -120,7 +120,7 @@ let () =
   reg ~name:"Pick whether to enable LVM"
     ~doc:
       {|If enabled, creates a single volume group over the system partition,
-and 3 logical volumes for `/`, `/var`, and `/home`.
+and 3 logical volumes for `/`, `/var`, and `/home`
 
 If encryption is enabled, then the volume group is set up inside the encrypted partition
 |}
