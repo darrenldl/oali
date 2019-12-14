@@ -31,7 +31,7 @@ Oali is an installer written in OCaml which sets up a (very) opinionated Arch Li
 
 You may pick any combination of above choices and Oali will take the appropriate actions accordingly
 
-Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below for more information.
+Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below and [OALI\_DOC](OALI_DOC.md) for more information.
 
 ## TODO
 
