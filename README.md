@@ -2,11 +2,13 @@
 [![Build Status](https://travis-ci.org/darrenldl/oali.svg?branch=master)](https://travis-ci.org/darrenldl/oali)
 
 ## Warning
-Oali is primarily developed for my personal use, so it is not designed to be general.
-If you require it to follow a vastly different workflow, consider forking it and adjusting it accordingly.
+- Oali is primarily developed for my personal use, so it is not designed to be general.
+  If you require it to follow a vastly different workflow, consider forking it and adjusting it accordingly.
 
-Oali is not supported by Arch Linux devs or the community, and you should not ask anything
-about it at Arch Linux reddit or forum
+- Oali is not supported by Arch Linux devs or the community, and you should not ask anything
+  about it at Arch Linux reddit or forum
+
+- Only the tagged releases are considered usable. You should never rely on `master` or `dev` branch to be working.
 
 Anyhow, if you think your desired installation is quite close to mine, then continue reading
 
@@ -29,7 +31,7 @@ Oali is an installer written in OCaml which sets up a (very) opinionated Arch Li
 
 You may pick any combination of above choices and Oali will take the appropriate actions accordingly
 
-Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below for more information.
+Overall Oali aims to be snappy, minimal, smart, and hassle free. See **Specifics** section below and [OALI\_DOC](OALI_DOC.md) for more information.
 
 ## TODO
 
