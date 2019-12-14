@@ -25,6 +25,7 @@ type stats = {
 
 type task_record = {
   name : string;
+  doc : string;
   task : task;
   stats : stats;
 }
@@ -53,9 +54,9 @@ let task_result_to_string res =
 let make config =
   { config; task_queue = []; tasks_to_run = None; cur_task = None }
 
-let register task_book ~name task =
+let register task_book ~name ~doc task =
   task_book.task_queue <-
-    { name; task; stats = { result = Not_run; exec_count = 0 } }
+    { name; doc; task; stats = { result = Not_run; exec_count = 0 } }
     :: task_book.task_queue
 
 let finalize task_book =
