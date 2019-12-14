@@ -162,13 +162,12 @@ let gen_doc_md task_book =
        Printf.fprintf oc
          "This doc is generated via Oali. Please do not edit directly.\n";
        Printf.fprintf oc "\n";
-       List.iteri
-         (fun i task_record ->
-            Printf.fprintf oc "## %d. %s\n" i task_record.name;
-            Printf.fprintf oc "\n";
-            Printf.fprintf oc "%s\n" task_record.doc;
-            Printf.fprintf oc "\n")
-         task_book.task_queue)
+       task_book.task_queue |> List.rev
+       |> List.iteri (fun i task_record ->
+           Printf.fprintf oc "## %d. %s\n" i task_record.name;
+           Printf.fprintf oc "\n";
+           Printf.fprintf oc "%s\n" task_record.doc;
+           Printf.fprintf oc "\n"))
 
 let run task_book =
   let rec aux task_book =
