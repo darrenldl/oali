@@ -97,3 +97,5 @@ let lvm_lv_home_name = "lv_home"
 let var_mount_point = Misc_utils.concat_file_names [ root_mount_point; "var" ]
 
 let home_mount_point = Misc_utils.concat_file_names [ root_mount_point; "home" ]
+
+let doc_md_name = "oali_doc.md"
