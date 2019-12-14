@@ -135,6 +135,7 @@ let pick_installer_action () =
     [
       ("Run all tasks", Run_everything);
       ("Run, skip to task", Run_skip_to_task);
+      ("Generate markdown doc", Gen_doc);
       ("Terminate", Terminate);
     ]
   in
@@ -156,7 +157,8 @@ let gen_doc_md task_book =
   Fun.protect
     ~finally:(fun () -> close_out oc)
     (fun () ->
-       Printf.fprintf oc "# Oali workflow details";
+       Printf.fprintf oc "# Oali workflow details\n";
+       Printf.fprintf oc "\n";
        List.iteri
          (fun i task_record ->
             Printf.fprintf oc "## %d. %s\n" i task_record.name;
