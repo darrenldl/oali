@@ -12,7 +12,7 @@ Increases the size of cow partition to 2G
 
 ## 2. Update time
 
-Update Live CD time via NTP
+Update live CD time via NTP
 
 ## 3. Pick editor
 
@@ -20,7 +20,7 @@ Update Live CD time via NTP
 
 ## 4. Updating pacman database in live CD
 
-
+Just `pacman -Sy`
 
 ## 5. Asking if want to use reflector
 
@@ -32,7 +32,7 @@ Update Live CD time via NTP
 
 ## 7. Automatic configuration of mirrorlist
 
-
+If `reflector` was enabled, then it is used to sort the mirrorlist by download rate
 
 ## 8. Manual configuration of mirrorlist
 
@@ -40,7 +40,7 @@ Opens mirrorlist using the specified text editor
 
 ## 9. Installing git
 
-
+Installs git onto live CD
 
 ## 10. Asking for hostname
 
@@ -48,14 +48,14 @@ Opens mirrorlist using the specified text editor
 
 ## 11. Asking if install hardened kernel
 
-
+Installs `linux-hardened` later if answered yes
 
 ## 12. Pick whether to enable LVM
 
 If enabled, creates a single volume group over the system partition,
 and 3 logical volumes for `/`, `/var`, and `/home`
 
-If encryption is enabled, then the volume group is set up inside the encrypted partition
+If encryption is enabled as well, then the volume group is set up inside the encrypted partition
 
 
 ## 13. Pick whether to encrypt BOOT partition
@@ -70,6 +70,12 @@ User can adjust the iteration time and key size here
 ## 15. Pick whether to encrypt ROOT partition (or physical volume for LVM)
 
 If enabled, encrypts the system volume using LUKS v2
+
+Oali will double check with the user if BOOT partition was configured to
+to be encrypted, but picking no for ROOT partition here
+
+User is allowed to continue said setup if they wishes to however
+
 
 ## 16. Adjusting cryptsetup parameters for root partition
 
@@ -92,15 +98,20 @@ User picks from one of the three disk layouts
 
 ## 19. Configure disk setup parameters
 
+Select disk and/or partitions based on previously picked disk layout,
+then partitions the disk(s) based on the choices using `parted`
+
+Partition sizes are calculated on Oali's side and passed to `parted`
+as percentages to ensure the partition boundaries are aligned optimially
 
 
 ## 20. Setting up disk
 
-
+LUKS, LVM, file system formatting are set up at this stage when applicable
 
 ## 21. Mounting disk
 
-
+Mount all partitions with root being at `/mnt`
 
 ## 22. Installing base system (base linux base-devel)
 
@@ -119,17 +130,22 @@ Sets up keyfile to be embedded into the initramfs
 
 Installs secondary keyfile for /boot
 
+The keyfile is referenced in crypttab later
+
 ## 26. Setting up crypttab for unlocking and mounting /boot after boot
 
+Append a line to crypttab file using the secondary keyfile for /boot,
+allowing decryption of boot partition after booting
 
+The line is then commented if disk layout uses USB key
 
 ## 27. Adjusting mkinitcpio.conf
 
-Adds appropriate mkinitcpio hooks
+Adds appropriate mkinitcpio hooks based on LUKS and LVM choices specified
 
 ## 28. Installing lvm2 onto system on disk
 
-
+Install `lvm2` package into system on disk if LVM is enabled
 
 ## 29. Recreating images
 
@@ -151,139 +167,145 @@ Recreate initramfs so the new mkinitcpio hooks are installed
 
 
 
-## 34. Updating package database
+## 34. Installing wifi-menu
 
 
 
-## 35. Installing wifi-menu
+## 35. Installing dhcpcd
 
 
 
-## 36. Installing dhcpcd
+## 36. Installing bootloader packages
 
+Install GRUB bootloader
 
+## 37. Updating GRUB config: GRUB_ENABLE_CRYPTODISK
 
-## 37. Installing bootloader packages
 
 
+## 38. Updating GRUB config: GRUB_CMDLINE_LINUX
 
-## 38. Updating GRUB config: GRUB_ENABLE_CRYPTODISK
+If LUKS is enabled, adjusts the `GRUB_CMDLINE_LINUX` line in grub config to specify
+the system partition, the associated keyfile, and root volume
 
+## 39. Setting hardened kernel as default boot entry
 
 
-## 39. Updating GRUB config: GRUB_CMDLINE_LINUX
 
-If LUKS is enabled, adjusts the `GRUB_CMDLINE_LINUX` line in grub config to specify the the system partition, the associated keyfile, and root volume
+## 40. Installing GRUB to disk
 
-## 40. Setting hardened kernel as default boot entry
+Invokes `grub-install` with parameters based on whether in BIOS or UEFI mode,
+and also based on disk layout
 
+Specifically, `--removable` flag is added if disk layout uses USB key
 
+## 41. Generating GRUB config
 
-## 41. Installing GRUB to disk
+Invokes `grub-mkconfig`
 
+## 42. Setting up root password
 
 
-## 42. Generating GRUB config
 
+## 43. Setting user account
 
 
-## 43. Setting up root password
 
+## 44. Setting user password
 
 
-## 44. Setting user account
 
+## 45. Creating oali files folder
 
+Sets up user facing notes for post-install stuff
 
-## 45. Setting user password
+## 46. Generating USB key mounting and unmounting scripts
 
+If disk layout uses USB key, generates scripts with appropriate UUIDs
+embedded for mounting and unmounting the USB key partitions
 
+## 47. Generating useradd helper scripts
 
-## 46. Creating oali files folder
 
 
+## 48. Ask if enable SSH server
 
-## 47. Generating USB key mounting and unmounting scripts
 
 
+## 49. Installing SSH server
 
-## 48. Generating useradd helper scripts
 
 
+## 50. Generating sshd_config
 
-## 49. Ask if enable SSH server
 
 
+## 51. Enabling SSH server
 
-## 50. Installing SSH server
 
 
+## 52. Setting up SSH key directory
 
-## 51. Generating sshd_config
 
 
+## 53. Transferring SSH public keys
 
-## 52. Enabling SSH server
+User can transfer the public key via command using `ncat` (for network transfer) and `gpg` (for symmetric encryption using a randomly generated alphanumeric passphrase)
 
+Technically encryption of public is not necessary. The encryption
+is to limit the damage of accidentally transferring private key instead
+of the public key.
 
 
-## 53. Setting up SSH key directory
+## 54. Ask if set up SaltStack
 
 
 
-## 54. Transferring SSH public keys
+## 55. Installing SaltStack
 
 
 
-## 55. Ask if set up SaltStack
+## 56. Generating SaltStack execution script
 
 
 
-## 56. Installing SaltStack
+## 57. Git cloning oali-profiles repo into current directory
 
 
 
-## 57. Generating SaltStack execution script
+## 58. Select profile to use
 
 
 
-## 58. Git cloning oali-profiles repo into current directory
+## 59. Copying SaltStack files
 
 
 
-## 59. Select profile to use
+## 60. Customising SaltStack files
 
 
 
-## 60. Copying SaltStack files
+## 61. Generating setup note
 
 
 
-## 61. Customising SaltStack files
+## 62. Setting oali files permissions
 
 
 
-## 62. Generating setup note
+## 63. Asking if unmount partitions
 
 
 
-## 63. Setting oali files permissions
+## 64. Unmounting partitions
 
 
 
-## 64. Asking if unmount partitions
+## 65. Asking if shutdown
 
 
 
-## 65. Unmounting partitions
-
-
-
-## 66. Asking if shutdown
-
-
-
-## 67. Shutting down
+## 66. Shutting down
 
 
 
