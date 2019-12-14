@@ -53,7 +53,7 @@ Opens mirrorlist using the specified text editor
 ## 12. Pick whether to enable LVM
 
 If enabled, creates a single volume group over the system partition,
-and 3 logical volumes for `/`, `/var`, and `/home`.
+and 3 logical volumes for `/`, `/var`, and `/home`
 
 If encryption is enabled, then the volume group is set up inside the encrypted partition
 
@@ -81,7 +81,7 @@ User picks from one of the three disk layouts
 
 - Single system disk
 
-- Manual picking**
+- Manual picking
 
 - Single system partition + USB key
 
@@ -167,7 +167,7 @@ Recreate initramfs so the new mkinitcpio hooks are installed
 
 
 
-## 38. Updating grub config: GRUB_ENABLE_CRYPTODISK
+## 38. Updating GRUB config: GRUB_ENABLE_CRYPTODISK
 
 
 

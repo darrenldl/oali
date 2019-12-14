@@ -243,7 +243,7 @@ If encryption is enabled, then the volume group is set up inside the encrypted p
 
 - Single system disk
 
-- Manual picking**
+- Manual picking
 
 - Single system partition + USB key
 |}
@@ -779,7 +779,7 @@ if using the USB key disk layout|}
        if Option.get config.is_efi_mode then
          Arch_chroot.install [ "efibootmgr"; "efitools" ];
        config);
-  reg ~name:"Updating grub config: GRUB_ENABLE_CRYPTODISK" ~doc:""
+  reg ~name:"Updating GRUB config: GRUB_ENABLE_CRYPTODISK" ~doc:""
     (fun _answer_store config ->
        let encrypt = Option.get config.encrypt_boot in
        ( if encrypt then
