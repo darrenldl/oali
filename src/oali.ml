@@ -357,7 +357,7 @@ user may wish to overprovision manually.
                in
                ask_uint ~lower_bound ~upper_bound_exc:100
                  "Please enter the maximum percentage of disk to use"
-             else frac_to_perc Config.total_disk_usage_frac
+             else 100
            in
            exec
              (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
