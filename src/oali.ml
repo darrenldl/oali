@@ -331,7 +331,8 @@ user may wish to overprovision manually.
              ~value:Config.boot_part_size_MiB ~total:disk_size_MiB
          in
          let get_max_disk_perc_to_use ~boot_part_end_MB =
-           if ask_yn "Do you want to overprovision the disk?" = `Yes then
+           if ask_yn_confirm "Do you want to overprovision the disk?" = `Yes
+           then
              let lower_bound =
                Float.ceil
                  (float_of_int boot_part_end_MB /. disk_size_MiB *. 100.)
