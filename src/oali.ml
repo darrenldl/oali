@@ -330,6 +330,17 @@ user may wish to overprovision manually.
            calc_frac ~max_frac:Config.boot_part_max_frac
              ~value:Config.boot_part_size_MiB ~total:disk_size_MiB
          in
+         let get_max_disk_perc_to_use ~boot_part_end_MB =
+           if ask_yn "Do you want to overprovision the disk?" = `Yes then
+             let lower_bound =
+               Float.ceil
+                 (float_of_int boot_part_end_MB /. disk_size_MiB *. 100.)
+               |> int_of_float
+             in
+             ask_uint ~lower_bound ~upper_bound_exc:100
+               "Please enter the maximum percentage of disk to use"
+           else 100
+         in
          if is_efi_mode then (
            let esp_part_frac =
              calc_frac ~max_frac:Config.esp_part_max_frac
@@ -350,14 +361,7 @@ user may wish to overprovision manually.
              boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
            in
            let disk_use_max_perc =
-             if ask_yn "Do you want to overprovision the disk?" = `Yes then
-               let lower_bound =
-                 Float.ceil (float_of_int boot_part_end_MB /. disk_size_MiB)
-                 |> int_of_float
-               in
-               ask_uint ~lower_bound ~upper_bound_exc:100
-                 "Please enter the maximum percentage of disk to use"
-             else 100
+             get_max_disk_perc_to_use ~boot_part_end_MB
            in
            exec
              (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
@@ -386,15 +390,7 @@ user may wish to overprovision manually.
              boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
            in
            let disk_use_max_perc =
-             if ask_yn_confirm "Do you want to overprovision the disk?" = `Yes
-             then
-               let lower_bound =
-                 Float.ceil (float_of_int boot_part_end_MB /. disk_size_MiB)
-                 |> int_of_float
-               in
-               ask_uint ~lower_bound ~upper_bound_exc:100
-                 "Please enter the maximum percentage of disk to use"
-             else 100
+             get_max_disk_perc_to_use ~boot_part_end_MB
            in
            exec
              (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
