@@ -563,7 +563,7 @@ If LVM is enabled, then logical volume sizes are as follows
 
   - %d%% of the volume group or %.1f GiB (whichever is smaller)
 
-` LV for `/home`
+- LV for `/home`
 
   - %d%% of the remaining space of volume group
 
