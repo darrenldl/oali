@@ -90,9 +90,11 @@ let lvm_lv_var_name = "lv_var"
 
 let lvm_lv_var_frac = 0.25
 
-let lvm_lv_var_max_size_MiB = 20. *. 1024.
+let lvm_lv_var_max_size_MiB = 250. *. 1024.
 
 let lvm_lv_home_name = "lv_home"
+
+let lvm_lv_home_frac_of_leftover = 0.8
 
 let var_mount_point = Misc_utils.concat_file_names [ root_mount_point; "var" ]
 

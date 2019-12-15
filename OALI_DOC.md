@@ -2,7 +2,7 @@
 
 This doc is generated via Oali. Please do not edit directly.
 
-## 0. Initialising entropy of Oali
+## 0. Initialise entropy of Oali
 
 
 
@@ -18,15 +18,15 @@ Update live CD time via NTP
 
 
 
-## 4. Updating pacman database in live CD
+## 4. Update pacman database in live CD
 
 Just `pacman -Sy`
 
-## 5. Asking if want to use reflector
+## 5. Ask if want to use reflector
 
 
 
-## 6. Installing reflector
+## 6. Install reflector
 
 
 
@@ -38,15 +38,15 @@ If `reflector` was enabled, then it is used to sort the mirrorlist by download r
 
 Opens mirrorlist using the specified text editor
 
-## 9. Installing git
+## 9. Install git
 
 Installs git onto live CD
 
-## 10. Asking for hostname
+## 10. Ask for hostname
 
 
 
-## 11. Asking if install hardened kernel
+## 11. Ask if install hardened kernel
 
 Installs `linux-hardened` later if answered yes
 
@@ -63,7 +63,7 @@ If encryption is enabled as well, then the volume group is set up inside the enc
 If enabled, encrypts the partition using LUKS v1
 (GRUB does not support v2 yet
 
-## 14. Adjusting cryptsetup parameters for boot partition
+## 14. Adjust cryptsetup parameters for boot partition
 
 User can adjust the iteration time and key size here
 
@@ -77,7 +77,7 @@ to be encrypted, but picking no for ROOT partition here
 User is allowed to continue said setup if they wishes to however
 
 
-## 16. Adjusting cryptsetup parameters for root partition
+## 16. Adjust cryptsetup parameters for root partition
 
 User can adjust the iteration time and key size here
 
@@ -92,7 +92,7 @@ User picks from one of the three disk layouts
 - Single system partition + USB key
 
 
-## 18. Checking if in EFI mode
+## 18. Check if in EFI mode
 
 
 
@@ -105,126 +105,143 @@ Partition sizes are calculated on Oali's side and passed to `parted`
 as percentages to ensure the partition boundaries are aligned optimially
 
 
-## 20. Setting up disk
+## 20. Set up disk
 
-LUKS, LVM, file system formatting are set up at this stage when applicable
+LUKS, LVM, and file system formatting are set up at this stage when applicable
 
-## 21. Mounting disk
+If LVM is enabled, then the logical volume sizes are as follows
+
+- LV for `/`
+
+  - 25% of the volume group or 25.0 GiB (whichever is smaller)
+
+- LV for `/var`
+
+  - 25% of the volume group or 250.0 GiB (whichever is smaller)
+
+- LV for `/home`
+
+  - 80% of the remaining space of volume group
+
+- Leftover is intended for snapshot volumes
+
+
+## 21. Mount disk
 
 Mount all partitions with root being at `/mnt`
 
-## 22. Installing base system (base linux base-devel)
+## 22. Install base system (base linux base-devel)
 
 
 
-## 23. Generating fstab
+## 23. Generate fstab
 
 Invokes `genfstab`, and comments out entry for `/boot`
 if using the USB key disk layout
 
-## 24. Installing keyfile for /
+## 24. Install keyfile for /
 
 Sets up keyfile to be embedded into the initramfs
 
-## 25. Installing keyfile for unlocking /boot after boot
+## 25. Install keyfile for unlocking /boot after boot
 
 Installs secondary keyfile for /boot
 
 The keyfile is referenced in crypttab later
 
-## 26. Setting up crypttab for unlocking and mounting /boot after boot
+## 26. Set up crypttab for unlocking and mounting /boot after boot
 
 Append a line to crypttab file using the secondary keyfile for /boot,
 allowing decryption of boot partition after booting
 
 The line is then commented if disk layout uses USB key
 
-## 27. Adjusting mkinitcpio.conf
+## 27. Adjust mkinitcpio.conf
 
 Adds appropriate mkinitcpio hooks based on LUKS and LVM choices specified
 
-## 28. Installing lvm2 onto system on disk
+## 28. Install lvm2 onto system on disk
 
 Install `lvm2` package into system on disk if LVM is enabled
 
-## 29. Recreating images
+## 29. Recreate images
 
 Recreate initramfs so the new mkinitcpio hooks are installed
 
-## 30. Installing hardened kernel
+## 30. Install hardened kernel
 
 
 
-## 31. Updating initramfs permissions
+## 31. Update initramfs permissions
 
 
 
-## 32. Setting up hostname
+## 32. Set up hostname
 
 
 
-## 33. Setting up locale
+## 33. Set up locale
 
 
 
-## 34. Installing wifi-menu
+## 34. Install wifi-menu
 
 
 
-## 35. Installing dhcpcd
+## 35. Install dhcpcd
 
 
 
-## 36. Installing bootloader packages
+## 36. Install bootloader packages
 
 Install GRUB bootloader
 
-## 37. Updating GRUB config: GRUB_ENABLE_CRYPTODISK
+## 37. Update GRUB config: GRUB_ENABLE_CRYPTODISK
 
+If LUKS is enabled, then sets `GRUB_ENABLE_CRYPTODISK` to `y`
 
-
-## 38. Updating GRUB config: GRUB_CMDLINE_LINUX
+## 38. Update GRUB config: GRUB_CMDLINE_LINUX
 
 If LUKS is enabled, adjusts the `GRUB_CMDLINE_LINUX` line in grub config to specify
 the system partition, the associated keyfile, and root volume
 
-## 39. Setting hardened kernel as default boot entry
+## 39. Set hardened kernel as default boot entry
 
 
 
-## 40. Installing GRUB to disk
+## 40. Install GRUB to disk
 
 Invokes `grub-install` with parameters based on whether in BIOS or UEFI mode,
 and also based on disk layout
 
 Specifically, `--removable` flag is added if disk layout uses USB key
 
-## 41. Generating GRUB config
+## 41. Generate GRUB config
 
 Invokes `grub-mkconfig`
 
-## 42. Setting up root password
+## 42. Set up root password
 
 
 
-## 43. Setting user account
+## 43. Set up user account
 
 
 
-## 44. Setting user password
+## 44. Set up user password
 
 
 
-## 45. Creating oali files folder
+## 45. Create oali files folder
 
 Sets up user facing notes for post-install stuff
 
-## 46. Generating USB key mounting and unmounting scripts
+## 46. Generate USB key mounting and unmounting scripts
 
 If disk layout uses USB key, generates scripts with appropriate UUIDs
 embedded for mounting and unmounting the USB key partitions
 
-## 47. Generating useradd helper scripts
+## 47. Generate useradd helper scripts
 
 
 
@@ -232,23 +249,23 @@ embedded for mounting and unmounting the USB key partitions
 
 
 
-## 49. Installing SSH server
+## 49. Install SSH server
 
 
 
-## 50. Generating sshd_config
+## 50. Generate sshd_config
 
 
 
-## 51. Enabling SSH server
+## 51. Enable SSH server
 
 
 
-## 52. Setting up SSH key directory
+## 52. Set up SSH key directory
 
 
 
-## 53. Transferring SSH public keys
+## 53. Transfer SSH public keys
 
 User can transfer the public key via command using `ncat` (for network transfer) and `gpg` (for symmetric encryption using a randomly generated alphanumeric passphrase)
 
@@ -261,15 +278,15 @@ of the public key.
 
 
 
-## 55. Installing SaltStack
+## 55. Install SaltStack
 
 
 
-## 56. Generating SaltStack execution script
+## 56. Generate SaltStack execution script
 
 
 
-## 57. Git cloning oali-profiles repo into current directory
+## 57. Git clone oali-profiles repo into current directory
 
 
 
@@ -277,35 +294,35 @@ of the public key.
 
 
 
-## 59. Copying SaltStack files
+## 59. Copy SaltStack files
 
 
 
-## 60. Customising SaltStack files
+## 60. Customise SaltStack files
 
 
 
-## 61. Generating setup note
+## 61. Generate setup note
 
 
 
-## 62. Setting oali files permissions
+## 62. Set oali files permissions
 
 
 
-## 63. Asking if unmount partitions
+## 63. Ask if unmount partitions
 
 
 
-## 64. Unmounting partitions
+## 64. Unmount partitions
 
 
 
-## 65. Asking if shutdown
+## 65. Ask if shutdown
 
 
 
-## 66. Shutting down
+## 66. Shut down
 
 
 

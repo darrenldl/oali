@@ -249,7 +249,7 @@ let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
 
 let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
     path : Storage_unit.t * Storage_unit.t option * Storage_unit.t option =
-  (* common components *)
+  (* common components - L1, L2 stuff *)
   Hashtbl.add pool.l1_pool Params.Sys.l1_id
     ( if encrypt then
         Storage_unit.L1.make_luks ~path ~mapper_name:Config.sys_mapper_name
@@ -259,46 +259,58 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
     ( if use_lvm then Storage_unit.L2.make_lvm ~vg_name:Config.lvm_vg_name
       else Storage_unit.L2.make_none () );
   let part_size_MiB = Disk_utils.disk_size_MiB path in
-  let root =
+  (* root specific *)
+  let root, root_size_MiB =
     let open Params.Root in
+    let size_MiB_float =
+      min
+        (Config.lvm_lv_root_frac *. part_size_MiB)
+        Config.lvm_lv_root_max_size_MiB
+    in
+    let size_MiB = int_of_float size_MiB_float in
     Hashtbl.add pool.l3_pool l3_id
       ( if use_lvm then
-          let size_MiB =
-            min
-              (Config.lvm_lv_root_frac *. part_size_MiB)
-              Config.lvm_lv_root_max_size_MiB
-            |> int_of_float |> Option.some
-          in
           Storage_unit.L3.make_lvm ~lv_name:Config.lvm_lv_root_name
-            ~vg_name:Config.lvm_vg_name ~size_MiB
+            ~vg_name:Config.lvm_vg_name ~size_MiB:(Some size_MiB)
         else Storage_unit.L3.make_none () );
     Hashtbl.add pool.l4_pool l4_id
       (Storage_unit.L4.make ~mount_point:Config.root_mount_point `Ext4);
-    Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id
+    (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id, size_MiB_float)
   in
-  let var =
+  (* var specific *)
+  let var, var_size_MiB =
     if use_lvm then (
       let open Params.Var in
-      let size_MiB =
+      let size_MiB_float =
         min
           (Config.lvm_lv_var_frac *. part_size_MiB)
           Config.lvm_lv_var_max_size_MiB
-        |> int_of_float |> Option.some
       in
+      let size_MiB = int_of_float size_MiB_float in
       Hashtbl.add pool.l3_pool l3_id
         (Storage_unit.L3.make_lvm ~lv_name:Config.lvm_lv_var_name
-           ~vg_name:Config.lvm_vg_name ~size_MiB);
+           ~vg_name:Config.lvm_vg_name ~size_MiB:(Some size_MiB));
       Hashtbl.add pool.l4_pool l4_id
         (Storage_unit.L4.make ~mount_point:Config.var_mount_point `Ext4);
-      Some (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id) )
-    else None
+      (Some (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id), Some size_MiB_float)
+    )
+    else (None, None)
   in
+  (* home specific *)
   let home =
     if use_lvm then (
+      let used_space = root_size_MiB +. Option.value ~default:0. var_size_MiB in
+      let free_space = part_size_MiB -. used_space in
+      (* use 80% of remaining space for /home,
+         20% is reserved for snapshot volumes *)
+      let size_MiB =
+        free_space *. Config.lvm_lv_home_frac_of_leftover
+        |> int_of_float |> Option.some
+      in
       let open Params.Home in
       Hashtbl.add pool.l3_pool l3_id
         (Storage_unit.L3.make_lvm ~lv_name:Config.lvm_lv_home_name
-           ~vg_name:Config.lvm_vg_name ~size_MiB:None);
+           ~vg_name:Config.lvm_vg_name ~size_MiB);
       Hashtbl.add pool.l4_pool l4_id
         (Storage_unit.L4.make ~mount_point:Config.home_mount_point `Ext4);
       Some (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id) )
