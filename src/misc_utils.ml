@@ -70,7 +70,7 @@ module Internal = struct
     match ask_yn ~answer_store prompt with `Yes -> Stop ret | `No -> Retry
 
   let ask_uint ~lower_bound ~upper_bound_exc ~answer_store prompt =
-    let lower_bound = lower_bound |> Option.value ~default:0 |> min 0 in
+    let lower_bound = lower_bound |> Option.value ~default:0 |> max 0 in
     let prompt =
       prompt
       ^
