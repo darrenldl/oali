@@ -107,7 +107,22 @@ as percentages to ensure the partition boundaries are aligned optimially
 
 ## 20. Setting up disk
 
-LUKS, LVM, file system formatting are set up at this stage when applicable
+LUKS, LVM, and file system formatting are set up at this stage when applicable
+
+If LVM is enabled, then logical volume sizes are as follows
+
+- LV for `/`
+
+  - 25% of the volume group or 25.0 GiB (whichever is smaller)
+
+- LV for `/var`
+
+  - 25% of the volume group or 250.0 GiB (whichever is smaller)
+
+` LV for `/home`
+
+  - 80% of the remaining space of volume group
+
 
 ## 21. Mounting disk
 

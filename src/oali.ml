@@ -550,7 +550,28 @@ as percentages to ensure the partition boundaries are aligned optimially
            { config with disk_layout = Some disk_layout });
   reg ~name:"Setting up disk"
     ~doc:
-      {|LUKS, LVM, file system formatting are set up at this stage when applicable|}
+      (Printf.sprintf
+         {|LUKS, LVM, and file system formatting are set up at this stage when applicable
+
+If LVM is enabled, then logical volume sizes are as follows
+
+- LV for `/`
+
+  - %d%% of the volume group or %.1f GiB (whichever is smaller)
+
+- LV for `/var`
+
+  - %d%% of the volume group or %.1f GiB (whichever is smaller)
+
+` LV for `/home`
+
+  - %d%% of the remaining space of volume group
+|}
+         (Config.lvm_lv_root_frac *. 100.0 |> int_of_float)
+         (Config.lvm_lv_root_max_size_MiB /. 1024.)
+         (Config.lvm_lv_var_frac *. 100.0 |> int_of_float)
+         (Config.lvm_lv_var_max_size_MiB /. 1024.)
+         (Config.lvm_lv_home_frac_of_leftover *. 100.0 |> int_of_float))
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
        ( try Disk_layout.set_up disk_layout
