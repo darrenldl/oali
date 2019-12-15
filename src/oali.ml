@@ -337,7 +337,7 @@ user may wish to overprovision manually.
                  (float_of_int boot_part_end_MB /. disk_size_MiB *. 100.)
                |> int_of_float
              in
-             ask_uint ~lower_bound ~upper_bound_exc:100
+             ask_uint_confirm ~lower_bound ~upper_bound_exc:100
                "Please enter the maximum percentage of disk to use"
            else 100
          in

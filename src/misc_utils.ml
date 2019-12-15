@@ -121,6 +121,13 @@ let ask_string_confirm ?(is_valid = fun _ -> true) ?answer_store prompt =
       let ret = Internal.ask_string ~is_valid ~answer_store prompt in
       confirm_answer_is_correct_end_retry ~ret)
 
+let ask_uint_confirm ?lower_bound ?upper_bound_exc ?answer_store prompt =
+  Internal.retry ~answer_store (fun () ->
+      let ret =
+        Internal.ask_uint ~lower_bound ~upper_bound_exc ~answer_store prompt
+      in
+      confirm_answer_is_correct_end_retry ~ret)
+
 let pick_choice_num ?(confirm = true) ?(header = "Options")
     (choices : string list) : int =
   Internal.retry ~answer_store:None (fun () ->
