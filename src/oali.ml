@@ -386,7 +386,8 @@ user may wish to overprovision manually.
              boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
            in
            let disk_use_max_perc =
-             if ask_yn "Do you want to overprovision the disk?" = `Yes then
+             if ask_yn_confirm "Do you want to overprovision the disk?" = `Yes
+             then
                let lower_bound =
                  Float.ceil (float_of_int boot_part_end_MB /. disk_size_MiB)
                  |> int_of_float
