@@ -123,6 +123,8 @@ If LVM is enabled, then logical volume sizes are as follows
 
   - 80% of the remaining space of volume group
 
+- Leftover is intended for snapshot volumes
+
 
 ## 21. Mounting disk
 

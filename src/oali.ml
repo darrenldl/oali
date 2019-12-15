@@ -566,6 +566,8 @@ If LVM is enabled, then logical volume sizes are as follows
 ` LV for `/home`
 
   - %d%% of the remaining space of volume group
+
+- Leftover is intended for snapshot volumes
 |}
          (Config.lvm_lv_root_frac *. 100.0 |> int_of_float)
          (Config.lvm_lv_root_max_size_MiB /. 1024.)
