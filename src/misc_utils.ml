@@ -69,13 +69,22 @@ module Internal = struct
   let ask_yn_end_retry ~(ret : 'a) ~answer_store prompt =
     match ask_yn ~answer_store prompt with `Yes -> Stop ret | `No -> Retry
 
-  let ask_uint ~upper_bound_exc ~answer_store prompt =
+  let ask_uint ~lower_bound ~upper_bound_exc ~answer_store prompt =
+    let lower_bound = lower_bound |> Option.value ~default:0 |> min 0 in
+    let prompt =
+      prompt
+      ^
+      match upper_bound_exc with
+      | None -> Printf.sprintf " (min : %d)" lower_bound
+      | Some ub -> Printf.sprintf " (min : %d, max exc : %d)" lower_bound ub
+    in
     ask_string
       ~is_valid:(fun s ->
           match int_of_string_opt s with
           | None -> false
           | Some x -> (
-              match upper_bound_exc with None -> x >= 0 | Some ub -> x < ub ))
+              lower_bound <= x
+              && match upper_bound_exc with None -> true | Some ub -> x < ub ))
       ~answer_store prompt
     |> int_of_string
 end
@@ -88,8 +97,8 @@ let ask_yn ?answer_store prompt = Internal.ask_yn ~answer_store prompt
 let ask_yn_end_retry ~(ret : 'a) ?answer_store prompt =
   Internal.ask_yn_end_retry ~ret ~answer_store prompt
 
-let ask_uint ?upper_bound_exc ?answer_store prompt =
-  Internal.ask_uint ~upper_bound_exc ~answer_store prompt
+let ask_uint ?lower_bound ?upper_bound_exc ?answer_store prompt =
+  Internal.ask_uint ~lower_bound ~upper_bound_exc ~answer_store prompt
 
 let tell_press_enter () =
   print_newline ();

@@ -280,6 +280,10 @@ then partitions the disk(s) based on the choices using `parted`
 
 Partition sizes are calculated on Oali's side and passed to `parted`
 as percentages to ensure the partition boundaries are aligned optimially
+
+If disk layout is single disk, user is asked to pick the maximum
+percentage of disk used. This is most useful for SSD scenarios where
+user may wish to overprovision manually.
 |}
     (fun _answer_store config ->
        let open Disk_layout in
@@ -345,6 +349,16 @@ as percentages to ensure the partition boundaries are aligned optimially
            let boot_part_end_MB =
              boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
            in
+           let disk_use_max_perc =
+             if ask_yn "Do you want to overprovision the disk?" = `Yes then
+               let lower_bound =
+                 Float.ceil (float_of_int boot_part_end_MB /. disk_size_MiB)
+                 |> int_of_float
+               in
+               ask_uint ~lower_bound ~upper_bound_exc:100
+                 "Please enter the maximum percentage of disk to use"
+             else frac_to_perc Config.total_disk_usage_frac
+           in
            exec
              (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
                 disk esp_part_end_MB);
@@ -353,8 +367,7 @@ as percentages to ensure the partition boundaries are aligned optimially
                 disk boot_part_beg_MB boot_part_end_MB);
            exec
              (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %d%%"
-                disk boot_part_end_MB
-                (frac_to_perc Config.total_disk_usage_frac));
+                disk boot_part_end_MB disk_use_max_perc);
            exec (Printf.sprintf "parted %s set 1 boot on" disk);
            let parts = Disk_utils.parts_of_disk disk in
            let esp_part_path = List.nth parts 0 |> Option.some in
