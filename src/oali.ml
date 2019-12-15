@@ -5,7 +5,7 @@ let () =
   let config = Task_config.create () in
   let task_book = Task_book.make config in
   let reg ~name ~doc task = Task_book.register task_book ~name ~doc task in
-  reg ~name:"Initialising entropy of Oali" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Initialise entropy of Oali" ~doc:"" (fun _answer_store config ->
       Random.self_init ();
       config);
   reg ~name:"Increase size of cow partition"
@@ -32,20 +32,19 @@ let () =
               Retry)
       in
       { config with editor = Some editor });
-  reg ~name:"Updating pacman database in live CD" ~doc:"Just `pacman -Sy`"
+  reg ~name:"Update pacman database in live CD" ~doc:"Just `pacman -Sy`"
     (fun _answer_store config ->
        pacman "-Sy";
        config);
-  reg ~name:"Asking if want to use reflector" ~doc:""
-    (fun answer_store config ->
-       let use_reflector =
-         ask_yn ~answer_store
-           "Do you want to use reflector to automatically sort mirrorlist by \
-            rate"
-         = `Yes
-       in
-       { config with use_reflector = Some use_reflector });
-  reg ~name:"Installing reflector" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Ask if want to use reflector" ~doc:"" (fun answer_store config ->
+      let use_reflector =
+        ask_yn ~answer_store
+          "Do you want to use reflector to automatically sort mirrorlist by \
+           rate"
+        = `Yes
+      in
+      { config with use_reflector = Some use_reflector });
+  reg ~name:"Install reflector" ~doc:"" (fun _answer_store config ->
       if Option.get config.use_reflector then pacman "-S reflector";
       config);
   reg ~name:"Automatic configuration of mirrorlist"
@@ -93,16 +92,16 @@ let () =
              (Printf.sprintf "%s %s" editor Config.livecd_mirrorlist_path);
            ask_yn_end_retry ~ret:() "Finished editing?");
        config);
-  reg ~name:"Installing git" ~doc:"Installs git onto live CD"
+  reg ~name:"Install git" ~doc:"Installs git onto live CD"
     (fun _answer_store config ->
        install [ "git" ];
        config);
-  reg ~name:"Asking for hostname" ~doc:"" (fun answer_store config ->
+  reg ~name:"Ask for hostname" ~doc:"" (fun answer_store config ->
       let hostname =
         ask_string_confirm ~is_valid:not_empty ~answer_store "Hostname"
       in
       { config with hostname = Some hostname });
-  reg ~name:"Asking if install hardened kernel"
+  reg ~name:"Ask if install hardened kernel"
     ~doc:"Installs `linux-hardened` later if answered yes"
     (fun answer_store config ->
        let add_hardened =
@@ -154,7 +153,7 @@ If encryption is enabled as well, then the volume group is set up inside the enc
        in
        { config with encrypt_boot = Some encrypt });
   let luks_doc = {|User can adjust the iteration time and key size here|} in
-  reg ~name:"Adjusting cryptsetup parameters for boot partition" ~doc:luks_doc
+  reg ~name:"Adjust cryptsetup parameters for boot partition" ~doc:luks_doc
     (fun answer_store config ->
        if Option.get config.encrypt_boot then
          let iter_time_ms, key_size_bits =
@@ -215,7 +214,7 @@ User is allowed to continue said setup if they wishes to however
              confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
        in
        { config with encrypt_sys = Some encrypt });
-  reg ~name:"Adjusting cryptsetup parameters for root partition" ~doc:luks_doc
+  reg ~name:"Adjust cryptsetup parameters for root partition" ~doc:luks_doc
     (fun answer_store config ->
        if Option.get config.encrypt_sys then
          let iter_time_ms, key_size_bits =
@@ -271,7 +270,7 @@ User is allowed to continue said setup if they wishes to however
        in
        let choice = pick_choice_kv choices in
        { config with disk_layout_choice = Some choice });
-  reg ~name:"Checking if in EFI mode" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Check if in EFI mode" ~doc:"" (fun _answer_store config ->
       let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
       { config with is_efi_mode = Some is_efi_mode });
   reg ~name:"Configure disk setup parameters"
@@ -548,7 +547,7 @@ as percentages to ensure the partition boundaries are aligned optimially
                ~sys_encrypt ~use_lvm
            in
            { config with disk_layout = Some disk_layout });
-  reg ~name:"Setting up disk"
+  reg ~name:"Set up disk"
     ~doc:
       (Printf.sprintf
          {|LUKS, LVM, and file system formatting are set up at this stage when applicable
@@ -581,8 +580,7 @@ If LVM is enabled, then the logical volume sizes are as follows
            Disk_layout.reset disk_layout;
            raise e );
        config);
-  reg ~name:"Mounting disk"
-    ~doc:{|Mount all partitions with root being at `/mnt`|}
+  reg ~name:"Mount disk" ~doc:{|Mount all partitions with root being at `/mnt`|}
     (fun _answer_store config ->
        (* let is_efi_mode = Option.get config.is_efi_mode in *)
        let disk_layout = Option.get config.disk_layout in
@@ -594,13 +592,13 @@ If LVM is enabled, then the logical volume sizes are as follows
         *   Unix.mkdir Config.esp_mount_point 0o744;
         *   Disk_layout.mount_esp disk_layout ); *)
        config);
-  reg ~name:"Installing base system (base linux base-devel)" ~doc:""
+  reg ~name:"Install base system (base linux base-devel)" ~doc:""
     (fun _answer_store config ->
        exec_no_capture
          (Printf.sprintf "pacstrap %s base linux base-devel"
             Config.root_mount_point);
        config);
-  reg ~name:"Generating fstab"
+  reg ~name:"Generate fstab"
     ~doc:
       {|Invokes `genfstab`, and comments out entry for `/boot`
 if using the USB key disk layout|}
@@ -623,7 +621,7 @@ if using the USB key disk layout|}
              | None, None -> [ s ]
              | _, _ -> [ "# " ^ s ]);
        config);
-  reg ~name:"Installing keyfile for /"
+  reg ~name:"Install keyfile for /"
     ~doc:{|Sets up keyfile to be embedded into the initramfs|}
     (fun _answer_store config ->
        if Option.get config.encrypt_sys then (
@@ -645,7 +643,7 @@ if using the USB key disk layout|}
            Unix.chmod keyfile_path 0o000 )
        else print_endline "Skipped";
        config);
-  reg ~name:"Installing keyfile for unlocking /boot after boot"
+  reg ~name:"Install keyfile for unlocking /boot after boot"
     ~doc:
       {|Installs secondary keyfile for /boot
 
@@ -677,7 +675,7 @@ The keyfile is referenced in crypttab later|}
              () )
          else print_endline "Skipped";
        config);
-  reg ~name:"Setting up crypttab for unlocking and mounting /boot after boot"
+  reg ~name:"Set up crypttab for unlocking and mounting /boot after boot"
     ~doc:
       {|Append a line to crypttab file using the secondary keyfile for /boot,
 allowing decryption of boot partition after booting
@@ -720,7 +718,7 @@ The line is then commented if disk layout uses USB key|}
                 output_string crypttab_oc line;
                 output_string crypttab_oc "\n") );
        config);
-  reg ~name:"Adjusting mkinitcpio.conf"
+  reg ~name:"Adjust mkinitcpio.conf"
     ~doc:
       {|Adds appropriate mkinitcpio hooks based on LUKS and LVM choices specified|}
     (fun _answer_store config ->
@@ -758,26 +756,25 @@ The line is then commented if disk layout uses USB key|}
        File.filter_map_lines ~file fill_in_FILES;
        File.filter_map_lines ~file fill_in_HOOKS;
        config);
-  reg ~name:"Installing lvm2 onto system on disk"
+  reg ~name:"Install lvm2 onto system on disk"
     ~doc:{|Install `lvm2` package into system on disk if LVM is enabled|}
     (fun _answer_store config ->
        if Option.get config.use_lvm then Arch_chroot.install [ "lvm2" ];
        config);
-  reg ~name:"Recreating images"
+  reg ~name:"Recreate images"
     ~doc:"Recreate initramfs so the new mkinitcpio hooks are installed"
     (fun _answer_store config ->
        Arch_chroot.exec "mkinitcpio -p linux";
        config);
-  reg ~name:"Installing hardened kernel" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Install hardened kernel" ~doc:"" (fun _answer_store config ->
       if Option.get config.add_hardened then
         Arch_chroot.install [ "linux-hardened"; "linux-hardened-headers" ];
       config);
-  reg ~name:"Updating initramfs permissions" ~doc:""
-    (fun _answer_store config ->
-       exec
-         (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
-       config);
-  reg ~name:"Setting up hostname" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Update initramfs permissions" ~doc:"" (fun _answer_store config ->
+      exec
+        (Printf.sprintf "chmod 600 %s/initramfs-linux*" Config.boot_mount_point);
+      config);
+  reg ~name:"Set up hostname" ~doc:{||} (fun _answer_store config ->
       let oc =
         open_out
           (concat_file_names [ Config.root_mount_point; "etc"; "hostname" ])
@@ -786,7 +783,7 @@ The line is then commented if disk layout uses USB key|}
         ~finally:(fun () -> close_out oc)
         (fun () -> output_string oc (Option.get config.hostname));
       config);
-  reg ~name:"Setting up locale" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Set up locale" ~doc:"" (fun _answer_store config ->
       (let en_us_locale_gen = "en_US.UTF-8 UTF-8" in
        let en_dk_locale_gen = "en_DK.UTF-8 UTF-8" in
        let uncommet_locales =
@@ -822,22 +819,20 @@ The line is then commented if disk layout uses USB key|}
             output_string oc (Printf.sprintf "LC_TIME=%s\n" en_dk_locale_conf));
        Arch_chroot.exec "locale-gen");
       config);
-  (* reg ~name:"Updating package database" ~doc:"" (fun _answer_store config ->
-   *     Arch_chroot.pacman "-Sy";
-   *     config); *)
-  reg ~name:"Installing wifi-menu" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Install wifi-menu" ~doc:"" (fun _answer_store config ->
       Arch_chroot.install [ "dialog"; "wpa_supplicant" ];
       config);
-  reg ~name:"Installing dhcpcd" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Install dhcpcd" ~doc:"" (fun _answer_store config ->
       Arch_chroot.install [ "dhcpcd" ];
       config);
-  reg ~name:"Installing bootloader packages" ~doc:{|Install GRUB bootloader|}
+  reg ~name:"Install bootloader packages" ~doc:{|Install GRUB bootloader|}
     (fun _answer_store config ->
        Arch_chroot.install [ "grub" ];
        if Option.get config.is_efi_mode then
          Arch_chroot.install [ "efibootmgr"; "efitools" ];
        config);
-  reg ~name:"Updating GRUB config: GRUB_ENABLE_CRYPTODISK" ~doc:""
+  reg ~name:"Update GRUB config: GRUB_ENABLE_CRYPTODISK"
+    ~doc:{|If LUKS is enabled, then sets `GRUB_ENABLE_CRYPTODISK` to `y`|}
     (fun _answer_store config ->
        let encrypt = Option.get config.encrypt_boot in
        ( if encrypt then
@@ -872,7 +867,7 @@ The line is then commented if disk layout uses USB key|}
                ~finally:(fun () -> close_out oc)
                (fun () -> output_string oc (grub_enable_cryptodisk ^ "=y\n")) );
        config);
-  reg ~name:"Updating GRUB config: GRUB_CMDLINE_LINUX"
+  reg ~name:"Update GRUB config: GRUB_CMDLINE_LINUX"
     ~doc:
       {|If LUKS is enabled, adjusts the `GRUB_CMDLINE_LINUX` line in grub config to specify
 the system partition, the associated keyfile, and root volume|}
@@ -933,7 +928,7 @@ the system partition, the associated keyfile, and root volume|}
            in
            File.filter_map_lines ~file:default_grub_path update_grub_cmdline );
        config);
-  reg ~name:"Setting hardened kernel as default boot entry" ~doc:""
+  reg ~name:"Set hardened kernel as default boot entry" ~doc:""
     (fun _answer_store config ->
        let file =
          concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
@@ -955,7 +950,7 @@ the system partition, the associated keyfile, and root volume|}
            in
            File.filter_map_lines ~file update_grub_default );
        config);
-  reg ~name:"Installing GRUB to disk"
+  reg ~name:"Install GRUB to disk"
     ~doc:
       {|Invokes `grub-install` with parameters based on whether in BIOS or UEFI mode,
 and also based on disk layout
@@ -986,14 +981,14 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
                 "grub-install %s --target=i386-pc --boot-directory=%s --recheck %s"
                 removable_flag Config.boot_dir boot_disk) );
        config);
-  reg ~name:"Generating GRUB config" ~doc:{|Invokes `grub-mkconfig`|}
+  reg ~name:"Generate GRUB config" ~doc:{|Invokes `grub-mkconfig`|}
     (fun _answer_store config ->
        Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
        config);
-  reg ~name:"Setting up root password" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Set up root password" ~doc:"" (fun _answer_store config ->
       Arch_chroot.exec_no_capture "passwd";
       config);
-  reg ~name:"Setting user account" ~doc:"" (fun answer_store config ->
+  reg ~name:"Set up user account" ~doc:"" (fun answer_store config ->
       let user_name =
         ask_string_confirm ~is_valid:not_empty ~answer_store
           "Please enter user name"
@@ -1002,12 +997,12 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
       Arch_chroot.exec
         (Printf.sprintf "useradd -m \"%s\" -G users,wheel,rfkill" user_name);
       { config with user_name = Some user_name });
-  reg ~name:"Setting user password" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Set up user password" ~doc:"" (fun _answer_store config ->
       let user_name = Option.get config.user_name in
       Printf.printf "Setting password for %s" user_name;
       Arch_chroot.exec_no_capture (Printf.sprintf "passwd %s" user_name);
       config);
-  reg ~name:"Creating oali files folder"
+  reg ~name:"Create oali files folder"
     ~doc:{|Sets up user facing notes for post-install stuff|}
     (fun _answer_store config ->
        let dst_path =
@@ -1016,7 +1011,7 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
        in
        FileUtil.mkdir dst_path;
        config);
-  reg ~name:"Generating USB key mounting and unmounting scripts"
+  reg ~name:"Generate USB key mounting and unmounting scripts"
     ~doc:
       {|If disk layout uses USB key, generates scripts with appropriate UUIDs
 embedded for mounting and unmounting the USB key partitions|}
@@ -1077,7 +1072,7 @@ embedded for mounting and unmounting the USB key partitions|}
            ~finally:(fun () -> close_out oc)
            (fun () -> output_string oc script) );
        config);
-  reg ~name:"Generating useradd helper scripts" ~doc:""
+  reg ~name:"Generate useradd helper scripts" ~doc:""
     (fun _answer_store config ->
        (let dst_path =
           concat_file_names
@@ -1113,11 +1108,11 @@ embedded for mounting and unmounting the USB key partitions|}
         ask_yn_confirm ~answer_store "Do you want to enable SSH server?" = `Yes
       in
       { config with enable_ssh_server = Some enable_ssh_server });
-  reg ~name:"Installing SSH server" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Install SSH server" ~doc:"" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then
         Arch_chroot.install [ "openssh" ];
       config);
-  reg ~name:"Generating sshd_config" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Generate sshd_config" ~doc:"" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then (
         let script = Sshd_config_template.gen ~port:Config.sshd_port in
         let dst_path = Config.etc_sshd_config_path in
@@ -1127,11 +1122,11 @@ embedded for mounting and unmounting the USB key partitions|}
           (fun () -> output_string oc script);
         Unix.chmod dst_path 0o600 );
       config);
-  reg ~name:"Enabling SSH server" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Enable SSH server" ~doc:"" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then
         Arch_chroot.exec "systemctl enable sshd";
       config);
-  reg ~name:"Setting up SSH key directory" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Set up SSH key directory" ~doc:"" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then (
         let user_name = Option.get config.user_name in
         let user_ssh_dir_path =
@@ -1147,7 +1142,7 @@ embedded for mounting and unmounting the USB key partitions|}
           user_ssh_authorized_keys_path = Some user_ssh_authorized_keys_path;
         } )
       else config);
-  reg ~name:"Transferring SSH public keys"
+  reg ~name:"Transfer SSH public keys"
     ~doc:
       {|User can transfer the public key via command using `ncat` (for network transfer) and `gpg` (for symmetric encryption using a randomly generated alphanumeric passphrase)
 
@@ -1242,11 +1237,11 @@ of the public key.
         = `Yes
       in
       { config with use_saltstack = Some use_saltstack });
-  reg ~name:"Installing SaltStack" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Install SaltStack" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
       if use_saltstack then Arch_chroot.install [ "salt" ];
       config);
-  reg ~name:"Generating SaltStack execution script" ~doc:""
+  reg ~name:"Generate SaltStack execution script" ~doc:""
     (fun _answer_store config ->
        let use_saltstack = Option.get config.use_saltstack in
        if use_saltstack then (
@@ -1265,7 +1260,7 @@ of the public key.
            (fun () -> output_string oc script);
          Unix.chmod dst_path 0o600 );
        config);
-  reg ~name:"Git cloning oali-profiles repo into current directory" ~doc:""
+  reg ~name:"Git clone oali-profiles repo into current directory" ~doc:""
     (fun answer_store config ->
        let use_saltstack = Option.get config.use_saltstack in
        if use_saltstack then (
@@ -1311,7 +1306,7 @@ of the public key.
           let profile = pick_choice_value profiles in
           { config with oali_profile = Some profile }
       else config);
-  reg ~name:"Copying SaltStack files" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Copy SaltStack files" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
       ( if use_saltstack then
           let salt_files_path =
@@ -1330,7 +1325,7 @@ of the public key.
           FileUtil.cp ~recurse:true folders
             (Filename.concat Config.root_mount_point "srv") );
       config);
-  reg ~name:"Customising SaltStack files" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Customise SaltStack files" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
       ( if use_saltstack then
           let user_name = Option.get config.user_name in
@@ -1344,7 +1339,7 @@ of the public key.
             ~finally:(fun () -> close_out oc)
             (fun () -> output_string oc script) );
       config);
-  reg ~name:"Generating setup note" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Generate setup note" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
       let use_usb_key =
         Option.get config.disk_layout_choice
@@ -1364,30 +1359,29 @@ of the public key.
         ~finally:(fun () -> close_out oc)
         (fun () -> output_string oc note);
       config);
-  reg ~name:"Setting oali files permissions" ~doc:""
-    (fun _answer_store config ->
-       let path =
-         concat_file_names
-           [ Config.root_mount_point; Config.oali_files_dir_path ]
-       in
-       exec (Printf.sprintf "chmod 700 %s/*" path);
-       config);
-  reg ~name:"Asking if unmount partitions" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Set oali files permissions" ~doc:"" (fun _answer_store config ->
+      let path =
+        concat_file_names
+          [ Config.root_mount_point; Config.oali_files_dir_path ]
+      in
+      exec (Printf.sprintf "chmod 700 %s/*" path);
+      config);
+  reg ~name:"Ask if unmount partitions" ~doc:"" (fun _answer_store config ->
       let do_unmount = ask_yn "Do you want to unmount partitions?" = `Yes in
       { config with do_unmount = Some do_unmount });
-  reg ~name:"Unmounting partitions" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Unmount partitions" ~doc:"" (fun _answer_store config ->
       ( if Option.get config.do_unmount then
           let disk_layout = Option.get config.disk_layout in
           Disk_layout.unmount disk_layout );
       config);
-  reg ~name:"Asking if shutdown" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Ask if shutdown" ~doc:"" (fun _answer_store config ->
       if Option.get config.do_unmount then
         let do_shutdown = ask_yn "Do you want to shutdown?" = `Yes in
         { config with do_shutdown = Some do_shutdown }
       else (
         print_endline "Shutdown skipped";
         config ));
-  reg ~name:"Shutting down" ~doc:"" (fun _answer_store config ->
+  reg ~name:"Shut down" ~doc:"" (fun _answer_store config ->
       if
         Option.get config.do_unmount
         && Option.value ~default:false config.do_shutdown
