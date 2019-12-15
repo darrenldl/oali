@@ -553,7 +553,7 @@ as percentages to ensure the partition boundaries are aligned optimially
       (Printf.sprintf
          {|LUKS, LVM, and file system formatting are set up at this stage when applicable
 
-If LVM is enabled, then logical volume sizes are as follows
+If LVM is enabled, then the logical volume sizes are as follows
 
 - LV for `/`
 
