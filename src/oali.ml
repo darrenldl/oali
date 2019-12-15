@@ -281,9 +281,9 @@ then partitions the disk(s) based on the choices using `parted`
 Partition sizes are calculated on Oali's side and passed to `parted`
 as percentages to ensure the partition boundaries are aligned optimially
 
-If disk layout is single disk, user is asked to pick the maximum
-percentage of disk used. This is most useful for SSD scenarios where
-user may wish to overprovision manually.
+If disk layout is single disk, user is asked whether they want to
+overprovision, and to pick the maximum percentage of disk to be used if so.
+This is most useful for SSD scenarios where user may wish to overprovision manually.
 |}
     (fun _answer_store config ->
        let open Disk_layout in
