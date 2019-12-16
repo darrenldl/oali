@@ -665,7 +665,7 @@ if using the USB key disk layout|}
        config);
   reg ~name:"Install keyfile for unlocking /boot after boot"
     ~doc:
-      {|Installs secondary keyfile for /boot
+      {|Installs secondary keyfile for /boot if disk layout does not use USB key
 
 The keyfile is referenced in crypttab later|}
     (fun _answer_store config ->

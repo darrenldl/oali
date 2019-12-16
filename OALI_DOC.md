@@ -149,7 +149,7 @@ Sets up keyfile to be embedded into the initramfs
 
 ## 25. Install keyfile for unlocking /boot after boot
 
-Installs secondary keyfile for /boot
+Installs secondary keyfile for /boot if disk layout does not use USB key
 
 The keyfile is referenced in crypttab later
 
