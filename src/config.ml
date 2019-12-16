@@ -12,8 +12,6 @@ let boot_part_size_MiB = 500.0
 
 let boot_part_max_frac = 0.75
 
-let total_disk_usage_frac = 0.75
-
 let boot_dir = "/boot"
 
 let boot_mount_point =

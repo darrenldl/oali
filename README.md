@@ -178,7 +178,7 @@ modify the relevant files to your liking, and select "Custom" in the profile men
 #### Post-bootstrapping
 After initial installation, several files will be present in `/root/oali_pack` (all of the files are to be accessed/executed by root)
 - `salt_exec.sh` allows you start the saltstack setup, present only if you answered yes to using saltstack for your further setup
-- `oli_setup_note` contains description of the files
+- `oali_setup_note` contains description of the files
 - `usb_key_mount.sh` allows you to mount your USB key easily and reliably
 - `usb_key_umount.sh` allows you to unmount your USB key easily and reliably
 - `useradd_helper_restructed.sh` and `useradd_helper_as_powerful.sh` allow you to add more users in the same manner as used by setup.sh

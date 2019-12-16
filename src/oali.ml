@@ -280,6 +280,10 @@ then partitions the disk(s) based on the choices using `parted`
 
 Partition sizes are calculated on Oali's side and passed to `parted`
 as percentages to ensure the partition boundaries are aligned optimially
+
+If disk layout is single disk, user is asked whether they want to
+overprovision, and to pick the maximum percentage of disk to be used if so.
+This is most useful for SSD scenarios where user may wish to overprovision manually.
 |}
     (fun _answer_store config ->
        let open Disk_layout in
@@ -326,6 +330,18 @@ as percentages to ensure the partition boundaries are aligned optimially
            calc_frac ~max_frac:Config.boot_part_max_frac
              ~value:Config.boot_part_size_MiB ~total:disk_size_MiB
          in
+         let get_max_disk_perc_to_use ~boot_part_end_MB =
+           if ask_yn_confirm "Do you want to overprovision the disk?" = `Yes
+           then
+             let lower_bound =
+               Float.ceil
+                 (float_of_int boot_part_end_MB /. disk_size_MiB *. 100.)
+               |> int_of_float
+             in
+             ask_uint_confirm ~lower_bound ~upper_bound_exc:100
+               "Please enter the maximum percentage of disk to use"
+           else 100
+         in
          if is_efi_mode then (
            let esp_part_frac =
              calc_frac ~max_frac:Config.esp_part_max_frac
@@ -345,6 +361,9 @@ as percentages to ensure the partition boundaries are aligned optimially
            let boot_part_end_MB =
              boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
            in
+           let disk_use_max_perc =
+             get_max_disk_perc_to_use ~boot_part_end_MB
+           in
            exec
              (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
                 disk esp_part_end_MB);
@@ -353,8 +372,7 @@ as percentages to ensure the partition boundaries are aligned optimially
                 disk boot_part_beg_MB boot_part_end_MB);
            exec
              (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %d%%"
-                disk boot_part_end_MB
-                (frac_to_perc Config.total_disk_usage_frac));
+                disk boot_part_end_MB disk_use_max_perc);
            exec (Printf.sprintf "parted %s set 1 boot on" disk);
            let parts = Disk_utils.parts_of_disk disk in
            let esp_part_path = List.nth parts 0 |> Option.some in
@@ -372,13 +390,15 @@ as percentages to ensure the partition boundaries are aligned optimially
            let boot_part_end_MB =
              boot_part_end_MiB |> Unit_convert.from_MiB_to_MB |> int_of_float
            in
+           let disk_use_max_perc =
+             get_max_disk_perc_to_use ~boot_part_end_MB
+           in
            exec
              (Printf.sprintf "parted -a optimal %s mkpart primary 0%% %dMB"
                 disk boot_part_end_MB);
            exec
              (Printf.sprintf "parted -a optimal %s mkpart primary %dMB %d%%"
-                disk boot_part_end_MB
-                (frac_to_perc Config.total_disk_usage_frac));
+                disk boot_part_end_MB disk_use_max_perc);
            exec (Printf.sprintf "parted %s set 1 boot on" disk);
            let parts = Disk_utils.parts_of_disk disk in
            let boot_part_path = List.nth parts 0 in
@@ -645,7 +665,7 @@ if using the USB key disk layout|}
        config);
   reg ~name:"Install keyfile for unlocking /boot after boot"
     ~doc:
-      {|Installs secondary keyfile for /boot
+      {|Installs secondary keyfile for /boot if disk layout does not use USB key
 
 The keyfile is referenced in crypttab later|}
     (fun _answer_store config ->
@@ -702,8 +722,8 @@ The line is then commented if disk layout uses USB key|}
              else ""
            in
            let line =
-             Printf.sprintf "%s%s UUID=%s %s %s\n" Config.boot_mapper_name
-               comment_str boot_part_uuid keyfile_path
+             Printf.sprintf "%s%s UUID=%s %s %s\n" comment_str
+               Config.boot_mapper_name boot_part_uuid keyfile_path
                (String.concat ","
                   [ Printf.sprintf "x-systemd.device-timeout=%ds" 90 ])
            in
@@ -825,6 +845,10 @@ The line is then commented if disk layout uses USB key|}
   reg ~name:"Install dhcpcd" ~doc:"" (fun _answer_store config ->
       Arch_chroot.install [ "dhcpcd" ];
       config);
+  reg ~name:"Install basic text editors" ~doc:{|Installs `nano`, `vim`|}
+    (fun _answer_store config ->
+       Arch_chroot.install [ "nano"; "vim" ];
+       config);
   reg ~name:"Install bootloader packages" ~doc:{|Install GRUB bootloader|}
     (fun _answer_store config ->
        Arch_chroot.install [ "grub" ];

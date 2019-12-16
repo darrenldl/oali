@@ -344,41 +344,41 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
   { root; var; home; esp; boot; lvm_info; pool }
 
 let mount layout =
-  print_endline "Mounting root";
+  Misc_utils.print_boxed_msg "Mounting root";
   Storage_unit.mount layout.pool layout.root;
   Option.iter
     (fun var ->
-       print_endline "Mounting var";
+       Misc_utils.print_boxed_msg "Mounting var";
        Storage_unit.mount layout.pool var)
     layout.var;
   Option.iter
     (fun home ->
-       print_endline "Mounting home";
+       Misc_utils.print_boxed_msg "Mounting home";
        Storage_unit.mount layout.pool home)
     layout.home;
   Storage_unit.mount layout.pool layout.boot;
   Option.iter
     (fun esp ->
-       print_endline "Mounting esp";
+       Misc_utils.print_boxed_msg "Mounting esp";
        Storage_unit.mount layout.pool esp)
     layout.esp
 
 let unmount layout =
   Option.iter
     (fun esp ->
-       print_endline "Unmounting esp";
+       Misc_utils.print_boxed_msg "Unmounting esp";
        Storage_unit.unmount layout.pool esp)
     layout.esp;
-  print_endline "Unmounting boot";
+  Misc_utils.print_boxed_msg "Unmounting boot";
   Storage_unit.unmount layout.pool layout.boot;
   Option.iter
     (fun home ->
-       print_endline "Unmounting home";
+       Misc_utils.print_boxed_msg "Unmounting home";
        Storage_unit.unmount layout.pool home)
     layout.home;
   Option.iter
     (fun var ->
-       print_endline "Unmounting var";
+       Misc_utils.print_boxed_msg "Unmounting var";
        Storage_unit.unmount layout.pool var)
     layout.var;
   print_endline "Unmounting root";
@@ -388,27 +388,27 @@ let set_up layout =
   (* ESP *)
   Option.iter
     (fun esp ->
-       print_endline "Setting up ESP";
+       Misc_utils.print_boxed_msg "Setting up ESP";
        Storage_unit.set_up layout.pool esp)
     layout.esp;
   (* boot *)
-  print_endline "Setting up boot";
+  Misc_utils.print_boxed_msg "Setting up boot";
   Storage_unit.set_up layout.pool layout.boot;
   (* system *)
-  print_endline "Setting up system volume(s)";
+  Misc_utils.print_boxed_msg "Setting up system volume(s)";
   (* root *)
-  print_endline "Setting up root";
+  Misc_utils.print_boxed_msg "Setting up root";
   Storage_unit.set_up layout.pool layout.root;
   (* var *)
   Option.iter
     (fun var ->
-       print_endline "Setting up var";
+       Misc_utils.print_boxed_msg "Setting up var";
        Storage_unit.set_up layout.pool var)
     layout.var;
   (* home *)
   Option.iter
     (fun home ->
-       print_endline "Setting up home";
+       Misc_utils.print_boxed_msg "Setting up home";
        Storage_unit.set_up layout.pool home)
     layout.home
 

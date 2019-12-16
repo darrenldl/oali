@@ -104,6 +104,10 @@ then partitions the disk(s) based on the choices using `parted`
 Partition sizes are calculated on Oali's side and passed to `parted`
 as percentages to ensure the partition boundaries are aligned optimially
 
+If disk layout is single disk, user is asked whether they want to
+overprovision, and to pick the maximum percentage of disk to be used if so.
+This is most useful for SSD scenarios where user may wish to overprovision manually.
+
 
 ## 20. Set up disk
 
@@ -145,7 +149,7 @@ Sets up keyfile to be embedded into the initramfs
 
 ## 25. Install keyfile for unlocking /boot after boot
 
-Installs secondary keyfile for /boot
+Installs secondary keyfile for /boot if disk layout does not use USB key
 
 The keyfile is referenced in crypttab later
 
@@ -192,80 +196,84 @@ Recreate initramfs so the new mkinitcpio hooks are installed
 
 
 
-## 36. Install bootloader packages
+## 36. Install basic text editors
+
+Installs `nano`, `vim`
+
+## 37. Install bootloader packages
 
 Install GRUB bootloader
 
-## 37. Update GRUB config: GRUB_ENABLE_CRYPTODISK
+## 38. Update GRUB config: GRUB_ENABLE_CRYPTODISK
 
 If LUKS is enabled, then sets `GRUB_ENABLE_CRYPTODISK` to `y`
 
-## 38. Update GRUB config: GRUB_CMDLINE_LINUX
+## 39. Update GRUB config: GRUB_CMDLINE_LINUX
 
 If LUKS is enabled, adjusts the `GRUB_CMDLINE_LINUX` line in grub config to specify
 the system partition, the associated keyfile, and root volume
 
-## 39. Set hardened kernel as default boot entry
+## 40. Set hardened kernel as default boot entry
 
 
 
-## 40. Install GRUB to disk
+## 41. Install GRUB to disk
 
 Invokes `grub-install` with parameters based on whether in BIOS or UEFI mode,
 and also based on disk layout
 
 Specifically, `--removable` flag is added if disk layout uses USB key
 
-## 41. Generate GRUB config
+## 42. Generate GRUB config
 
 Invokes `grub-mkconfig`
 
-## 42. Set up root password
+## 43. Set up root password
 
 
 
-## 43. Set up user account
+## 44. Set up user account
 
 
 
-## 44. Set up user password
+## 45. Set up user password
 
 
 
-## 45. Create oali files folder
+## 46. Create oali files folder
 
 Sets up user facing notes for post-install stuff
 
-## 46. Generate USB key mounting and unmounting scripts
+## 47. Generate USB key mounting and unmounting scripts
 
 If disk layout uses USB key, generates scripts with appropriate UUIDs
 embedded for mounting and unmounting the USB key partitions
 
-## 47. Generate useradd helper scripts
+## 48. Generate useradd helper scripts
 
 
 
-## 48. Ask if enable SSH server
+## 49. Ask if enable SSH server
 
 
 
-## 49. Install SSH server
+## 50. Install SSH server
 
 
 
-## 50. Generate sshd_config
+## 51. Generate sshd_config
 
 
 
-## 51. Enable SSH server
+## 52. Enable SSH server
 
 
 
-## 52. Set up SSH key directory
+## 53. Set up SSH key directory
 
 
 
-## 53. Transfer SSH public keys
+## 54. Transfer SSH public keys
 
 User can transfer the public key via command using `ncat` (for network transfer) and `gpg` (for symmetric encryption using a randomly generated alphanumeric passphrase)
 
@@ -274,55 +282,55 @@ is to limit the damage of accidentally transferring private key instead
 of the public key.
 
 
-## 54. Ask if set up SaltStack
+## 55. Ask if set up SaltStack
 
 
 
-## 55. Install SaltStack
+## 56. Install SaltStack
 
 
 
-## 56. Generate SaltStack execution script
+## 57. Generate SaltStack execution script
 
 
 
-## 57. Git clone oali-profiles repo into current directory
+## 58. Git clone oali-profiles repo into current directory
 
 
 
-## 58. Select profile to use
+## 59. Select profile to use
 
 
 
-## 59. Copy SaltStack files
+## 60. Copy SaltStack files
 
 
 
-## 60. Customise SaltStack files
+## 61. Customise SaltStack files
 
 
 
-## 61. Generate setup note
+## 62. Generate setup note
 
 
 
-## 62. Set oali files permissions
+## 63. Set oali files permissions
 
 
 
-## 63. Ask if unmount partitions
+## 64. Ask if unmount partitions
 
 
 
-## 64. Unmount partitions
+## 65. Unmount partitions
 
 
 
-## 65. Ask if shutdown
+## 66. Ask if shutdown
 
 
 
-## 66. Shut down
+## 67. Shut down
 
 
 
