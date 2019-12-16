@@ -722,8 +722,8 @@ The line is then commented if disk layout uses USB key|}
              else ""
            in
            let line =
-             Printf.sprintf "%s%s UUID=%s %s %s\n" Config.boot_mapper_name
-               comment_str boot_part_uuid keyfile_path
+             Printf.sprintf "%s%s UUID=%s %s %s\n" comment_str
+               Config.boot_mapper_name boot_part_uuid keyfile_path
                (String.concat ","
                   [ Printf.sprintf "x-systemd.device-timeout=%ds" 90 ])
            in
