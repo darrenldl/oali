@@ -99,3 +99,5 @@ let var_mount_point = Misc_utils.concat_file_names [ root_mount_point; "var" ]
 let home_mount_point = Misc_utils.concat_file_names [ root_mount_point; "home" ]
 
 let doc_md_name = "OALI_DOC.md"
+
+let recovery_kit_dir = "oali_recovery_kit"
