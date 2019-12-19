@@ -1009,6 +1009,9 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
     (fun _answer_store config ->
        Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
        config);
+  reg ~name:"Install system recovery kit into /boot and /root" ~doc:"" (fun _answer_store config ->
+      config
+    );
   reg ~name:"Set up root password" ~doc:"" (fun _answer_store config ->
       Arch_chroot.exec_no_capture "passwd";
       config);
