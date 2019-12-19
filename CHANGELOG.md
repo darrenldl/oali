@@ -1,3 +1,6 @@
+# 0.0.5
+- Key for `/boot` now is always installed regardless of disk layout
+
 # 0.0.4
 - Fixed `oali_pack` files permissions
 - Moved SaltStack files to `oali-profiles` repo
