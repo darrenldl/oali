@@ -1005,15 +1005,36 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
        config);
   reg ~name:"Install system recovery kit into /boot and /root" ~doc:""
     (fun _answer_store config ->
-       List.iter (fun path ->
-           let dst_path =
-             concat_file_names
-               [path; Config.recovery_kit_dir]
-           in
-
-         ())
-         [concat_file_names [Config.root_mount_point; Config.boot_dir];
-          concat_file_names [Config.root_mount_point; "root"]
+       let disk_layout = Option.get config.disk_layout in
+       List.iter
+         (fun path ->
+            let dir_path = concat_file_names [ path; Config.recovery_kit_dir ] in
+            (let boot = Disk_layout.get_boot disk_layout in
+             match boot.l1 with
+             | Clear _ -> ()
+             | Luks { info; _ } ->
+               let boot_secondary_key = Option.get info.secondary_key in
+               let keyfile_path =
+                 concat_file_names [ dir_path; Config.boot_part_keyfile_name ]
+               in
+               let oc = open_out_bin keyfile_path in
+               Fun.protect
+                 ~finally:(fun () -> close_out oc)
+                 (fun () -> output_string oc boot_secondary_key));
+            let root = Disk_layout.get_root disk_layout in
+            match root.l1 with
+            | Clear _ -> ()
+            | Luks { info; _ } ->
+              let keyfile_path =
+                concat_file_names [ dir_path; Config.sys_part_keyfile_name ]
+              in
+              let oc = open_out_bin keyfile_path in
+              Fun.protect
+                ~finally:(fun () -> close_out oc)
+                (fun () -> output_string oc info.primary_key))
+         [
+           concat_file_names [ Config.root_mount_point; Config.boot_dir ];
+           concat_file_names [ Config.root_mount_point; "root" ];
          ];
        config);
   reg ~name:"Set up root password" ~doc:"" (fun _answer_store config ->
