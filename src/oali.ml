@@ -669,27 +669,25 @@ if using the USB key disk layout|}
 
 The keyfile is referenced in crypttab later|}
     (fun _answer_store config ->
-         if Option.get config.encrypt_boot then (
-           let disk_layout = Option.get config.disk_layout in
-           let boot = Disk_layout.get_boot disk_layout in
-           match boot.l1 with
-           | Clear _ -> failwith "Expected LUKS"
-           | Luks { info; _ } ->
-             let boot_secondary_key = Option.get info.secondary_key in
-             let keyfile_path =
-               concat_file_names
-                 [
-                   Config.root_mount_point;
-                   "root";
-                   Config.boot_part_keyfile_name;
-                 ]
-             in
-             let oc = open_out_bin keyfile_path in
-             Fun.protect
-               ~finally:(fun () -> close_out oc)
-               (fun () -> output_string oc boot_secondary_key);
-             () )
-         else print_endline "Skipped";
+       if Option.get config.encrypt_boot then (
+         let disk_layout = Option.get config.disk_layout in
+         let boot = Disk_layout.get_boot disk_layout in
+         match boot.l1 with
+         | Clear _ -> failwith "Expected LUKS"
+         | Luks { info; _ } ->
+           let boot_secondary_key = Option.get info.secondary_key in
+           let keyfile_path =
+             concat_file_names
+               [
+                 Config.root_mount_point; "root"; Config.boot_part_keyfile_name;
+               ]
+           in
+           let oc = open_out_bin keyfile_path in
+           Fun.protect
+             ~finally:(fun () -> close_out oc)
+             (fun () -> output_string oc boot_secondary_key);
+           () )
+       else print_endline "Skipped";
        config);
   reg ~name:"Set up crypttab for unlocking and mounting /boot after boot"
     ~doc:
@@ -1005,9 +1003,8 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
     (fun _answer_store config ->
        Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
        config);
-  reg ~name:"Install system recovery kit into /boot and /root" ~doc:"" (fun _answer_store config ->
-      config
-    );
+  reg ~name:"Install system recovery kit into /boot and /root" ~doc:""
+    (fun _answer_store config -> config);
   reg ~name:"Set up root password" ~doc:"" (fun _answer_store config ->
       Arch_chroot.exec_no_capture "passwd";
       config);

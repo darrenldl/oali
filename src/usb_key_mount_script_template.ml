@@ -67,5 +67,4 @@ echo "USB key mounted successfully"
 |}
     encrypt is_efi_mode
     (Option.value ~default:"" esp_part_uuid)
-    boot_part_uuid Config.boot_mapper_name
-    Config.boot_part_keyfile_name
+    boot_part_uuid Config.boot_mapper_name Config.boot_part_keyfile_name
