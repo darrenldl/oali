@@ -1,5 +1,6 @@
 # 0.0.5
 - Key for `/boot` now is always installed regardless of disk layout
+- Updated usb key mounting script to use the installed boot partition key file
 
 # 0.0.4
 - Fixed `oali_pack` files permissions
