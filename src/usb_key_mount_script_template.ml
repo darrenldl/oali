@@ -13,7 +13,7 @@ while true; do
   if $encrypt; then
     if [ -b /dev/disk/by-uuid/"$usb_key_boot_uuid" ]; then
       echo "Unlocking boot partition"
-      cryptsetup open --type luks /dev/disk/by-uuid/"$usb_key_boot_uuid" "$mapper_name_boot"
+      cryptsetup open --type luks --key-file=/root/%s /dev/disk/by-uuid/"$usb_key_boot_uuid" "$mapper_name_boot"
       if [[ $? == 0 ]]; then
         break
       else
@@ -68,3 +68,4 @@ echo "USB key mounted successfully"
     encrypt is_efi_mode
     (Option.value ~default:"" esp_part_uuid)
     boot_part_uuid Config.boot_mapper_name
+    Config.boot_part_keyfile_name
