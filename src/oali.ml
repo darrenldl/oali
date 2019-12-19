@@ -663,16 +663,12 @@ if using the USB key disk layout|}
            Unix.chmod keyfile_path 0o000 )
        else print_endline "Skipped";
        config);
-  reg ~name:"Install keyfile for unlocking /boot after boot"
+  reg ~name:"Install keyfile for unlocking /boot"
     ~doc:
       {|Installs secondary keyfile for /boot if disk layout does not use USB key
 
 The keyfile is referenced in crypttab later|}
     (fun _answer_store config ->
-       if
-         Option.get config.disk_layout_choice
-         <> Disk_layout.Sys_part_plus_usb_drive
-       then
          if Option.get config.encrypt_boot then (
            let disk_layout = Option.get config.disk_layout in
            let boot = Disk_layout.get_boot disk_layout in
