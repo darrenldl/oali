@@ -92,10 +92,16 @@ let () =
              (Printf.sprintf "%s %s" editor Config.livecd_mirrorlist_path);
            ask_yn_end_retry ~ret:() "Finished editing?");
        config);
+  reg ~name:"Check if in EFI mode" ~doc:"" (fun _answer_store config ->
+      let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
+      { config with is_efi_mode = Some is_efi_mode });
   reg ~name:"Install git" ~doc:"Installs git onto live CD"
     (fun _answer_store config ->
        install [ "git" ];
        config);
+  reg ~name:"Install gptfdisk packages" ~doc:"" (fun _answer_store config ->
+      if Option.get config.is_efi_mode then install [ "gptfdisk" ];
+      config);
   reg ~name:"Ask for hostname" ~doc:"" (fun answer_store config ->
       let hostname =
         ask_string_confirm ~is_valid:not_empty ~answer_store "Hostname"
@@ -270,9 +276,6 @@ User is allowed to continue said setup if they wishes to however
        in
        let choice = pick_choice_kv choices in
        { config with disk_layout_choice = Some choice });
-  reg ~name:"Check if in EFI mode" ~doc:"" (fun _answer_store config ->
-      let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
-      { config with is_efi_mode = Some is_efi_mode });
   reg ~name:"Configure disk setup parameters"
     ~doc:
       {|Select disk and/or partitions based on previously picked disk layout,
@@ -1003,35 +1006,117 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
     (fun _answer_store config ->
        Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
        config);
-  reg ~name:"Install system recovery kit into /boot and /root" ~doc:""
+  reg ~name:"Install system recovery kit into /boot and /root"
+    ~doc:
+      {|Following items are included in the recovery kit directory
+
+- If boot partition is encrypted, then
+
+  - Boot partition secondary key
+
+  - LUKS header backup
+
+- If root partition is encrypted, then
+
+  - Root partition secondary key
+
+  - LUKS header backup
+
+- System disk partition table backup
+
+- If disk layout uses USB key, then
+
+  - USB key partition table backup
+|}
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
+       let is_efi_mode = Option.get config.is_efi_mode in
+       let boot = Disk_layout.get_boot disk_layout in
+       let root = Disk_layout.get_root disk_layout in
        List.iter
-         (fun path ->
-            let dir_path = concat_file_names [ path; Config.recovery_kit_dir ] in
-            (let boot = Disk_layout.get_boot disk_layout in
-             match boot.l1 with
-             | Clear _ -> ()
-             | Luks { info; _ } ->
-               let boot_secondary_key = Option.get info.secondary_key in
-               let keyfile_path =
-                 concat_file_names [ dir_path; Config.boot_part_keyfile_name ]
-               in
-               let oc = open_out_bin keyfile_path in
-               Fun.protect
-                 ~finally:(fun () -> close_out oc)
-                 (fun () -> output_string oc boot_secondary_key));
-            let root = Disk_layout.get_root disk_layout in
-            match root.l1 with
-            | Clear _ -> ()
-            | Luks { info; _ } ->
-              let keyfile_path =
-                concat_file_names [ dir_path; Config.sys_part_keyfile_name ]
-              in
-              let oc = open_out_bin keyfile_path in
-              Fun.protect
-                ~finally:(fun () -> close_out oc)
-                (fun () -> output_string oc info.primary_key))
+         (fun dst_dir_path ->
+            let dst_dir_path =
+              concat_file_names [ dst_dir_path; Config.recovery_kit_dir ]
+            in
+            (* boot partition key and header backup *)
+            ( match boot.l1 with
+              | Clear _ -> ()
+              | Luks { info; path; _ } ->
+                let boot_secondary_key = Option.get info.secondary_key in
+                let keyfile_path =
+                  concat_file_names
+                    [ dst_dir_path; Config.boot_part_keyfile_name ]
+                in
+                let oc = open_out_bin keyfile_path in
+                Fun.protect
+                  ~finally:(fun () -> close_out oc)
+                  (fun () -> output_string oc boot_secondary_key);
+                let luks_header_backup_path =
+                  concat_file_names
+                    [
+                      dst_dir_path; Config.boot_part_luks_header_backup_file_name;
+                    ]
+                in
+                Printf.sprintf
+                  "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
+                  luks_header_backup_path
+                |> exec );
+            (* root partition key and header backup *)
+            ( match root.l1 with
+              | Clear _ -> ()
+              | Luks { info; path; _ } ->
+                let keyfile_path =
+                  concat_file_names [ dst_dir_path; Config.sys_part_keyfile_name ]
+                in
+                let oc = open_out_bin keyfile_path in
+                Fun.protect
+                  ~finally:(fun () -> close_out oc)
+                  (fun () -> output_string oc info.primary_key);
+                let luks_header_backup_path =
+                  concat_file_names
+                    [
+                      dst_dir_path; Config.root_part_luks_header_backup_file_name;
+                    ]
+                in
+                Printf.sprintf
+                  "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
+                  luks_header_backup_path
+                |> exec );
+            (* system disk partition table backup *)
+            (let root_path =
+               match root.l1 with
+               | Clear { path } -> path
+               | Luks { path; _ } -> path
+             in
+             let sys_disk = Disk_utils.disk_of_part root_path in
+             if is_efi_mode then
+               Printf.sprintf "sgdisk -b=%s.gpt.bin %s"
+                 Config.sys_disk_part_table_backup_prefix sys_disk
+               |> exec
+             else
+               Printf.sprintf "sfdisk -d %s > %s.mbr.bin"
+                 Config.sys_disk_part_table_backup_prefix sys_disk
+               |> exec);
+            (* boot USB key partition table backup *)
+            (let boot_path =
+               match boot.l1 with
+               | Clear { path } -> path
+               | Luks { path; _ } -> path
+             in
+             let boot_disk = Disk_utils.disk_of_part boot_path in
+             if
+               Option.get config.disk_layout_choice
+               = Disk_layout.Sys_part_plus_usb_drive
+             then
+               if is_efi_mode then
+                 Printf.sprintf "sgdisk -b=%s.gpt.bin %s"
+                   Config.boot_disk_part_table_backup_prefix boot_disk
+                 |> exec
+               else
+                 Printf.sprintf "sfdisk -d %s > %s.mbr.bin"
+                   Config.boot_disk_part_table_backup_prefix boot_disk
+                 |> exec);
+            ())
          [
            concat_file_names [ Config.root_mount_point; Config.boot_dir ];
            concat_file_names [ Config.root_mount_point; "root" ];

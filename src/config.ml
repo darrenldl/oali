@@ -101,3 +101,11 @@ let home_mount_point = Misc_utils.concat_file_names [ root_mount_point; "home" ]
 let doc_md_name = "OALI_DOC.md"
 
 let recovery_kit_dir = "oali_recovery_kit"
+
+let boot_part_luks_header_backup_file_name = "boot_luks_header.img"
+
+let root_part_luks_header_backup_file_name = "root_luks_header.img"
+
+let boot_disk_part_table_backup_prefix = "boot_disk_part_table"
+
+let sys_disk_part_table_backup_prefix = "sys_disk_part_table"
