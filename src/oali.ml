@@ -1038,7 +1038,7 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
             let dst_dir_path =
               concat_file_names [ dst_dir_path; Config.recovery_kit_dir ]
             in
-            (* boot partition key and header backup *)
+            print_boxed_msg "Backing up boot partition secondary key and LUKS header";
             ( match boot.l1 with
               | Clear _ -> ()
               | Luks { info; path; _ } ->
@@ -1060,8 +1060,8 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
                 Printf.sprintf
                   "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
                   luks_header_backup_path
-                |> exec );
-            (* root partition key and header backup *)
+                |> exec_no_capture );
+            print_boxed_msg "Backing up root partition key and LUKS header";
             ( match root.l1 with
               | Clear _ -> ()
               | Luks { info; path; _ } ->
@@ -1081,8 +1081,8 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
                 Printf.sprintf
                   "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
                   luks_header_backup_path
-                |> exec );
-            (* system disk partition table backup *)
+                |> exec_no_capture );
+            print_boxed_msg "Backing up system disk partition table";
             (let root_path =
                match root.l1 with
                | Clear { path } -> path
@@ -1092,12 +1092,12 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
              if is_efi_mode then
                Printf.sprintf "sgdisk -b=%s.gpt.bin %s"
                  Config.sys_disk_part_table_backup_prefix sys_disk
-               |> exec
+               |> exec_no_capture
              else
                Printf.sprintf "sfdisk -d %s > %s.mbr.bin"
                  Config.sys_disk_part_table_backup_prefix sys_disk
-               |> exec);
-            (* boot USB key partition table backup *)
+               |> exec_no_capture);
+            print_boxed_msg "Backing up USB key partition table";
             (let boot_path =
                match boot.l1 with
                | Clear { path } -> path
@@ -1111,11 +1111,11 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
                if is_efi_mode then
                  Printf.sprintf "sgdisk -b=%s.gpt.bin %s"
                    Config.boot_disk_part_table_backup_prefix boot_disk
-                 |> exec
+                 |> exec_no_capture
                else
                  Printf.sprintf "sfdisk -d %s > %s.mbr.bin"
                    Config.boot_disk_part_table_backup_prefix boot_disk
-                 |> exec);
+                 |> exec_no_capture);
             ())
          [
            concat_file_names [ Config.root_mount_point; Config.boot_dir ];
