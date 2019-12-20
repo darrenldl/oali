@@ -6,7 +6,14 @@ efi_mode=%b
 usb_key_esp_uuid=%s
 usb_key_boot_uuid=%s
 mapper_name_boot=%s
-
+efi_dir=%s
+boot_dir=%s
+    |}
+    encrypt is_efi_mode
+    (Option.value ~default:"" esp_part_uuid)
+    boot_part_uuid Config.boot_mapper_name Config.efi_dir Config.boot_dir
+  ^ Printf.sprintf
+    {|
 while true; do
   echo "Looking for encrypted boot"
 
@@ -32,14 +39,17 @@ while true; do
     :
   fi
 done
-
+|}
+    Config.boot_part_keyfile_name
+  ^ {|
 echo "Mounting boot partition"
 if $encrypt; then
-  mount /dev/mapper/"$mapper_name_boot" /boot
+  mount /dev/mapper/"$mapper_name_boot" "$boot_dir"
 else
-  mount /dev/disk/by-uuid/"$usb_key_boot_uuid" /boot
+  mount /dev/disk/by-uuid/"$usb_key_boot_uuid" "$boot_dir"
 fi
-
+|}
+  ^ {|
 if $efi_mode; then
   while true; do
     echo "Looking for ESP partition"
@@ -60,11 +70,8 @@ if $efi_mode; then
   done
 
   echo "Mounting EFI partition"
-  mount /dev/disk/by-uuid/"$usb_key_esp_uuid" /efi
+  mount /dev/disk/by-uuid/"$usb_key_esp_uuid" "$efi_dir"
 fi
 
 echo "USB key mounted successfully"
 |}
-    encrypt is_efi_mode
-    (Option.value ~default:"" esp_part_uuid)
-    boot_part_uuid Config.boot_mapper_name Config.boot_part_keyfile_name
