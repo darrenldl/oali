@@ -1,6 +1,5 @@
 let gen ~port =
-  Printf.sprintf
-    {|#	$OpenBSD: sshd_config,v 1.102 2018/02/16 02:32:40 djm Exp $
+  {|#	$OpenBSD: sshd_config,v 1.102 2018/02/16 02:32:40 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -13,12 +12,16 @@ let gen ~port =
 # default value.
 
 Protocol 2
-
+|}
+  ^ Printf.sprintf
+    {|
 Port %d
 #AddressFamily any
 #ListenAddress 0.0.0.0
 #ListenAddress ::
-
+    |}
+    port
+  ^ {|
 #HostKey /etc/ssh/ssh_host_rsa_key
 #HostKey /etc/ssh/ssh_host_ecdsa_key
 #HostKey /etc/ssh/ssh_host_ed25519_key
@@ -120,4 +123,3 @@ Subsystem	sftp	/usr/lib/ssh/sftp-server
 #	PermitTTY no
 #	ForceCommand cvs server
 |}
-    port
