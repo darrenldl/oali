@@ -1038,7 +1038,8 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
             let dst_dir_path =
               concat_file_names [ dst_dir_path; Config.recovery_kit_dir ]
             in
-            print_boxed_msg "Backing up boot partition secondary key and LUKS header";
+            print_boxed_msg
+              "Backing up boot partition secondary key and LUKS header";
             ( match boot.l1 with
               | Clear _ -> ()
               | Luks { info; path; _ } ->
