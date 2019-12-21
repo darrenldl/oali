@@ -45,7 +45,8 @@ module Internal = struct
             Unix.(tcsetattr stdin TCSANOW tios) );
           let res = try read_line () with End_of_file -> "" in
           if no_echo then (
-            tios.c_echo <- false;
+            print_newline ();
+            tios.c_echo <- true;
             Unix.(tcsetattr stdin TCSANOW tios) );
           if is_valid res then (
             Option.iter
