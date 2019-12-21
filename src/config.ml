@@ -1,5 +1,7 @@
 let root_mount_point = "/mnt"
 
+let root_dir = "/root"
+
 let esp_part_size_MiB = 550.0
 
 let esp_part_max_frac = 0.25
@@ -99,3 +101,17 @@ let var_mount_point = Misc_utils.concat_file_names [ root_mount_point; "var" ]
 let home_mount_point = Misc_utils.concat_file_names [ root_mount_point; "home" ]
 
 let doc_md_name = "OALI_DOC.md"
+
+let recovery_kit_dir = "oali_recovery_kit"
+
+let boot_part_luks_header_backup_file_name = "boot_luks_header.img"
+
+let root_part_luks_header_backup_file_name = "root_luks_header.img"
+
+let boot_disk_part_table_backup_prefix = "boot_disk_part_table"
+
+let sys_disk_part_table_backup_prefix = "sys_disk_part_table"
+
+let gpt_sgdisk_backup_suffix = ".gpt.sgdisk"
+
+let mbr_sfdisk_backup_suffix = ".mbr.sfdisk"

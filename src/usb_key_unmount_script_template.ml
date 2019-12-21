@@ -5,14 +5,18 @@ let gen ~encrypt ~is_efi_mode =
 encrypt=%b
 efi_mode=%b
 mapper_name_boot=%s
-
+efi_dir=%s
+boot_dir=%s
+    |}
+    encrypt is_efi_mode Config.boot_mapper_name Config.efi_dir Config.boot_dir
+  ^ {|
 if $efi_mode; then
   echo "Umounting EFI partition"
-  umount /efi
+  umount "$efi_dir"
 fi
 
 echo "Unmounting boot partition"
-umount /boot
+umount "$boot_dir"
 
 if $encrypt; then
   echo "Closing boot partition"
@@ -21,4 +25,3 @@ fi
 
 echo "USB key unmounted successfully"
 |}
-    encrypt is_efi_mode Config.boot_mapper_name

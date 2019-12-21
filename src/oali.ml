@@ -92,10 +92,16 @@ let () =
              (Printf.sprintf "%s %s" editor Config.livecd_mirrorlist_path);
            ask_yn_end_retry ~ret:() "Finished editing?");
        config);
+  reg ~name:"Check if in EFI mode" ~doc:"" (fun _answer_store config ->
+      let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
+      { config with is_efi_mode = Some is_efi_mode });
   reg ~name:"Install git" ~doc:"Installs git onto live CD"
     (fun _answer_store config ->
        install [ "git" ];
        config);
+  reg ~name:"Install gptfdisk packages" ~doc:"" (fun _answer_store config ->
+      if Option.get config.is_efi_mode then install [ "gptfdisk" ];
+      config);
   reg ~name:"Ask for hostname" ~doc:"" (fun answer_store config ->
       let hostname =
         ask_string_confirm ~is_valid:not_empty ~answer_store "Hostname"
@@ -270,9 +276,6 @@ User is allowed to continue said setup if they wishes to however
        in
        let choice = pick_choice_kv choices in
        { config with disk_layout_choice = Some choice });
-  reg ~name:"Check if in EFI mode" ~doc:"" (fun _answer_store config ->
-      let is_efi_mode = Sys.file_exists "/sys/firmware/efi" in
-      { config with is_efi_mode = Some is_efi_mode });
   reg ~name:"Configure disk setup parameters"
     ~doc:
       {|Select disk and/or partitions based on previously picked disk layout,
@@ -653,7 +656,9 @@ if using the USB key disk layout|}
            let keyfile_path =
              concat_file_names
                [
-                 Config.root_mount_point; "root"; Config.sys_part_keyfile_name;
+                 Config.root_mount_point;
+                 Config.root_dir;
+                 Config.sys_part_keyfile_name;
                ]
            in
            let oc = open_out_bin keyfile_path in
@@ -663,37 +668,33 @@ if using the USB key disk layout|}
            Unix.chmod keyfile_path 0o000 )
        else print_endline "Skipped";
        config);
-  reg ~name:"Install keyfile for unlocking /boot after boot"
+  reg ~name:"Install keyfile for unlocking /boot"
     ~doc:
       {|Installs secondary keyfile for /boot if disk layout does not use USB key
 
 The keyfile is referenced in crypttab later|}
     (fun _answer_store config ->
-       if
-         Option.get config.disk_layout_choice
-         <> Disk_layout.Sys_part_plus_usb_drive
-       then
-         if Option.get config.encrypt_boot then (
-           let disk_layout = Option.get config.disk_layout in
-           let boot = Disk_layout.get_boot disk_layout in
-           match boot.l1 with
-           | Clear _ -> failwith "Expected LUKS"
-           | Luks { info; _ } ->
-             let boot_secondary_key = Option.get info.secondary_key in
-             let keyfile_path =
-               concat_file_names
-                 [
-                   Config.root_mount_point;
-                   "root";
-                   Config.boot_part_keyfile_name;
-                 ]
-             in
-             let oc = open_out_bin keyfile_path in
-             Fun.protect
-               ~finally:(fun () -> close_out oc)
-               (fun () -> output_string oc boot_secondary_key);
-             () )
-         else print_endline "Skipped";
+       if Option.get config.encrypt_boot then (
+         let disk_layout = Option.get config.disk_layout in
+         let boot = Disk_layout.get_boot disk_layout in
+         match boot.l1 with
+         | Clear _ -> failwith "Expected LUKS"
+         | Luks { info; _ } ->
+           let boot_secondary_key = Option.get info.secondary_key in
+           let keyfile_path =
+             concat_file_names
+               [
+                 Config.root_mount_point;
+                 Config.root_dir;
+                 Config.boot_part_keyfile_name;
+               ]
+           in
+           let oc = open_out_bin keyfile_path in
+           Fun.protect
+             ~finally:(fun () -> close_out oc)
+             (fun () -> output_string oc boot_secondary_key);
+           () )
+       else print_endline "Skipped";
        config);
   reg ~name:"Set up crypttab for unlocking and mounting /boot after boot"
     ~doc:
@@ -1008,6 +1009,140 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
   reg ~name:"Generate GRUB config" ~doc:{|Invokes `grub-mkconfig`|}
     (fun _answer_store config ->
        Arch_chroot.exec "grub-mkconfig -o /boot/grub/grub.cfg";
+       config);
+  reg ~name:"Install system recovery kit into /boot and /root"
+    ~doc:
+      {|Following items are included in the recovery kit directory
+
+- If boot partition is encrypted, then
+
+  - Boot partition secondary key
+
+  - LUKS header backup
+
+- If root partition is encrypted, then
+
+  - Root partition secondary key
+
+  - LUKS header backup
+
+- System disk partition table backup
+
+- If disk layout uses USB key, then
+
+  - USB key partition table backup
+
+Recovery kit creation decision is as follows
+
+- If either system or boot partition is encrypted, then
+
+  - A copy of recovery kit is created in `/root` if system partition is encrypted
+
+  - A copy of recovery kit is created in `/boot` if boot partition is encrypted
+
+- else if no partitions are encrypted
+
+  - A copy of recovery kit is created in both `/root` and `/boot`
+|}
+    (fun _answer_store config ->
+       let disk_layout = Option.get config.disk_layout in
+       let is_efi_mode = Option.get config.is_efi_mode in
+       let encrypt_boot = Option.get config.encrypt_boot in
+       let encrypt_sys = Option.get config.encrypt_sys in
+       let boot = Disk_layout.get_boot disk_layout in
+       let root = Disk_layout.get_root disk_layout in
+       let dst_s =
+         let dst_boot =
+           concat_file_names [ Config.root_mount_point; Config.boot_dir ]
+         in
+         let dst_root =
+           concat_file_names [ Config.root_mount_point; Config.root_dir ]
+         in
+         match (encrypt_boot, encrypt_sys) with
+         | true, true -> [ dst_boot; dst_root ]
+         | true, false -> [ dst_boot ]
+         | false, true -> [ dst_root ]
+         | false, false -> [ dst_boot; dst_root ]
+       in
+       dst_s
+       |> List.iter (fun dst_dir_path ->
+           let dst_dir_path =
+             concat_file_names [ dst_dir_path; Config.recovery_kit_dir ]
+           in
+           FileUtil.mkdir dst_dir_path;
+           print_boxed_msg
+             "Backing up boot partition secondary key and LUKS header";
+           ( match boot.l1 with
+             | Clear _ -> ()
+             | Luks { info; path; _ } ->
+               let boot_secondary_key = Option.get info.secondary_key in
+               let keyfile_path =
+                 concat_file_names
+                   [ dst_dir_path; Config.boot_part_keyfile_name ]
+               in
+               let oc = open_out_bin keyfile_path in
+               Fun.protect
+                 ~finally:(fun () -> close_out oc)
+                 (fun () -> output_string oc boot_secondary_key);
+               let luks_header_backup_path =
+                 concat_file_names
+                   [
+                     dst_dir_path;
+                     Config.boot_part_luks_header_backup_file_name;
+                   ]
+               in
+               Printf.sprintf
+                 "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
+                 luks_header_backup_path
+               |> exec_no_capture );
+           print_boxed_msg "Backing up root partition key and LUKS header";
+           ( match root.l1 with
+             | Clear _ -> ()
+             | Luks { info; path; _ } ->
+               let keyfile_path =
+                 concat_file_names
+                   [ dst_dir_path; Config.sys_part_keyfile_name ]
+               in
+               let oc = open_out_bin keyfile_path in
+               Fun.protect
+                 ~finally:(fun () -> close_out oc)
+                 (fun () -> output_string oc info.primary_key);
+               let luks_header_backup_path =
+                 concat_file_names
+                   [
+                     dst_dir_path;
+                     Config.root_part_luks_header_backup_file_name;
+                   ]
+               in
+               Printf.sprintf
+                 "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
+                 luks_header_backup_path
+               |> exec_no_capture );
+           print_boxed_msg "Backing up system disk partition table";
+           (let root_path =
+              match root.l1 with
+              | Clear { path } -> path
+              | Luks { path; _ } -> path
+            in
+            let sys_disk = Disk_utils.disk_of_part root_path in
+            Disk_utils.part_table_back_up ~is_efi_mode ~disk:sys_disk
+              ~backup_location:dst_dir_path
+              ~backup_file_prefix:Config.sys_disk_part_table_backup_prefix);
+           print_boxed_msg "Backing up USB key partition table";
+           (let boot_path =
+              match boot.l1 with
+              | Clear { path } -> path
+              | Luks { path; _ } -> path
+            in
+            let boot_disk = Disk_utils.disk_of_part boot_path in
+            if
+              Option.get config.disk_layout_choice
+              = Disk_layout.Sys_part_plus_usb_drive
+            then
+              Disk_utils.part_table_back_up ~is_efi_mode ~disk:boot_disk
+                ~backup_location:dst_dir_path
+                ~backup_file_prefix:Config.boot_disk_part_table_backup_prefix);
+           ());
        config);
   reg ~name:"Set up root password" ~doc:"" (fun _answer_store config ->
       Arch_chroot.exec_no_capture "passwd";
