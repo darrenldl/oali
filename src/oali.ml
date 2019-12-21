@@ -656,7 +656,9 @@ if using the USB key disk layout|}
            let keyfile_path =
              concat_file_names
                [
-                 Config.root_mount_point; Config.root_dir; Config.sys_part_keyfile_name;
+                 Config.root_mount_point;
+                 Config.root_dir;
+                 Config.sys_part_keyfile_name;
                ]
            in
            let oc = open_out_bin keyfile_path in
@@ -682,7 +684,9 @@ The keyfile is referenced in crypttab later|}
            let keyfile_path =
              concat_file_names
                [
-                 Config.root_mount_point; Config.root_dir; Config.boot_part_keyfile_name;
+                 Config.root_mount_point;
+                 Config.root_dir;
+                 Config.boot_part_keyfile_name;
                ]
            in
            let oc = open_out_bin keyfile_path in
@@ -1049,12 +1053,12 @@ Recovery kit creation decision is as follows
        let root = Disk_layout.get_root disk_layout in
        let dst_s =
          let dst_boot =
-             concat_file_names [ Config.root_mount_point; Config.boot_dir ]
+           concat_file_names [ Config.root_mount_point; Config.boot_dir ]
          in
          let dst_root =
-             concat_file_names [ Config.root_mount_point; Config.root_dir ]
+           concat_file_names [ Config.root_mount_point; Config.root_dir ]
          in
-         match encrypt_boot, encrypt_sys with
+         match (encrypt_boot, encrypt_sys) with
          | true, true -> [ dst_boot; dst_root ]
          | true, false -> [ dst_boot ]
          | false, true -> [ dst_root ]
