@@ -1,5 +1,7 @@
 let root_mount_point = "/mnt"
 
+let root_dir = "/root"
+
 let esp_part_size_MiB = 550.0
 
 let esp_part_max_frac = 0.25

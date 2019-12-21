@@ -656,7 +656,7 @@ if using the USB key disk layout|}
            let keyfile_path =
              concat_file_names
                [
-                 Config.root_mount_point; "root"; Config.sys_part_keyfile_name;
+                 Config.root_mount_point; Config.root_dir; Config.sys_part_keyfile_name;
                ]
            in
            let oc = open_out_bin keyfile_path in
@@ -682,7 +682,7 @@ The keyfile is referenced in crypttab later|}
            let keyfile_path =
              concat_file_names
                [
-                 Config.root_mount_point; "root"; Config.boot_part_keyfile_name;
+                 Config.root_mount_point; Config.root_dir; Config.boot_part_keyfile_name;
                ]
            in
            let oc = open_out_bin keyfile_path in
@@ -1028,22 +1028,39 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
 
   - USB key partition table backup
 
-A copy of recovery kit is always created in `/root`,
-and only created in `/boot` if boot partition is encrypted
+Recovery kit creation decision is as follows
+
+- If either system or boot partition is encrypted, then
+
+  - A copy of recovery kit is created in `/root` if system partition is encrypted
+
+  - A copy of recovery kit is created in `/boot` if boot partition is encrypted
+
+- else if no partitions are encrypted
+
+  - A copy of recovery kit is created in both `/root` and `/boot`
 |}
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
        let is_efi_mode = Option.get config.is_efi_mode in
        let encrypt_boot = Option.get config.encrypt_boot in
+       let encrypt_sys = Option.get config.encrypt_sys in
        let boot = Disk_layout.get_boot disk_layout in
        let root = Disk_layout.get_root disk_layout in
-       [
-         ( if encrypt_boot then
-             Some (concat_file_names [ Config.root_mount_point; Config.boot_dir ])
-           else None );
-         Some (concat_file_names [ Config.root_mount_point; "root" ]);
-       ]
-       |> List.filter_map (fun x -> x)
+       let dst_s =
+         let dst_boot =
+             concat_file_names [ Config.root_mount_point; Config.boot_dir ]
+         in
+         let dst_root =
+             concat_file_names [ Config.root_mount_point; Config.root_dir ]
+         in
+         match encrypt_boot, encrypt_sys with
+         | true, true -> [ dst_boot; dst_root ]
+         | true, false -> [ dst_boot ]
+         | false, true -> [ dst_root ]
+         | false, false -> [ dst_boot; dst_root ]
+       in
+       dst_s
        |> List.iter (fun dst_dir_path ->
            let dst_dir_path =
              concat_file_names [ dst_dir_path; Config.recovery_kit_dir ]
