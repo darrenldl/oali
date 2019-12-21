@@ -254,8 +254,17 @@ Following items are included in the recovery kit directory
 
   - USB key partition table backup
 
-A copy of recovery kit is always created in `/root`,
-and only created in `/boot` if boot partition is encrypted
+Recovery kit creation decision is as follows
+
+- If either system or boot partition is encrypted, then
+
+  - A copy of recovery kit is created in `/root` if system partition is encrypted
+
+  - A copy of recovery kit is created in `/boot` if boot partition is encrypted
+
+- else if no partitions are encrypted
+
+  - A copy of recovery kit is created in both `/root` and `/boot`
 
 
 ## 45. Set up root password
