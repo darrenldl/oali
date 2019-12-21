@@ -236,8 +236,7 @@ let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
         let primary_key =
           Misc_utils.ask_string_confirm
             ~is_valid:(fun x -> x <> "")
-            ~no_echo:true
-            "Please enter passphrase for encryption"
+            ~no_echo:true "Please enter passphrase for encryption"
         in
         Storage_unit.L1.make_luks ~primary_key ~add_secondary_key:true
           ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
