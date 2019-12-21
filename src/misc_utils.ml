@@ -24,8 +24,9 @@ module Internal = struct
     in
     aux f
 
-  let ask_string ?(is_valid = fun _ -> true)
+  let ask_string ?(is_valid = fun _ -> true) ~(no_echo : bool option)
       ~(answer_store : (string, string) Hashtbl.t option) prompt =
+    let no_echo = Option.value ~default:false no_echo in
     let answer =
       match answer_store with
       | None -> None
@@ -38,7 +39,14 @@ module Internal = struct
     | None ->
       retry ~answer_store:None (fun () ->
           Printf.printf "%s : " prompt;
+          let tios = Unix.(tcgetattr stdin) in
+          if no_echo then (
+            tios.c_echo <- false;
+            Unix.(tcsetattr stdin TCSANOW tios) );
           let res = try read_line () with End_of_file -> "" in
+          if no_echo then (
+            tios.c_echo <- false;
+            Unix.(tcsetattr stdin TCSANOW tios) );
           if is_valid res then (
             Option.iter
               (fun store -> Hashtbl.add store prompt res)
@@ -51,7 +59,7 @@ module Internal = struct
   let ask_yn ~answer_store prompt =
     retry ~answer_store (fun () ->
         let s =
-          ask_string ~is_valid:not_empty ~answer_store
+          ask_string ~is_valid:not_empty ~no_echo:None ~answer_store
             (Printf.sprintf "%s y/n" prompt)
           |> String.lowercase_ascii
         in
@@ -85,12 +93,12 @@ module Internal = struct
           | Some x -> (
               lower_bound <= x
               && match upper_bound_exc with None -> true | Some ub -> x < ub ))
-      ~answer_store prompt
+      ~no_echo:None ~answer_store prompt
     |> int_of_string
 end
 
-let ask_string ?(is_valid = fun _ -> true) ?answer_store prompt =
-  Internal.ask_string ~is_valid ~answer_store prompt
+let ask_string ?(is_valid = fun _ -> true) ?no_echo ?answer_store prompt =
+  Internal.ask_string ~is_valid ~no_echo ~answer_store prompt
 
 let ask_yn ?answer_store prompt = Internal.ask_yn ~answer_store prompt
 
@@ -116,9 +124,10 @@ let ask_yn_confirm ?answer_store prompt =
       let ret = Internal.ask_yn ~answer_store prompt in
       confirm_answer_is_correct_end_retry ~ret)
 
-let ask_string_confirm ?(is_valid = fun _ -> true) ?answer_store prompt =
+let ask_string_confirm ?(is_valid = fun _ -> true) ?no_echo ?answer_store prompt
+  =
   Internal.retry ~answer_store (fun () ->
-      let ret = Internal.ask_string ~is_valid ~answer_store prompt in
+      let ret = Internal.ask_string ~is_valid ~no_echo ~answer_store prompt in
       confirm_answer_is_correct_end_retry ~ret)
 
 let ask_uint_confirm ?lower_bound ?upper_bound_exc ?answer_store prompt =
