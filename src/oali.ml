@@ -1027,6 +1027,9 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
 - If disk layout uses USB key, then
 
   - USB key partition table backup
+
+A copy of recovery kit is always created in `/root`,
+and only created in `/boot` if boot partition is encrypted
 |}
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
