@@ -1090,14 +1090,8 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
                | Luks { path; _ } -> path
              in
              let sys_disk = Disk_utils.disk_of_part root_path in
-             if is_efi_mode then
-               Printf.sprintf "sgdisk -b=%s.gpt.bin %s"
-                 Config.sys_disk_part_table_backup_prefix sys_disk
-               |> exec_no_capture
-             else
-               Printf.sprintf "sfdisk -d %s > %s.mbr.bin"
-                 Config.sys_disk_part_table_backup_prefix sys_disk
-               |> exec_no_capture);
+             Disk_utils.part_table_back_up ~is_efi_mode ~disk:sys_disk
+               ~backup_file_prefix:Config.sys_disk_part_table_backup_prefix);
             print_boxed_msg "Backing up USB key partition table";
             (let boot_path =
                match boot.l1 with
@@ -1109,14 +1103,8 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
                Option.get config.disk_layout_choice
                = Disk_layout.Sys_part_plus_usb_drive
              then
-               if is_efi_mode then
-                 Printf.sprintf "sgdisk -b=%s.gpt.bin %s"
-                   Config.boot_disk_part_table_backup_prefix boot_disk
-                 |> exec_no_capture
-               else
-                 Printf.sprintf "sfdisk -d %s > %s.mbr.bin"
-                   Config.boot_disk_part_table_backup_prefix boot_disk
-                 |> exec_no_capture);
+               Disk_utils.part_table_back_up ~is_efi_mode ~disk:boot_disk
+                 ~backup_file_prefix:Config.boot_disk_part_table_backup_prefix);
             ())
          [
            concat_file_names [ Config.root_mount_point; Config.boot_dir ];

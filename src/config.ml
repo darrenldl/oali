@@ -109,3 +109,7 @@ let root_part_luks_header_backup_file_name = "root_luks_header.img"
 let boot_disk_part_table_backup_prefix = "boot_disk_part_table"
 
 let sys_disk_part_table_backup_prefix = "sys_disk_part_table"
+
+let gpt_sgdisk_backup_suffix = ".gpt.sgdisk"
+
+let mbr_sfdisk_backup_suffix = ".mbr.sfdisk"
