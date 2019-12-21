@@ -80,16 +80,20 @@ let uuid_of_dev dev =
   |> List.hd
   |> fun (_, uuid) -> uuid
 
-let gpt_sgdisk_back_up ~disk ~backup_file_prefix =
-  Printf.sprintf "sgdisk --backup=%s%s %s" backup_file_prefix
-    Config.gpt_sgdisk_backup_suffix disk
+let gpt_sgdisk_back_up ~disk ~backup_location ~backup_file_prefix =
+  Printf.sprintf "sgdisk --backup=%s %s"
+    (Misc_utils.concat_file_names
+       [ backup_location; backup_file_prefix ^ Config.gpt_sgdisk_backup_suffix ])
+    disk
   |> Proc_utils.exec_no_capture
 
-let mbr_sfdisk_back_up ~disk ~backup_file_prefix =
-  Printf.sprintf "sfdisk -d %s > %s%s" disk backup_file_prefix
-    Config.mbr_sfdisk_backup_suffix
+let mbr_sfdisk_back_up ~disk ~backup_location ~backup_file_prefix =
+  Printf.sprintf "sfdisk -d %s > %s" disk
+    (Misc_utils.concat_file_names
+       [ backup_location; backup_file_prefix ^ Config.mbr_sfdisk_backup_suffix ])
   |> Proc_utils.exec_no_capture
 
-let part_table_back_up ~is_efi_mode ~disk ~backup_file_prefix =
-  if is_efi_mode then gpt_sgdisk_back_up ~disk ~backup_file_prefix
-  else mbr_sfdisk_back_up ~disk ~backup_file_prefix
+let part_table_back_up ~is_efi_mode ~disk ~backup_location ~backup_file_prefix =
+  if is_efi_mode then
+    gpt_sgdisk_back_up ~disk ~backup_location ~backup_file_prefix
+  else mbr_sfdisk_back_up ~disk ~backup_location ~backup_file_prefix

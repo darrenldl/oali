@@ -1092,6 +1092,7 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
              in
              let sys_disk = Disk_utils.disk_of_part root_path in
              Disk_utils.part_table_back_up ~is_efi_mode ~disk:sys_disk
+               ~backup_location:dst_dir_path
                ~backup_file_prefix:Config.sys_disk_part_table_backup_prefix);
             print_boxed_msg "Backing up USB key partition table";
             (let boot_path =
@@ -1105,6 +1106,7 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
                = Disk_layout.Sys_part_plus_usb_drive
              then
                Disk_utils.part_table_back_up ~is_efi_mode ~disk:boot_disk
+                 ~backup_location:dst_dir_path
                  ~backup_file_prefix:Config.boot_disk_part_table_backup_prefix);
             ())
          [
