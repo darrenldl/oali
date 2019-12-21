@@ -1031,88 +1031,94 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
        let is_efi_mode = Option.get config.is_efi_mode in
+       let encrypt_boot = Option.get config.encrypt_boot in
        let boot = Disk_layout.get_boot disk_layout in
        let root = Disk_layout.get_root disk_layout in
-       List.iter
-         (fun dst_dir_path ->
-            let dst_dir_path =
-              concat_file_names [ dst_dir_path; Config.recovery_kit_dir ]
+       [
+         ( if encrypt_boot then
+             Some (concat_file_names [ Config.root_mount_point; Config.boot_dir ])
+           else None );
+         Some (concat_file_names [ Config.root_mount_point; "root" ]);
+       ]
+       |> List.filter_map (fun x -> x)
+       |> List.iter (fun dst_dir_path ->
+           let dst_dir_path =
+             concat_file_names [ dst_dir_path; Config.recovery_kit_dir ]
+           in
+           FileUtil.mkdir dst_dir_path;
+           print_boxed_msg
+             "Backing up boot partition secondary key and LUKS header";
+           ( match boot.l1 with
+             | Clear _ -> ()
+             | Luks { info; path; _ } ->
+               let boot_secondary_key = Option.get info.secondary_key in
+               let keyfile_path =
+                 concat_file_names
+                   [ dst_dir_path; Config.boot_part_keyfile_name ]
+               in
+               let oc = open_out_bin keyfile_path in
+               Fun.protect
+                 ~finally:(fun () -> close_out oc)
+                 (fun () -> output_string oc boot_secondary_key);
+               let luks_header_backup_path =
+                 concat_file_names
+                   [
+                     dst_dir_path;
+                     Config.boot_part_luks_header_backup_file_name;
+                   ]
+               in
+               Printf.sprintf
+                 "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
+                 luks_header_backup_path
+               |> exec_no_capture );
+           print_boxed_msg "Backing up root partition key and LUKS header";
+           ( match root.l1 with
+             | Clear _ -> ()
+             | Luks { info; path; _ } ->
+               let keyfile_path =
+                 concat_file_names
+                   [ dst_dir_path; Config.sys_part_keyfile_name ]
+               in
+               let oc = open_out_bin keyfile_path in
+               Fun.protect
+                 ~finally:(fun () -> close_out oc)
+                 (fun () -> output_string oc info.primary_key);
+               let luks_header_backup_path =
+                 concat_file_names
+                   [
+                     dst_dir_path;
+                     Config.root_part_luks_header_backup_file_name;
+                   ]
+               in
+               Printf.sprintf
+                 "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
+                 luks_header_backup_path
+               |> exec_no_capture );
+           print_boxed_msg "Backing up system disk partition table";
+           (let root_path =
+              match root.l1 with
+              | Clear { path } -> path
+              | Luks { path; _ } -> path
             in
-            FileUtil.mkdir dst_dir_path;
-            print_boxed_msg
-              "Backing up boot partition secondary key and LUKS header";
-            ( match boot.l1 with
-              | Clear _ -> ()
-              | Luks { info; path; _ } ->
-                let boot_secondary_key = Option.get info.secondary_key in
-                let keyfile_path =
-                  concat_file_names
-                    [ dst_dir_path; Config.boot_part_keyfile_name ]
-                in
-                let oc = open_out_bin keyfile_path in
-                Fun.protect
-                  ~finally:(fun () -> close_out oc)
-                  (fun () -> output_string oc boot_secondary_key);
-                let luks_header_backup_path =
-                  concat_file_names
-                    [
-                      dst_dir_path; Config.boot_part_luks_header_backup_file_name;
-                    ]
-                in
-                Printf.sprintf
-                  "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
-                  luks_header_backup_path
-                |> exec_no_capture );
-            print_boxed_msg "Backing up root partition key and LUKS header";
-            ( match root.l1 with
-              | Clear _ -> ()
-              | Luks { info; path; _ } ->
-                let keyfile_path =
-                  concat_file_names [ dst_dir_path; Config.sys_part_keyfile_name ]
-                in
-                let oc = open_out_bin keyfile_path in
-                Fun.protect
-                  ~finally:(fun () -> close_out oc)
-                  (fun () -> output_string oc info.primary_key);
-                let luks_header_backup_path =
-                  concat_file_names
-                    [
-                      dst_dir_path; Config.root_part_luks_header_backup_file_name;
-                    ]
-                in
-                Printf.sprintf
-                  "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
-                  luks_header_backup_path
-                |> exec_no_capture );
-            print_boxed_msg "Backing up system disk partition table";
-            (let root_path =
-               match root.l1 with
-               | Clear { path } -> path
-               | Luks { path; _ } -> path
-             in
-             let sys_disk = Disk_utils.disk_of_part root_path in
-             Disk_utils.part_table_back_up ~is_efi_mode ~disk:sys_disk
-               ~backup_location:dst_dir_path
-               ~backup_file_prefix:Config.sys_disk_part_table_backup_prefix);
-            print_boxed_msg "Backing up USB key partition table";
-            (let boot_path =
-               match boot.l1 with
-               | Clear { path } -> path
-               | Luks { path; _ } -> path
-             in
-             let boot_disk = Disk_utils.disk_of_part boot_path in
-             if
-               Option.get config.disk_layout_choice
-               = Disk_layout.Sys_part_plus_usb_drive
-             then
-               Disk_utils.part_table_back_up ~is_efi_mode ~disk:boot_disk
-                 ~backup_location:dst_dir_path
-                 ~backup_file_prefix:Config.boot_disk_part_table_backup_prefix);
-            ())
-         [
-           concat_file_names [ Config.root_mount_point; Config.boot_dir ];
-           concat_file_names [ Config.root_mount_point; "root" ];
-         ];
+            let sys_disk = Disk_utils.disk_of_part root_path in
+            Disk_utils.part_table_back_up ~is_efi_mode ~disk:sys_disk
+              ~backup_location:dst_dir_path
+              ~backup_file_prefix:Config.sys_disk_part_table_backup_prefix);
+           print_boxed_msg "Backing up USB key partition table";
+           (let boot_path =
+              match boot.l1 with
+              | Clear { path } -> path
+              | Luks { path; _ } -> path
+            in
+            let boot_disk = Disk_utils.disk_of_part boot_path in
+            if
+              Option.get config.disk_layout_choice
+              = Disk_layout.Sys_part_plus_usb_drive
+            then
+              Disk_utils.part_table_back_up ~is_efi_mode ~disk:boot_disk
+                ~backup_location:dst_dir_path
+                ~backup_file_prefix:Config.boot_disk_part_table_backup_prefix);
+           ());
        config);
   reg ~name:"Set up root password" ~doc:"" (fun _answer_store config ->
       Arch_chroot.exec_no_capture "passwd";
