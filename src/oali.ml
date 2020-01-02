@@ -843,12 +843,14 @@ The line is then commented if disk layout uses USB key|}
   reg ~name:"Install dhcpcd" ~doc:"" (fun _answer_store config ->
       Arch_chroot.install [ "dhcpcd" ];
       config);
-  reg ~name:"Install dependencies for wifi-menu" ~doc:"" (fun _answer_store config ->
-      Arch_chroot.install [ "dialog"; "wpa_supplicant" ];
-      config);
-  reg ~name:"Install netctl (for wifi-menu)" ~doc:"" (fun _answer_store config ->
-      Arch_chroot.install [ "netctl" ];
-      config);
+  reg ~name:"Install dependencies for wifi-menu" ~doc:""
+    (fun _answer_store config ->
+       Arch_chroot.install [ "dialog"; "wpa_supplicant" ];
+       config);
+  reg ~name:"Install netctl (for wifi-menu)" ~doc:""
+    (fun _answer_store config ->
+       Arch_chroot.install [ "netctl" ];
+       config);
   reg ~name:"Install basic text editors" ~doc:{|Installs `nano`, `vim`|}
     (fun _answer_store config ->
        Arch_chroot.install [ "nano"; "vim" ];
