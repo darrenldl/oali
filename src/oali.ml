@@ -840,6 +840,9 @@ The line is then commented if disk layout uses USB key|}
             output_string oc (Printf.sprintf "LC_TIME=%s\n" en_dk_locale_conf));
        Arch_chroot.exec "locale-gen");
       config);
+  reg ~name:"Install linux-firmware" ~doc:"" (fun _answer_store config ->
+      Arch_chroot.install [ "linux-firmware" ];
+      config);
   reg ~name:"Install dhcpcd" ~doc:"" (fun _answer_store config ->
       Arch_chroot.install [ "dhcpcd" ];
       config);
