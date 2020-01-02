@@ -5,13 +5,13 @@ let gen ~use_usb_key =
         Printf.sprintf
           {|if [ ! -b /dev/mapper/"%s" ]; then
   echo "USB key does not seem to be mounted"
-  echo "Please make sure you have mounted the USB key using USB_KEY_MOUNT_SCRIPT_DUMMY"
+  echo "Please make sure you have mounted the USB key using %s"
 
   exit 1
 fi
 
 |}
-          Config.boot_mapper_name
+          Config.boot_mapper_name Config.usb_key_mount_script_name
       else "" )
   ^ {|time=$(date "+%Y-%m-%d_%H:%M")
 log_file_path=salt_exec_"$time".log
