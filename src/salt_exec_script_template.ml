@@ -13,7 +13,7 @@ fi
 |}
           Config.boot_mapper_name Config.usb_key_mount_script_name
       else "" )
-  ^ {|time=$(date "+%Y-%m-%d_%H:%M")
+  ^ {|time=$(date "+%Y-%m-%d_%H%M")
 log_file_path=salt_exec_"$time".log
 
 echo "Log is stored as $log_file_path"
