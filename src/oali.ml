@@ -843,6 +843,9 @@ The line is then commented if disk layout uses USB key|}
   reg ~name:"Install linux-firmware" ~doc:"" (fun _answer_store config ->
       Arch_chroot.install [ "linux-firmware" ];
       config);
+  reg ~name:"Install usbutils" ~doc:"" (fun _answer_store config ->
+      Arch_chroot.install [ "usbutils" ];
+      config);
   reg ~name:"Install dhcpcd" ~doc:"" (fun _answer_store config ->
       Arch_chroot.install [ "dhcpcd" ];
       config);
