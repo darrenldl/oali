@@ -840,11 +840,14 @@ The line is then commented if disk layout uses USB key|}
             output_string oc (Printf.sprintf "LC_TIME=%s\n" en_dk_locale_conf));
        Arch_chroot.exec "locale-gen");
       config);
-  reg ~name:"Install wifi-menu" ~doc:"" (fun _answer_store config ->
-      Arch_chroot.install [ "dialog"; "wpa_supplicant" ];
-      config);
   reg ~name:"Install dhcpcd" ~doc:"" (fun _answer_store config ->
       Arch_chroot.install [ "dhcpcd" ];
+      config);
+  reg ~name:"Install dependencies for wifi-menu" ~doc:"" (fun _answer_store config ->
+      Arch_chroot.install [ "dialog"; "wpa_supplicant" ];
+      config);
+  reg ~name:"Install netctl (for wifi-menu)" ~doc:"" (fun _answer_store config ->
+      Arch_chroot.install [ "netctl" ];
       config);
   reg ~name:"Install basic text editors" ~doc:{|Installs `nano`, `vim`|}
     (fun _answer_store config ->
@@ -1404,6 +1407,10 @@ of the public key.
     (fun _answer_store config ->
        let use_saltstack = Option.get config.use_saltstack in
        if use_saltstack then (
+         let use_usb_key =
+           Option.get config.disk_layout_choice
+           = Disk_layout.Sys_part_plus_usb_drive
+         in
          let dst_path =
            concat_file_names
              [
@@ -1412,7 +1419,7 @@ of the public key.
                Config.salt_exec_script_name;
              ]
          in
-         let script = Salt_exec_script_template.gen_no_usb_key () in
+         let script = Salt_exec_script_template.gen ~use_usb_key in
          let oc = open_out dst_path in
          Fun.protect
            ~finally:(fun () -> close_out oc)
