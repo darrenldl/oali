@@ -920,51 +920,37 @@ the system partition, the associated keyfile, and root volume|}
          concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
        in
        let root = Disk_layout.get_root disk_layout in
-       ( match root.l1 with
-         | Clear _ -> ()
-         (* | Clear { path } ->
-          *   let update_grub_cmdline s =
-          *     match Re.matches re s with
-          *     | [] -> [ s ]
-          *     | _ ->
-          *       if use_lvm then
-          *         [
-          *           Printf.sprintf "%s=\"root=/dev/%s/%s\"" grub_cmdline_linux
-          *             Config.lvm_vg_name Config.lvm_lv_root_name;
-          *         ]
-          *       else
-          *         let sys_part_uuid = Disk_utils.uuid_of_dev path in
-          *         [
-          *           Printf.sprintf "%s=\"root=UUID=%s\"" grub_cmdline_linux
-          *             sys_part_uuid;
-          *         ]
-          *   in
-          *   File.filter_map_lines ~file:default_grub_path update_grub_cmdline *)
-         | Luks { path; _ } ->
-           let sys_part_uuid = Disk_utils.uuid_of_dev path in
-           let update_grub_cmdline s =
-             match Re.matches re s with
-             | [] -> [ s ]
-             | _ ->
-               if use_lvm then
-                 [
+       let cmdline_string_new =
+         grub_cmdline_linux
+         ^ "\""
+         ^ String.concat " "
+           [
+             ( match root.l1 with
+               | Clear _ -> ""
+               | Luks { path; _ } ->
+                 let sys_part_uuid = Disk_utils.uuid_of_dev path in
+                 if use_lvm then
                    Printf.sprintf
                      "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
                       root=/dev/%s/%s\""
                      grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
                      Config.sys_part_keyfile_name Config.lvm_vg_name
-                     Config.lvm_lv_root_name;
-                 ]
-               else
-                 [
+                     Config.lvm_lv_root_name
+                 else
                    Printf.sprintf
                      "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
                       root=/dev/mapper/%s\""
                      grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                     Config.sys_part_keyfile_name Config.sys_mapper_name;
-                 ]
-           in
-           File.filter_map_lines ~file:default_grub_path update_grub_cmdline );
+                     Config.sys_part_keyfile_name Config.sys_mapper_name );
+             "apparmor=1";
+             "security=apparmor";
+           ]
+         ^ "\""
+       in
+       let update_grub_cmdline s =
+         match Re.matches re s with [] -> [ s ] | _ -> [ cmdline_string_new ]
+       in
+       File.filter_map_lines ~file:default_grub_path update_grub_cmdline;
        config);
   reg ~name:"Set hardened kernel as default boot entry" ~doc:""
     (fun _answer_store config ->
