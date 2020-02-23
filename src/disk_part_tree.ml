@@ -15,7 +15,8 @@ let of_parts parts =
        | None -> DiskPartMap.add disk [ part ] tbl
        | Some l -> DiskPartMap.add disk (part :: l) tbl)
     DiskPartMap.empty
-  |> DiskPartMap.to_seq |> List.of_seq
+  |> DiskPartMap.to_seq
+  |> List.of_seq
   |> List.sort (fun (k1, _) (k2, _) -> compare k1 k2)
   |> List.map (fun (k, l) -> (k, List.sort compare l))
 

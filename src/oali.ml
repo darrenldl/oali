@@ -880,11 +880,13 @@ The line is then commented if disk layout uses USB key|}
            let enable_grub_enable_cryptodisk =
              let re_uncommented =
                Printf.sprintf "^%s=" grub_enable_cryptodisk
-               |> Re.Posix.re |> Re.compile
+               |> Re.Posix.re
+               |> Re.compile
              in
              let re_commented =
                Printf.sprintf "^#%s=" grub_enable_cryptodisk
-               |> Re.Posix.re |> Re.compile
+               |> Re.Posix.re
+               |> Re.compile
              in
              fun match_count s ->
                match (Re.matches re_uncommented s, Re.matches re_commented s) with
@@ -1467,7 +1469,8 @@ of the public key.
       if use_saltstack then
         let dir = Option.get config.oali_profiles_repo_name in
         let profiles =
-          Sys.readdir dir |> Array.to_list
+          Sys.readdir dir
+          |> Array.to_list
           |> List.filter (fun name ->
               Sys.is_directory (Filename.concat dir name))
           |> List.filter (fun name ->

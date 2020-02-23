@@ -228,7 +228,8 @@ let concat_file_names names =
     names
     |> List.map (fun s ->
         Core_kernel.String.Escaping.split s ~on:'/' ~escape_char:'\\')
-    |> List.concat |> List.filter not_empty
+    |> List.concat
+    |> List.filter not_empty
   in
   let res = String.concat Filename.dir_sep splits in
   match names with

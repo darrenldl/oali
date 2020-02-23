@@ -1,7 +1,9 @@
 type t = (string, string) Hashtbl.t
 
 let normalize_name s =
-  s |> String.lowercase_ascii |> String.split_on_char ' '
+  s
+  |> String.lowercase_ascii
+  |> String.split_on_char ' '
   |> List.map (Core_kernel.String.filter ~f:Core_kernel.Char.is_alphanum)
   |> List.filter (fun s -> s <> "")
   |> String.concat "_"

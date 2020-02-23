@@ -34,7 +34,11 @@ let disk_of_part part =
   let devs = list_disk_block_devs () in
   let part_path, _ = List.find (fun (_path, dst) -> dst = part) devs in
   let disk_path =
-    part_path |> String.split_on_char '-' |> List.rev |> List.tl |> List.rev
+    part_path
+    |> String.split_on_char '-'
+    |> List.rev
+    |> List.tl
+    |> List.rev
     |> String.concat "-"
   in
   let _, disk_name = List.find (fun (path, _dst) -> path = disk_path) devs in

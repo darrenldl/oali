@@ -74,7 +74,8 @@ let print_task_list task_book =
 let pick_task task_book =
   let tasks_to_run = Option.get task_book.tasks_to_run in
   let choices =
-    tasks_to_run |> Array.to_list
+    tasks_to_run
+    |> Array.to_list
     |> List.map (fun record ->
         Printf.sprintf "%s    %s" record.name
           (task_result_to_string record.stats.result))
@@ -162,7 +163,8 @@ let gen_doc_md task_book =
        Printf.fprintf oc
          "This doc is generated via Oali. Please do not edit directly.\n";
        Printf.fprintf oc "\n";
-       task_book.task_queue |> List.rev
+       task_book.task_queue
+       |> List.rev
        |> List.iteri (fun i task_record ->
            Printf.fprintf oc "## %d. %s\n" i task_record.name;
            Printf.fprintf oc "\n";

@@ -305,7 +305,8 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
          20% is reserved for snapshot volumes *)
       let size_MiB =
         free_space *. Config.lvm_lv_home_frac_of_leftover
-        |> int_of_float |> Option.some
+        |> int_of_float
+        |> Option.some
       in
       let open Params.Home in
       Hashtbl.add pool.l3_pool l3_id
