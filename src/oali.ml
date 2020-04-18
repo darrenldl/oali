@@ -922,29 +922,32 @@ the system partition, the associated keyfile, and root volume|}
        let root = Disk_layout.get_root disk_layout in
        let cmdline_string_new =
          grub_cmdline_linux
-         ^ "\""
+         ^ "=\""
          ^ String.concat " "
-           [
-             ( match root.l1 with
-               | Clear _ -> ""
-               | Luks { path; _ } ->
-                 let sys_part_uuid = Disk_utils.uuid_of_dev path in
-                 if use_lvm then
-                   Printf.sprintf
-                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                      root=/dev/%s/%s\""
-                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                     Config.sys_part_keyfile_name Config.lvm_vg_name
-                     Config.lvm_lv_root_name
-                 else
-                   Printf.sprintf
-                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                      root=/dev/mapper/%s\""
-                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                     Config.sys_part_keyfile_name Config.sys_mapper_name );
-             "apparmor=1";
-             "security=apparmor";
-           ]
+           (List.filter_map
+              (fun x -> x)
+              [
+                ( match root.l1 with
+                  | Clear _ -> None
+                  | Luks { path; _ } ->
+                    let sys_part_uuid = Disk_utils.uuid_of_dev path in
+                    ( if use_lvm then
+                        Printf.sprintf
+                          "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                           root=/dev/%s/%s\""
+                          grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                          Config.sys_part_keyfile_name Config.lvm_vg_name
+                          Config.lvm_lv_root_name
+                      else
+                        Printf.sprintf
+                          "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                           root=/dev/mapper/%s\""
+                          grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                          Config.sys_part_keyfile_name Config.sys_mapper_name )
+                    |> Option.some );
+                Some "apparmor=1";
+                Some "security=apparmor";
+              ])
          ^ "\""
        in
        let update_grub_cmdline s =
