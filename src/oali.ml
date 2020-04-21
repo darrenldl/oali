@@ -946,7 +946,7 @@ the system partition, the associated keyfile, and root volume|}
                           Config.sys_part_keyfile_name Config.sys_mapper_name )
                     |> Option.some );
                 Some "apparmor=1";
-                Some "security=apparmor";
+                Some "lsm=lockdown,yama,apparmor";
               ])
          ^ "\""
        in
