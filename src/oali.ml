@@ -1156,7 +1156,7 @@ Recovery kit creation decision is as follows
       in
       print_endline "Adding user";
       Arch_chroot.exec
-        (Printf.sprintf "useradd -m \"%s\" -G users,wheel,rfkill" user_name);
+        (Printf.sprintf "useradd -m \"%s\" -G users,rfkill" user_name);
       { config with user_name = Some user_name });
   reg ~name:"Set up user password" ~doc:"" (fun _answer_store config ->
       let user_name = Option.get config.user_name in
