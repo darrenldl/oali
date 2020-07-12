@@ -211,7 +211,9 @@ module L1 = struct
                Printf.sprintf "luks%d"
                  (luks_version_to_int luks.info.version);
              ]
-               @ iter_time_ms_opt @ key_size_bits_opt @ [ luks.path ] )
+               @ iter_time_ms_opt
+               @ key_size_bits_opt
+               @ [ luks.path ] )
            |> exec_with_stdin
          in
          output_string stdin luks.info.primary_key;

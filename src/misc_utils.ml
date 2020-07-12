@@ -34,11 +34,11 @@ module Internal = struct
     in
     match answer with
     | Some x ->
-      Printf.printf "%s -> using stored answer : %s\n" prompt x;
+      Printf.printf "%s -> using stored answer: %s\n" prompt x;
       x
     | None ->
       retry ~answer_store:None (fun () ->
-          Printf.printf "%s : " prompt;
+          Printf.printf "%s: " prompt;
           let tios = Unix.(tcgetattr stdin) in
           if no_echo then (
             tios.c_echo <- false;
@@ -228,7 +228,8 @@ let concat_file_names names =
     names
     |> List.map (fun s ->
         Core_kernel.String.Escaping.split s ~on:'/' ~escape_char:'\\')
-    |> List.concat |> List.filter not_empty
+    |> List.concat
+    |> List.filter not_empty
   in
   let res = String.concat Filename.dir_sep splits in
   match names with

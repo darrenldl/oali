@@ -840,12 +840,23 @@ The line is then commented if disk layout uses USB key|}
             output_string oc (Printf.sprintf "LC_TIME=%s\n" en_dk_locale_conf));
        Arch_chroot.exec "locale-gen");
       config);
-  reg ~name:"Install wifi-menu" ~doc:"" (fun _answer_store config ->
-      Arch_chroot.install [ "dialog"; "wpa_supplicant" ];
+  reg ~name:"Install linux-firmware" ~doc:"" (fun _answer_store config ->
+      Arch_chroot.install [ "linux-firmware" ];
+      config);
+  reg ~name:"Install usbutils" ~doc:"" (fun _answer_store config ->
+      Arch_chroot.install [ "usbutils" ];
       config);
   reg ~name:"Install dhcpcd" ~doc:"" (fun _answer_store config ->
       Arch_chroot.install [ "dhcpcd" ];
       config);
+  reg ~name:"Install dependencies for wifi-menu" ~doc:""
+    (fun _answer_store config ->
+       Arch_chroot.install [ "dialog"; "wpa_supplicant" ];
+       config);
+  reg ~name:"Install netctl (for wifi-menu)" ~doc:""
+    (fun _answer_store config ->
+       Arch_chroot.install [ "netctl" ];
+       config);
   reg ~name:"Install basic text editors" ~doc:{|Installs `nano`, `vim`|}
     (fun _answer_store config ->
        Arch_chroot.install [ "nano"; "vim" ];
@@ -869,11 +880,13 @@ The line is then commented if disk layout uses USB key|}
            let enable_grub_enable_cryptodisk =
              let re_uncommented =
                Printf.sprintf "^%s=" grub_enable_cryptodisk
-               |> Re.Posix.re |> Re.compile
+               |> Re.Posix.re
+               |> Re.compile
              in
              let re_commented =
                Printf.sprintf "^#%s=" grub_enable_cryptodisk
-               |> Re.Posix.re |> Re.compile
+               |> Re.Posix.re
+               |> Re.compile
              in
              fun match_count s ->
                match (Re.matches re_uncommented s, Re.matches re_commented s) with
@@ -907,51 +920,40 @@ the system partition, the associated keyfile, and root volume|}
          concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
        in
        let root = Disk_layout.get_root disk_layout in
-       ( match root.l1 with
-         | Clear _ -> ()
-         (* | Clear { path } ->
-          *   let update_grub_cmdline s =
-          *     match Re.matches re s with
-          *     | [] -> [ s ]
-          *     | _ ->
-          *       if use_lvm then
-          *         [
-          *           Printf.sprintf "%s=\"root=/dev/%s/%s\"" grub_cmdline_linux
-          *             Config.lvm_vg_name Config.lvm_lv_root_name;
-          *         ]
-          *       else
-          *         let sys_part_uuid = Disk_utils.uuid_of_dev path in
-          *         [
-          *           Printf.sprintf "%s=\"root=UUID=%s\"" grub_cmdline_linux
-          *             sys_part_uuid;
-          *         ]
-          *   in
-          *   File.filter_map_lines ~file:default_grub_path update_grub_cmdline *)
-         | Luks { path; _ } ->
-           let sys_part_uuid = Disk_utils.uuid_of_dev path in
-           let update_grub_cmdline s =
-             match Re.matches re s with
-             | [] -> [ s ]
-             | _ ->
-               if use_lvm then
-                 [
-                   Printf.sprintf
-                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                      root=/dev/%s/%s\""
-                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                     Config.sys_part_keyfile_name Config.lvm_vg_name
-                     Config.lvm_lv_root_name;
-                 ]
-               else
-                 [
-                   Printf.sprintf
-                     "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                      root=/dev/mapper/%s\""
-                     grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                     Config.sys_part_keyfile_name Config.sys_mapper_name;
-                 ]
-           in
-           File.filter_map_lines ~file:default_grub_path update_grub_cmdline );
+       let cmdline_string_new =
+         grub_cmdline_linux
+         ^ "=\""
+         ^ String.concat " "
+           (List.filter_map
+              (fun x -> x)
+              [
+                ( match root.l1 with
+                  | Clear _ -> None
+                  | Luks { path; _ } ->
+                    let sys_part_uuid = Disk_utils.uuid_of_dev path in
+                    ( if use_lvm then
+                        Printf.sprintf
+                          "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                           root=/dev/%s/%s\""
+                          grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                          Config.sys_part_keyfile_name Config.lvm_vg_name
+                          Config.lvm_lv_root_name
+                      else
+                        Printf.sprintf
+                          "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                           root=/dev/mapper/%s\""
+                          grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                          Config.sys_part_keyfile_name Config.sys_mapper_name )
+                    |> Option.some );
+                Some "apparmor=1";
+                Some "lsm=lockdown,yama,apparmor";
+              ])
+         ^ "\""
+       in
+       let update_grub_cmdline s =
+         match Re.matches re s with [] -> [ s ] | _ -> [ cmdline_string_new ]
+       in
+       File.filter_map_lines ~file:default_grub_path update_grub_cmdline;
        config);
   reg ~name:"Set hardened kernel as default boot entry" ~doc:""
     (fun _answer_store config ->
@@ -1154,7 +1156,7 @@ Recovery kit creation decision is as follows
       in
       print_endline "Adding user";
       Arch_chroot.exec
-        (Printf.sprintf "useradd -m \"%s\" -G users,wheel,rfkill" user_name);
+        (Printf.sprintf "useradd -m \"%s\" -G users,rfkill" user_name);
       { config with user_name = Some user_name });
   reg ~name:"Set up user password" ~doc:"" (fun _answer_store config ->
       let user_name = Option.get config.user_name in
@@ -1404,6 +1406,10 @@ of the public key.
     (fun _answer_store config ->
        let use_saltstack = Option.get config.use_saltstack in
        if use_saltstack then (
+         let use_usb_key =
+           Option.get config.disk_layout_choice
+           = Disk_layout.Sys_part_plus_usb_drive
+         in
          let dst_path =
            concat_file_names
              [
@@ -1412,7 +1418,7 @@ of the public key.
                Config.salt_exec_script_name;
              ]
          in
-         let script = Salt_exec_script_template.gen_no_usb_key () in
+         let script = Salt_exec_script_template.gen ~use_usb_key in
          let oc = open_out dst_path in
          Fun.protect
            ~finally:(fun () -> close_out oc)
@@ -1452,7 +1458,8 @@ of the public key.
       if use_saltstack then
         let dir = Option.get config.oali_profiles_repo_name in
         let profiles =
-          Sys.readdir dir |> Array.to_list
+          Sys.readdir dir
+          |> Array.to_list
           |> List.filter (fun name ->
               Sys.is_directory (Filename.concat dir name))
           |> List.filter (fun name ->
