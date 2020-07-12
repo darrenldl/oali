@@ -114,7 +114,7 @@ let rec run_single_task task_book task_index task_record : unit =
       Printf.printf "Unix.Unix_error : %s, %s, %s\n" (Unix.error_message err)
         s1 s2;
       (false, task_book.config)
-    | FileUtilCP.CpError msg ->
+    | FileUtil.CpError msg ->
       Printf.printf "FileUtilCP.CpError : %s\n" msg;
       (false, task_book.config)
   in
