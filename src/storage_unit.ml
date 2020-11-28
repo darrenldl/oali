@@ -130,7 +130,7 @@ let path_to_l3_for_up pool (t : t) : string =
 module L1 = struct
   let make_clear ~path : l1 = Clear { path }
 
-  let make_luks ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
+  let make_luks ?(primary_key = Rand_utils.gen_rand_string ~len:Config.keyfile_size)
       ?(add_secondary_key = false) ?(version = `LuksV2) ~path ~mapper_name
       enc_params : l1 =
     let info : Luks_info.t =
@@ -143,7 +143,7 @@ module L1 = struct
             enc_params;
         primary_key;
         secondary_key =
-          ( if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:4096)
+          ( if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:Config.keyfile_size)
             else None );
         version;
         mapper_name;
