@@ -273,10 +273,6 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params
      | `Keyfile ->
        Storage_unit.L1.make_luks ~path ~mapper_name:Config.sys_mapper_name
          enc_params);
-  (* (if encrypt then
-   *    Storage_unit.L1.make_luks ~path ~mapper_name:Config.sys_mapper_name
-   *      enc_params
-   *  else Storage_unit.L1.make_clear ~path); *)
   Hashtbl.add pool.l2_pool Params.Sys.l2_id
     (if use_lvm then Storage_unit.L2.make_lvm ~vg_name:Config.lvm_vg_name
      else Storage_unit.L2.make_none ());
