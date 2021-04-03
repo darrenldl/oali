@@ -1,4 +1,5 @@
-let gen_mkinitcpio_hooks ~(encrypt_sys : Disk_layout.sys_part_enc_choice) ~use_lvm =
+let gen_mkinitcpio_hooks ~(encrypt_sys : Disk_layout.sys_part_enc_choice)
+    ~use_lvm =
   List.filter_map
     (fun x -> x)
     [
