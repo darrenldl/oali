@@ -944,19 +944,23 @@ the system partition, the associated keyfile, and root volume|}
                  | Clear _ -> None
                  | Luks { path; _ } ->
                    let sys_part_uuid = Disk_utils.uuid_of_dev path in
+                   let cryptkey_kv =
+                     match Option.get config.encrypt_sys with
+                     | `None -> failwith "Unexpected case"
+                     | `Keyfile ->
+                       Printf.sprintf "cryptkey=rootfs:/root/%s"
+                         Config.sys_part_keyfile_name
+                     | `Passphrase -> ""
+                   in
                    (if use_lvm then
-                      Printf.sprintf
-                        "cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                         root=/dev/%s/%s"
-                        sys_part_uuid Config.sys_mapper_name
-                        Config.sys_part_keyfile_name Config.lvm_vg_name
-                        Config.lvm_lv_root_name
+                      Printf.sprintf "cryptdevice=UUID=%s:%s %s root=/dev/%s/%s"
+                        sys_part_uuid Config.sys_mapper_name cryptkey_kv
+                        Config.lvm_vg_name Config.lvm_lv_root_name
                     else
                       Printf.sprintf
-                        "cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                         root=/dev/mapper/%s"
-                        sys_part_uuid Config.sys_mapper_name
-                        Config.sys_part_keyfile_name Config.sys_mapper_name)
+                        "cryptdevice=UUID=%s:%s %s root=/dev/mapper/%s"
+                        sys_part_uuid Config.sys_mapper_name cryptkey_kv
+                        Config.sys_mapper_name)
                    |> Option.some);
                 Some "apparmor=1";
                 Some "lsm=lockdown,yama,apparmor";
