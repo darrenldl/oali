@@ -130,7 +130,8 @@ let path_to_l3_for_up pool (t : t) : string =
 module L1 = struct
   let make_clear ~path : l1 = Clear { path }
 
-  let make_luks ?(primary_key = Rand_utils.gen_rand_string ~len:4096)
+  let make_luks
+      ?(primary_key = Rand_utils.gen_rand_string ~len:Config.keyfile_size)
       ?(add_secondary_key = false) ?(version = `LuksV2) ~path ~mapper_name
       enc_params : l1 =
     let info : Luks_info.t =
@@ -138,13 +139,14 @@ module L1 = struct
         enc_params =
           Option.value
             ~default:
-              ( { iter_time_ms = None; key_size_bits = None }
-                : Luks_info.enc_params )
+              ({ iter_time_ms = None; key_size_bits = None }
+               : Luks_info.enc_params)
             enc_params;
         primary_key;
         secondary_key =
-          ( if add_secondary_key then Some (Rand_utils.gen_rand_string ~len:4096)
-            else None );
+          (if add_secondary_key then
+             Some (Rand_utils.gen_rand_string ~len:Config.keyfile_size)
+           else None);
         version;
         mapper_name;
       }
@@ -165,7 +167,7 @@ module L1 = struct
           |> exec_with_stdin
         in
         output_string stdin luks.info.primary_key;
-        f () );
+        f ());
       luks.active_use_count <- luks.active_use_count + 1
 
   let unmount pool (t : t) =
@@ -178,7 +180,7 @@ module L1 = struct
       luks.active_use_count <- luks.active_use_count - 1;
       if luks.active_use_count = 0 then (
         print_msg (Printf.sprintf " L1 - closing LUKS volume at %s" luks.path);
-        Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec )
+        Printf.sprintf "cryptsetup close %s" luks.info.mapper_name |> exec)
 
   let set_up pool t =
     let instance = instantiate_from_pool pool t in
@@ -202,7 +204,7 @@ module L1 = struct
         in
         (let stdin, f =
            String.concat " "
-             ( [
+             ([
                "cryptsetup";
                "luksFormat";
                "-y";
@@ -213,34 +215,34 @@ module L1 = struct
              ]
                @ iter_time_ms_opt
                @ key_size_bits_opt
-               @ [ luks.path ] )
+               @ [ luks.path ])
            |> exec_with_stdin
          in
          output_string stdin luks.info.primary_key;
          f ());
-        ( match luks.info.secondary_key with
-          | None -> ()
-          | Some secondary_key ->
-            let tmp_path = Filename.temp_file "installer" "secondary_key" in
-            let tmp_oc = open_out tmp_path in
-            Fun.protect
-              ~finally:(fun () -> close_out tmp_oc)
-              (fun () -> output_string tmp_oc secondary_key);
-            let stdin, f =
-              String.concat " "
-                [
-                  "cryptsetup";
-                  "luksAddKey";
-                  "-y";
-                  "--key-file=-";
-                  luks.path;
-                  tmp_path;
-                ]
-              |> exec_with_stdin
-            in
-            output_string stdin luks.info.primary_key;
-            f () );
-        luks.initialized <- true )
+        (match luks.info.secondary_key with
+         | None -> ()
+         | Some secondary_key ->
+           let tmp_path = Filename.temp_file "installer" "secondary_key" in
+           let tmp_oc = open_out tmp_path in
+           Fun.protect
+             ~finally:(fun () -> close_out tmp_oc)
+             (fun () -> output_string tmp_oc secondary_key);
+           let stdin, f =
+             String.concat " "
+               [
+                 "cryptsetup";
+                 "luksAddKey";
+                 "-y";
+                 "--key-file=-";
+                 luks.path;
+                 tmp_path;
+               ]
+             |> exec_with_stdin
+           in
+           output_string stdin luks.info.primary_key;
+           f ());
+        luks.initialized <- true)
 
   let reset pool t =
     let instance = instantiate_from_pool pool t in
@@ -268,7 +270,7 @@ module L2 = struct
           (Printf.sprintf "L2 - activating LVM volume group %s"
              lvm_vg.vg_name);
         vgscan ();
-        Printf.sprintf "vgchange -ay %s" lvm_vg.vg_name |> exec_no_capture );
+        Printf.sprintf "vgchange -ay %s" lvm_vg.vg_name |> exec_no_capture);
       lvm_vg.active_use_count <- lvm_vg.active_use_count + 1
 
   let unmount pool (t : t) =
@@ -284,7 +286,7 @@ module L2 = struct
           (Printf.sprintf "L2 - deactivating LVM volume group %s"
              lvm_vg.vg_name);
         vgscan ();
-        Printf.sprintf "vgchange -an %s" lvm_vg.vg_name |> exec_no_capture )
+        Printf.sprintf "vgchange -an %s" lvm_vg.vg_name |> exec_no_capture)
 
   let set_up pool t : unit =
     let instance = instantiate_from_pool pool t in
@@ -303,7 +305,7 @@ module L2 = struct
         |> exec_no_capture;
         lvm_vg.initialized <- true;
         lvm_vg.active_use_count <- lvm_vg.active_use_count + 1;
-        unmount pool t )
+        unmount pool t)
 
   let reset pool t =
     let instance = instantiate_from_pool pool t in
@@ -333,7 +335,7 @@ module L3 = struct
              lvm_lv.vg_name lvm_lv.lv_name);
         vgscan ();
         Printf.sprintf "lvchange -a y %s/%s" lvm_lv.vg_name lvm_lv.lv_name
-        |> exec_no_capture );
+        |> exec_no_capture);
       lvm_lv.active_use_count <- lvm_lv.active_use_count + 1
 
   let unmount pool t : unit =
@@ -349,7 +351,7 @@ module L3 = struct
              lvm_lv.vg_name lvm_lv.lv_name);
         vgscan ();
         Printf.sprintf "lvchange -a n %s/%s" lvm_lv.vg_name lvm_lv.lv_name
-        |> exec_no_capture )
+        |> exec_no_capture)
 
   let set_up pool t : unit =
     let instance = instantiate_from_pool pool t in
@@ -360,17 +362,17 @@ module L3 = struct
         print_msg
           (Printf.sprintf "L3 - setting up LVM logical volume %s/%s"
              lvm_lv.vg_name lvm_lv.lv_name);
-        ( match lvm_lv.size_MiB with
-          | None ->
-            Printf.sprintf "lvcreate -l 100%%FREE %s -n %s" lvm_lv.vg_name
-              lvm_lv.lv_name
-          | Some size_MiB ->
-            Printf.sprintf "lvcreate -L %dM %s -n %s" size_MiB lvm_lv.vg_name
-              lvm_lv.lv_name )
+        (match lvm_lv.size_MiB with
+         | None ->
+           Printf.sprintf "lvcreate -l 100%%FREE %s -n %s" lvm_lv.vg_name
+             lvm_lv.lv_name
+         | Some size_MiB ->
+           Printf.sprintf "lvcreate -L %dM %s -n %s" size_MiB lvm_lv.vg_name
+             lvm_lv.lv_name)
         |> exec_no_capture;
         lvm_lv.initialized <- true;
         lvm_lv.active_use_count <- lvm_lv.active_use_count + 1;
-        unmount pool t )
+        unmount pool t)
 
   let reset pool t =
     let instance = instantiate_from_pool pool t in
@@ -390,8 +392,8 @@ module L4 = struct
     assert l4.initialized;
     assert (l4.active_use_count = 0);
     let l3_path = path_to_l3_for_up pool t in
-    ( try Unix.mkdir l4.mount_point 0o744
-      with Unix.Unix_error (Unix.EEXIST, _, _) -> () );
+    (try Unix.mkdir l4.mount_point 0o744
+     with Unix.Unix_error (Unix.EEXIST, _, _) -> ());
     print_msg (Printf.sprintf "L4 - mounting %s at %s" l3_path l4.mount_point);
     Printf.sprintf "mount %s %s" l3_path l4.mount_point |> exec;
     l4.active_use_count <- l4.active_use_count + 1
@@ -412,11 +414,11 @@ module L4 = struct
     if not l4.initialized then (
       let l3_path = path_to_l3_for_up pool t in
       print_msg (Printf.sprintf "L4 - formatting %s" l3_path);
-      ( match l4.fs with
-        | `Fat32 -> Printf.sprintf "mkfs.fat -F32 %s" l3_path
-        | `Ext4 -> Printf.sprintf "mkfs.ext4 %s" l3_path )
+      (match l4.fs with
+       | `Fat32 -> Printf.sprintf "mkfs.fat -F32 %s" l3_path
+       | `Ext4 -> Printf.sprintf "mkfs.ext4 %s" l3_path)
       |> exec_no_capture;
-      l4.initialized <- true )
+      l4.initialized <- true)
 
   let reset pool t =
     let l4 = (instantiate_from_pool pool t).l4 in

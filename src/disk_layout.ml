@@ -232,15 +232,15 @@ let make_esp (pool : Storage_unit.pool) ~path =
 let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
   let open Params.Boot in
   Hashtbl.add pool.l1_pool l1_id
-    ( if encrypt then
-        let primary_key =
-          Misc_utils.ask_string_confirm
-            ~is_valid:(fun x -> x <> "")
-            ~no_echo:true "Please enter passphrase for encryption"
-        in
-        Storage_unit.L1.make_luks ~primary_key ~add_secondary_key:true
-          ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
-      else Storage_unit.L1.make_clear ~path );
+    (if encrypt then
+       let primary_key =
+         Misc_utils.ask_string_confirm
+           ~is_valid:(fun x -> x <> "")
+           ~no_echo:true "Please enter passphrase for encryption"
+       in
+       Storage_unit.L1.make_luks ~primary_key ~add_secondary_key:true
+         ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
+     else Storage_unit.L1.make_clear ~path);
   Hashtbl.add pool.l2_pool l2_id (Storage_unit.L2.make_none ());
   Hashtbl.add pool.l3_pool l3_id (Storage_unit.L3.make_none ());
   Hashtbl.add pool.l4_pool l4_id
@@ -251,13 +251,13 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
     path : Storage_unit.t * Storage_unit.t option * Storage_unit.t option =
   (* common components - L1, L2 stuff *)
   Hashtbl.add pool.l1_pool Params.Sys.l1_id
-    ( if encrypt then
-        Storage_unit.L1.make_luks ~path ~mapper_name:Config.sys_mapper_name
-          enc_params
-      else Storage_unit.L1.make_clear ~path );
+    (if encrypt then
+       Storage_unit.L1.make_luks ~path ~mapper_name:Config.sys_mapper_name
+         enc_params
+     else Storage_unit.L1.make_clear ~path);
   Hashtbl.add pool.l2_pool Params.Sys.l2_id
-    ( if use_lvm then Storage_unit.L2.make_lvm ~vg_name:Config.lvm_vg_name
-      else Storage_unit.L2.make_none () );
+    (if use_lvm then Storage_unit.L2.make_lvm ~vg_name:Config.lvm_vg_name
+     else Storage_unit.L2.make_none ());
   let part_size_MiB = Disk_utils.disk_size_MiB path in
   (* root specific *)
   let root, root_size_MiB =
@@ -269,10 +269,10 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
     in
     let size_MiB = int_of_float size_MiB_float in
     Hashtbl.add pool.l3_pool l3_id
-      ( if use_lvm then
-          Storage_unit.L3.make_lvm ~lv_name:Config.lvm_lv_root_name
-            ~vg_name:Config.lvm_vg_name ~size_MiB:(Some size_MiB)
-        else Storage_unit.L3.make_none () );
+      (if use_lvm then
+         Storage_unit.L3.make_lvm ~lv_name:Config.lvm_lv_root_name
+           ~vg_name:Config.lvm_vg_name ~size_MiB:(Some size_MiB)
+       else Storage_unit.L3.make_none ());
     Hashtbl.add pool.l4_pool l4_id
       (Storage_unit.L4.make ~mount_point:Config.root_mount_point `Ext4);
     (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id, size_MiB_float)
@@ -292,8 +292,7 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
            ~vg_name:Config.lvm_vg_name ~size_MiB:(Some size_MiB));
       Hashtbl.add pool.l4_pool l4_id
         (Storage_unit.L4.make ~mount_point:Config.var_mount_point `Ext4);
-      (Some (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id), Some size_MiB_float)
-    )
+      (Some (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id), Some size_MiB_float))
     else (None, None)
   in
   (* home specific *)
@@ -314,7 +313,7 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
            ~vg_name:Config.lvm_vg_name ~size_MiB);
       Hashtbl.add pool.l4_pool l4_id
         (Storage_unit.L4.make ~mount_point:Config.home_mount_point `Ext4);
-      Some (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id) )
+      Some (Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id))
     else None
   in
   (root, var, home)

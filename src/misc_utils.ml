@@ -42,20 +42,20 @@ module Internal = struct
           let tios = Unix.(tcgetattr stdin) in
           if no_echo then (
             tios.c_echo <- false;
-            Unix.(tcsetattr stdin TCSANOW tios) );
+            Unix.(tcsetattr stdin TCSANOW tios));
           let res = try read_line () with End_of_file -> "" in
           if no_echo then (
             print_newline ();
             tios.c_echo <- true;
-            Unix.(tcsetattr stdin TCSANOW tios) );
+            Unix.(tcsetattr stdin TCSANOW tios));
           if is_valid res then (
             Option.iter
               (fun store -> Hashtbl.add store prompt res)
               answer_store;
-            Stop res )
+            Stop res)
           else (
             print_endline "Invalid answer, please try again";
-            Retry ))
+            Retry))
 
   let ask_yn ~answer_store prompt =
     retry ~answer_store (fun () ->
@@ -93,7 +93,7 @@ module Internal = struct
           | None -> false
           | Some x -> (
               lower_bound <= x
-              && match upper_bound_exc with None -> true | Some ub -> x < ub ))
+              && match upper_bound_exc with None -> true | Some ub -> x < ub))
       ~no_echo:None ~answer_store prompt
     |> int_of_string
 end
@@ -149,7 +149,7 @@ let pick_choice_num ?(confirm = true) ?(header = "Options")
       let choice_count = List.length choices in
       if choice_count = 1 then (
         print_endline "Selected the only choice automatically";
-        Stop 0 )
+        Stop 0)
       else
         let choice_num =
           ask_uint ~upper_bound_exc:choice_count "Enter choice"

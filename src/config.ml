@@ -19,6 +19,8 @@ let boot_dir = "/boot"
 let boot_mount_point =
   Misc_utils.concat_file_names [ root_mount_point; boot_dir ]
 
+let keyfile_size = 4096
+
 let sys_part_keyfile_name = "sys_part.key"
 
 let boot_part_keyfile_name = "boot_part.key"

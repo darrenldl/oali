@@ -13,11 +13,12 @@ OCPINDENT = ocp-indent \
 	$(CINAPSFILES)
 
 .PHONY: all
-all : exe
+all :
+	dune build @all
 
-.PHONY: exe
-exe:
-	dune build src/oali.exe
+.PHONY: release-static
+release-static:
+	OCAMLPARAM='_,ccopt=-static' dune build --release src/oali.exe
 
 .PHONY: format
 format :
