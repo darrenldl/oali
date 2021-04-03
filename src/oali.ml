@@ -79,7 +79,7 @@ let () =
          if
            ask_yn_confirm "Do you want to copy this mirrorlist over to live CD?"
            = `Yes
-         then FileUtil.mv dst_path Config.livecd_mirrorlist_path );
+         then FileUtil.mv dst_path Config.livecd_mirrorlist_path);
        config);
   reg ~name:"Manual configuration of mirrorlist"
     ~doc:"Opens mirrorlist using the specified text editor"
@@ -209,8 +209,8 @@ User is allowed to continue said setup if they wishes to however
          retry ~answer_store (fun () ->
              let encrypt_sys =
                ask_yn ~answer_store
-                 ( if use_lvm then "Enable encryption for system physical volume?"
-                   else "Enable encryption for ROOT (/) partition?" )
+                 (if use_lvm then "Enable encryption for system physical volume?"
+                  else "Enable encryption for ROOT (/) partition?")
                = `Yes
              in
              if encrypt_boot && not encrypt_sys then
@@ -322,10 +322,10 @@ This is most useful for SSD scenarios where user may wish to overprovision manua
          (* create partition table *)
          if is_efi_mode then (
            print_endline "Creating GPT partition table";
-           exec (Printf.sprintf "parted %s mklabel gpt" disk) )
+           exec (Printf.sprintf "parted %s mklabel gpt" disk))
          else (
            print_endline "Creating MBR partition table";
-           exec (Printf.sprintf "parted %s mklabel msdos" disk) );
+           exec (Printf.sprintf "parted %s mklabel msdos" disk));
          (* partitioning *)
          print_endline "Partitioning";
          let disk_size_MiB = Disk_utils.disk_size_MiB disk in
@@ -387,7 +387,7 @@ This is most useful for SSD scenarios where user may wish to overprovision manua
                ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
                ~sys_encrypt ~use_lvm
            in
-           { config with disk_layout = Some disk_layout } )
+           { config with disk_layout = Some disk_layout })
          else
            let boot_part_end_MiB = disk_size_MiB *. boot_part_frac in
            let boot_part_end_MB =
@@ -505,10 +505,10 @@ This is most useful for SSD scenarios where user may wish to overprovision manua
          (* create partition table *)
          if is_efi_mode then (
            print_endline "Creating GPT partition table";
-           exec (Printf.sprintf "parted %s mklabel gpt" usb_key) )
+           exec (Printf.sprintf "parted %s mklabel gpt" usb_key))
          else (
            print_endline "Creating MBR partition table";
-           exec (Printf.sprintf "parted %s mklabel msdos" usb_key) );
+           exec (Printf.sprintf "parted %s mklabel msdos" usb_key));
          (* partitioning USB key *)
          print_endline "Partitioning";
          let usb_key_size_MiB = Disk_utils.disk_size_MiB usb_key in
@@ -551,7 +551,7 @@ This is most useful for SSD scenarios where user may wish to overprovision manua
                ~sys_part_path ~sys_part_enc_params:config.sys_part_enc_params
                ~sys_encrypt ~use_lvm
            in
-           { config with disk_layout = Some disk_layout } )
+           { config with disk_layout = Some disk_layout })
          else
            let boot_part_end_MiB = usb_key_size_MiB *. boot_part_frac in
            let boot_part_end_MB =
@@ -598,10 +598,10 @@ If LVM is enabled, then the logical volume sizes are as follows
          (Config.lvm_lv_home_frac_of_leftover *. 100.0 |> int_of_float))
     (fun _answer_store config ->
        let disk_layout = Option.get config.disk_layout in
-       ( try Disk_layout.set_up disk_layout
-         with e ->
-           Disk_layout.reset disk_layout;
-           raise e );
+       (try Disk_layout.set_up disk_layout
+        with e ->
+          Disk_layout.reset disk_layout;
+          raise e);
        config);
   reg ~name:"Mount disk" ~doc:{|Mount all partitions with root being at `/mnt`|}
     (fun _answer_store config ->
@@ -665,7 +665,7 @@ if using the USB key disk layout|}
            Fun.protect
              ~finally:(fun () -> close_out oc)
              (fun () -> output_string oc info.primary_key);
-           Unix.chmod keyfile_path 0o000 )
+           Unix.chmod keyfile_path 0o000)
        else print_endline "Skipped";
        config);
   reg ~name:"Install keyfile for unlocking /boot"
@@ -693,7 +693,7 @@ The keyfile is referenced in crypttab later|}
            Fun.protect
              ~finally:(fun () -> close_out oc)
              (fun () -> output_string oc boot_secondary_key);
-           () )
+           ())
        else print_endline "Skipped";
        config);
   reg ~name:"Set up crypttab for unlocking and mounting /boot after boot"
@@ -703,41 +703,41 @@ allowing decryption of boot partition after booting
 
 The line is then commented if disk layout uses USB key|}
     (fun _answer_store config ->
-       ( if Option.get config.encrypt_boot then
-           let disk_layout = Option.get config.disk_layout in
-           let boot_part_path =
-             let boot = Disk_layout.get_boot disk_layout in
-             match boot.l1 with
-             | Clear _ -> failwith "Expected LUKS"
-             | Luks { path; _ } -> path
-           in
-           let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
-           let keyfile_path =
-             concat_file_names [ "/root"; Config.boot_part_keyfile_name ]
-           in
-           let comment_str =
-             if
-               Option.get config.disk_layout_choice
-               = Disk_layout.Sys_part_plus_usb_drive
-             then "# "
-             else ""
-           in
-           let line =
-             Printf.sprintf "%s%s UUID=%s %s %s\n" comment_str
-               Config.boot_mapper_name boot_part_uuid keyfile_path
-               (String.concat ","
-                  [ Printf.sprintf "x-systemd.device-timeout=%ds" 90 ])
-           in
-           let crypttab_oc =
-             open_out_gen [ Open_append; Open_text ] 0o600
-               (concat_file_names [ Config.root_mount_point; "etc"; "crypttab" ])
-           in
-           Fun.protect
-             ~finally:(fun () -> close_out crypttab_oc)
-             (fun () ->
-                output_string crypttab_oc "\n";
-                output_string crypttab_oc line;
-                output_string crypttab_oc "\n") );
+       (if Option.get config.encrypt_boot then
+          let disk_layout = Option.get config.disk_layout in
+          let boot_part_path =
+            let boot = Disk_layout.get_boot disk_layout in
+            match boot.l1 with
+            | Clear _ -> failwith "Expected LUKS"
+            | Luks { path; _ } -> path
+          in
+          let boot_part_uuid = Disk_utils.uuid_of_dev boot_part_path in
+          let keyfile_path =
+            concat_file_names [ "/root"; Config.boot_part_keyfile_name ]
+          in
+          let comment_str =
+            if
+              Option.get config.disk_layout_choice
+              = Disk_layout.Sys_part_plus_usb_drive
+            then "# "
+            else ""
+          in
+          let line =
+            Printf.sprintf "%s%s UUID=%s %s %s\n" comment_str
+              Config.boot_mapper_name boot_part_uuid keyfile_path
+              (String.concat ","
+                 [ Printf.sprintf "x-systemd.device-timeout=%ds" 90 ])
+          in
+          let crypttab_oc =
+            open_out_gen [ Open_append; Open_text ] 0o600
+              (concat_file_names [ Config.root_mount_point; "etc"; "crypttab" ])
+          in
+          Fun.protect
+            ~finally:(fun () -> close_out crypttab_oc)
+            (fun () ->
+               output_string crypttab_oc "\n";
+               output_string crypttab_oc line;
+               output_string crypttab_oc "\n"));
        config);
   reg ~name:"Adjust mkinitcpio.conf"
     ~doc:
@@ -819,7 +819,7 @@ The line is then commented if disk layout uses USB key|}
            | [] -> (
                match Re.matches re_en_dk s with
                | [] -> [ s ]
-               | _ -> [ en_dk_locale_gen ] )
+               | _ -> [ en_dk_locale_gen ])
            | _ -> [ en_us_locale_gen ]
        in
        File.filter_map_lines
@@ -871,39 +871,38 @@ The line is then commented if disk layout uses USB key|}
     ~doc:{|If LUKS is enabled, then sets `GRUB_ENABLE_CRYPTODISK` to `y`|}
     (fun _answer_store config ->
        let encrypt = Option.get config.encrypt_boot in
-       ( if encrypt then
-           let default_grub_path =
-             concat_file_names
-               [ Config.root_mount_point; "etc"; "default"; "grub" ]
-           in
-           let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
-           let enable_grub_enable_cryptodisk =
-             let re_uncommented =
-               Printf.sprintf "^%s=" grub_enable_cryptodisk
-               |> Re.Posix.re
-               |> Re.compile
-             in
-             let re_commented =
-               Printf.sprintf "^#%s=" grub_enable_cryptodisk
-               |> Re.Posix.re
-               |> Re.compile
-             in
-             fun match_count s ->
-               match (Re.matches re_uncommented s, Re.matches re_commented s) with
-               | [], [] -> (match_count, [ s ])
-               | _, _ -> (succ match_count, [ grub_enable_cryptodisk ^ "=y" ])
-           in
-           let modification_count =
-             File.filter_map_fold_lines ~file:default_grub_path 0
-               enable_grub_enable_cryptodisk
-           in
-           if modification_count = 0 then
-             let oc =
-               open_out_gen [ Open_text; Open_append ] 0o600 default_grub_path
-             in
-             Fun.protect
-               ~finally:(fun () -> close_out oc)
-               (fun () -> output_string oc (grub_enable_cryptodisk ^ "=y\n")) );
+       (if encrypt then
+          let default_grub_path =
+            concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
+          in
+          let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
+          let enable_grub_enable_cryptodisk =
+            let re_uncommented =
+              Printf.sprintf "^%s=" grub_enable_cryptodisk
+              |> Re.Posix.re
+              |> Re.compile
+            in
+            let re_commented =
+              Printf.sprintf "^#%s=" grub_enable_cryptodisk
+              |> Re.Posix.re
+              |> Re.compile
+            in
+            fun match_count s ->
+              match (Re.matches re_uncommented s, Re.matches re_commented s) with
+              | [], [] -> (match_count, [ s ])
+              | _, _ -> (succ match_count, [ grub_enable_cryptodisk ^ "=y" ])
+          in
+          let modification_count =
+            File.filter_map_fold_lines ~file:default_grub_path 0
+              enable_grub_enable_cryptodisk
+          in
+          if modification_count = 0 then
+            let oc =
+              open_out_gen [ Open_text; Open_append ] 0o600 default_grub_path
+            in
+            Fun.protect
+              ~finally:(fun () -> close_out oc)
+              (fun () -> output_string oc (grub_enable_cryptodisk ^ "=y\n")));
        config);
   reg ~name:"Update GRUB config: GRUB_CMDLINE_LINUX"
     ~doc:
@@ -927,24 +926,24 @@ the system partition, the associated keyfile, and root volume|}
            (List.filter_map
               (fun x -> x)
               [
-                ( match root.l1 with
-                  | Clear _ -> None
-                  | Luks { path; _ } ->
-                    let sys_part_uuid = Disk_utils.uuid_of_dev path in
-                    ( if use_lvm then
-                        Printf.sprintf
-                          "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                           root=/dev/%s/%s\""
-                          grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                          Config.sys_part_keyfile_name Config.lvm_vg_name
-                          Config.lvm_lv_root_name
-                      else
-                        Printf.sprintf
-                          "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
-                           root=/dev/mapper/%s\""
-                          grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
-                          Config.sys_part_keyfile_name Config.sys_mapper_name )
-                    |> Option.some );
+                (match root.l1 with
+                 | Clear _ -> None
+                 | Luks { path; _ } ->
+                   let sys_part_uuid = Disk_utils.uuid_of_dev path in
+                   (if use_lvm then
+                      Printf.sprintf
+                        "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                         root=/dev/%s/%s\""
+                        grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                        Config.sys_part_keyfile_name Config.lvm_vg_name
+                        Config.lvm_lv_root_name
+                    else
+                      Printf.sprintf
+                        "%s=\"cryptdevice=UUID=%s:%s cryptkey=rootfs:/root/%s \
+                         root=/dev/mapper/%s\""
+                        grub_cmdline_linux sys_part_uuid Config.sys_mapper_name
+                        Config.sys_part_keyfile_name Config.sys_mapper_name)
+                   |> Option.some);
                 Some "apparmor=1";
                 Some "lsm=lockdown,yama,apparmor";
               ])
@@ -960,22 +959,22 @@ the system partition, the associated keyfile, and root volume|}
        let file =
          concat_file_names [ Config.root_mount_point; "etc"; "default"; "grub" ]
        in
-       ( if Option.get config.hardened_as_default then
-           let update_grub_default =
-             let grub_default = "GRUB_DEFAULT" in
-             let entry_str =
-               "Advanced options for Arch Linux>Arch Linux, with Linux \
-                linux-hardened"
-             in
-             let re =
-               Printf.sprintf "^%s" grub_default |> Re.Posix.re |> Re.compile
-             in
-             fun s ->
-               match Re.matches re s with
-               | [] -> [ s ]
-               | _ -> [ Printf.sprintf "%s=\"%s\"" grub_default entry_str ]
-           in
-           File.filter_map_lines ~file update_grub_default );
+       (if Option.get config.hardened_as_default then
+          let update_grub_default =
+            let grub_default = "GRUB_DEFAULT" in
+            let entry_str =
+              "Advanced options for Arch Linux>Arch Linux, with Linux \
+               linux-hardened"
+            in
+            let re =
+              Printf.sprintf "^%s" grub_default |> Re.Posix.re |> Re.compile
+            in
+            fun s ->
+              match Re.matches re s with
+              | [] -> [ s ]
+              | _ -> [ Printf.sprintf "%s=\"%s\"" grub_default entry_str ]
+          in
+          File.filter_map_lines ~file update_grub_default);
        config);
   reg ~name:"Install GRUB to disk"
     ~doc:
@@ -991,22 +990,22 @@ Specifically, `--removable` flag is added if disk layout uses USB key|}
          = Disk_layout.Sys_part_plus_usb_drive
        in
        let removable_flag = if use_usb_key then "--removable" else "" in
-       ( if is_efi_mode then
-           Arch_chroot.exec
-             (Printf.sprintf
-                "grub-install %s --target=x86_64-efi --efi-directory=%s \
-                 --bootloader-id=GRUB --recheck"
-                removable_flag Config.efi_dir)
-         else
-           let boot_path =
-             let boot = Disk_layout.get_boot disk_layout in
-             match boot.l1 with Clear { path } -> path | Luks { path; _ } -> path
-           in
-           let boot_disk = Disk_utils.disk_of_part boot_path in
-           Arch_chroot.exec
-             (Printf.sprintf
-                "grub-install %s --target=i386-pc --boot-directory=%s --recheck %s"
-                removable_flag Config.boot_dir boot_disk) );
+       (if is_efi_mode then
+          Arch_chroot.exec
+            (Printf.sprintf
+               "grub-install %s --target=x86_64-efi --efi-directory=%s \
+                --bootloader-id=GRUB --recheck"
+               removable_flag Config.efi_dir)
+        else
+          let boot_path =
+            let boot = Disk_layout.get_boot disk_layout in
+            match boot.l1 with Clear { path } -> path | Luks { path; _ } -> path
+          in
+          let boot_disk = Disk_utils.disk_of_part boot_path in
+          Arch_chroot.exec
+            (Printf.sprintf
+               "grub-install %s --target=i386-pc --boot-directory=%s --recheck %s"
+               removable_flag Config.boot_dir boot_disk));
        config);
   reg ~name:"Generate GRUB config" ~doc:{|Invokes `grub-mkconfig`|}
     (fun _answer_store config ->
@@ -1074,52 +1073,52 @@ Recovery kit creation decision is as follows
            FileUtil.mkdir dst_dir_path;
            print_boxed_msg
              "Backing up boot partition secondary key and LUKS header";
-           ( match boot.l1 with
-             | Clear _ -> ()
-             | Luks { info; path; _ } ->
-               let boot_secondary_key = Option.get info.secondary_key in
-               let keyfile_path =
-                 concat_file_names
-                   [ dst_dir_path; Config.boot_part_keyfile_name ]
-               in
-               let oc = open_out_bin keyfile_path in
-               Fun.protect
-                 ~finally:(fun () -> close_out oc)
-                 (fun () -> output_string oc boot_secondary_key);
-               let luks_header_backup_path =
-                 concat_file_names
-                   [
-                     dst_dir_path;
-                     Config.boot_part_luks_header_backup_file_name;
-                   ]
-               in
-               Printf.sprintf
-                 "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
-                 luks_header_backup_path
-               |> exec_no_capture );
+           (match boot.l1 with
+            | Clear _ -> ()
+            | Luks { info; path; _ } ->
+              let boot_secondary_key = Option.get info.secondary_key in
+              let keyfile_path =
+                concat_file_names
+                  [ dst_dir_path; Config.boot_part_keyfile_name ]
+              in
+              let oc = open_out_bin keyfile_path in
+              Fun.protect
+                ~finally:(fun () -> close_out oc)
+                (fun () -> output_string oc boot_secondary_key);
+              let luks_header_backup_path =
+                concat_file_names
+                  [
+                    dst_dir_path;
+                    Config.boot_part_luks_header_backup_file_name;
+                  ]
+              in
+              Printf.sprintf
+                "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
+                luks_header_backup_path
+              |> exec_no_capture);
            print_boxed_msg "Backing up root partition key and LUKS header";
-           ( match root.l1 with
-             | Clear _ -> ()
-             | Luks { info; path; _ } ->
-               let keyfile_path =
-                 concat_file_names
-                   [ dst_dir_path; Config.sys_part_keyfile_name ]
-               in
-               let oc = open_out_bin keyfile_path in
-               Fun.protect
-                 ~finally:(fun () -> close_out oc)
-                 (fun () -> output_string oc info.primary_key);
-               let luks_header_backup_path =
-                 concat_file_names
-                   [
-                     dst_dir_path;
-                     Config.root_part_luks_header_backup_file_name;
-                   ]
-               in
-               Printf.sprintf
-                 "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
-                 luks_header_backup_path
-               |> exec_no_capture );
+           (match root.l1 with
+            | Clear _ -> ()
+            | Luks { info; path; _ } ->
+              let keyfile_path =
+                concat_file_names
+                  [ dst_dir_path; Config.sys_part_keyfile_name ]
+              in
+              let oc = open_out_bin keyfile_path in
+              Fun.protect
+                ~finally:(fun () -> close_out oc)
+                (fun () -> output_string oc info.primary_key);
+              let luks_header_backup_path =
+                concat_file_names
+                  [
+                    dst_dir_path;
+                    Config.root_part_luks_header_backup_file_name;
+                  ]
+              in
+              Printf.sprintf
+                "cryptsetup luksHeaderBackup %s --header-backup-file %s" path
+                luks_header_backup_path
+              |> exec_no_capture);
            print_boxed_msg "Backing up system disk partition table";
            (let root_path =
               match root.l1 with
@@ -1231,7 +1230,7 @@ embedded for mounting and unmounting the USB key partitions|}
          let oc = open_out dst_path in
          Fun.protect
            ~finally:(fun () -> close_out oc)
-           (fun () -> output_string oc script) );
+           (fun () -> output_string oc script));
        config);
   reg ~name:"Generate useradd helper scripts" ~doc:""
     (fun _answer_store config ->
@@ -1281,7 +1280,7 @@ embedded for mounting and unmounting the USB key partitions|}
         Fun.protect
           ~finally:(fun () -> close_out oc)
           (fun () -> output_string oc script);
-        Unix.chmod dst_path 0o600 );
+        Unix.chmod dst_path 0o600);
       config);
   reg ~name:"Enable SSH server" ~doc:"" (fun _answer_store config ->
       if Option.get config.enable_ssh_server then
@@ -1301,7 +1300,7 @@ embedded for mounting and unmounting the USB key partitions|}
         {
           config with
           user_ssh_authorized_keys_path = Some user_ssh_authorized_keys_path;
-        } )
+        })
       else config);
   reg ~name:"Transfer SSH public keys"
     ~doc:
@@ -1312,84 +1311,83 @@ is to limit the damage of accidentally transferring private key instead
 of the public key.
 |}
     (fun _answer_store config ->
-       ( if Option.get config.enable_ssh_server then
-           let ip = Net_utils.get_internet_facing_ip () in
-           retry (fun () ->
-               let otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
-               let port = 10000 + Random.int 10000 in
-               let recv_dst_path = Filename.temp_file "installer" "ssh_pub_key" in
-               let decrypted_dst_path =
-                 Filename.temp_file "installer" "decrypted_ssh_pub_key"
-               in
-               print_endline
-                 "Transfer the PUBLIC key to the server using one of the \
-                  following commands";
-               Printf.printf
-                 "    cat PUBKEY | gpg -c | ncat %s %d # enter passphrase %s when \
-                  prompted\n"
-                 ip port otp;
-               print_endline "or";
-               Printf.printf
-                 "    cat PUBKEY | gpg --batch --yes --passphrase %s -c | ncat %s \
-                  %d\n"
-                 otp ip port;
-               print_newline ();
-               exec (Printf.sprintf "ncat -lp %d > %s" port recv_dst_path);
-               print_newline ();
-               print_endline "File received";
-               print_endline "Decrypting file";
-               try
-                 exec
-                   (Printf.sprintf
-                      "gpg --batch --yes --passphrase %s -o %s --decrypt %s" otp
-                      decrypted_dst_path recv_dst_path);
-                 let decrypted_file_hash =
-                   let res =
-                     exec_ret (Printf.sprintf "sha256sum %s" decrypted_dst_path)
-                   in
-                   res.stdout |> List.hd |> String.split_on_char ' ' |> List.hd
-                 in
-                 Printf.printf "SHA256 hash of the decrypted file : %s\n"
-                   decrypted_file_hash;
-                 match
-                   ask_yn "Does the hash match the hash of the original file?"
-                 with
-                 | `Yes -> (
-                     let user_name = Option.get config.user_name in
-                     let user_ssh_authorized_keys_path =
-                       Option.get config.user_ssh_authorized_keys_path
-                     in
-                     exec (Printf.sprintf "touch %s" user_ssh_authorized_keys_path);
-                     Printf.printf "Installing SSH key for user : %s\n" user_name;
-                     let key_line =
-                       let ic = open_in decrypted_dst_path in
-                       Fun.protect
-                         ~finally:(fun () -> close_in ic)
-                         (fun () -> input_line ic)
-                     in
-                     let user_ssh_authorized_keys_oc =
-                       open_out_gen [ Open_append; Open_text ] 0o600
-                         user_ssh_authorized_keys_path
-                     in
-                     Fun.protect
-                       ~finally:(fun () -> close_out user_ssh_authorized_keys_oc)
-                       (fun () ->
-                          output_string user_ssh_authorized_keys_oc "\n";
-                          output_string user_ssh_authorized_keys_oc key_line;
-                          output_string user_ssh_authorized_keys_oc "\n");
-                     match ask_yn "Do you want to add another SSH key?" with
-                     | `Yes -> Retry
-                     | `No -> Stop () )
-                 | `No -> (
-                     print_endline "Incorrect file received";
-                     match ask_yn "Do you want to retry?" with
-                     | `Yes -> Retry
-                     | `No -> Stop () )
-               with Exec_fail _ -> (
-                   print_endline "Decryption failed";
-                   match ask_yn "Do you want to retry?" with
-                   | `Yes -> Retry
-                   | `No -> Stop () )) );
+       (if Option.get config.enable_ssh_server then
+          let ip = Net_utils.get_internet_facing_ip () in
+          retry (fun () ->
+              let otp = Rand_utils.gen_rand_alphanum_string ~len:12 in
+              let port = 10000 + Random.int 10000 in
+              let recv_dst_path = Filename.temp_file "installer" "ssh_pub_key" in
+              let decrypted_dst_path =
+                Filename.temp_file "installer" "decrypted_ssh_pub_key"
+              in
+              print_endline
+                "Transfer the PUBLIC key to the server using one of the following \
+                 commands";
+              Printf.printf
+                "    cat PUBKEY | gpg -c | ncat %s %d # enter passphrase %s when \
+                 prompted\n"
+                ip port otp;
+              print_endline "or";
+              Printf.printf
+                "    cat PUBKEY | gpg --batch --yes --passphrase %s -c | ncat %s %d\n"
+                otp ip port;
+              print_newline ();
+              exec (Printf.sprintf "ncat -lp %d > %s" port recv_dst_path);
+              print_newline ();
+              print_endline "File received";
+              print_endline "Decrypting file";
+              try
+                exec
+                  (Printf.sprintf
+                     "gpg --batch --yes --passphrase %s -o %s --decrypt %s" otp
+                     decrypted_dst_path recv_dst_path);
+                let decrypted_file_hash =
+                  let res =
+                    exec_ret (Printf.sprintf "sha256sum %s" decrypted_dst_path)
+                  in
+                  res.stdout |> List.hd |> String.split_on_char ' ' |> List.hd
+                in
+                Printf.printf "SHA256 hash of the decrypted file : %s\n"
+                  decrypted_file_hash;
+                match
+                  ask_yn "Does the hash match the hash of the original file?"
+                with
+                | `Yes -> (
+                    let user_name = Option.get config.user_name in
+                    let user_ssh_authorized_keys_path =
+                      Option.get config.user_ssh_authorized_keys_path
+                    in
+                    exec (Printf.sprintf "touch %s" user_ssh_authorized_keys_path);
+                    Printf.printf "Installing SSH key for user : %s\n" user_name;
+                    let key_line =
+                      let ic = open_in decrypted_dst_path in
+                      Fun.protect
+                        ~finally:(fun () -> close_in ic)
+                        (fun () -> input_line ic)
+                    in
+                    let user_ssh_authorized_keys_oc =
+                      open_out_gen [ Open_append; Open_text ] 0o600
+                        user_ssh_authorized_keys_path
+                    in
+                    Fun.protect
+                      ~finally:(fun () -> close_out user_ssh_authorized_keys_oc)
+                      (fun () ->
+                         output_string user_ssh_authorized_keys_oc "\n";
+                         output_string user_ssh_authorized_keys_oc key_line;
+                         output_string user_ssh_authorized_keys_oc "\n");
+                    match ask_yn "Do you want to add another SSH key?" with
+                    | `Yes -> Retry
+                    | `No -> Stop ())
+                | `No -> (
+                    print_endline "Incorrect file received";
+                    match ask_yn "Do you want to retry?" with
+                    | `Yes -> Retry
+                    | `No -> Stop ())
+              with Exec_fail _ -> (
+                  print_endline "Decryption failed";
+                  match ask_yn "Do you want to retry?" with
+                  | `Yes -> Retry
+                  | `No -> Stop ())));
        config);
   reg ~name:"Ask if set up SaltStack" ~doc:"" (fun answer_store config ->
       let use_saltstack =
@@ -1423,7 +1421,7 @@ of the public key.
          Fun.protect
            ~finally:(fun () -> close_out oc)
            (fun () -> output_string oc script);
-         Unix.chmod dst_path 0o600 );
+         Unix.chmod dst_path 0o600);
        config);
   reg ~name:"Git clone oali-profiles repo into current directory" ~doc:""
     (fun answer_store config ->
@@ -1451,7 +1449,7 @@ of the public key.
            config with
            oali_profiles_repo_url = Some oali_profiles_repo_url;
            oali_profiles_repo_name = Some oali_profiles_repo_name;
-         } )
+         })
        else config);
   reg ~name:"Select profile to use" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
@@ -1474,36 +1472,36 @@ of the public key.
       else config);
   reg ~name:"Copy SaltStack files" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
-      ( if use_saltstack then
-          let salt_files_path =
-            concat_file_names
-              [
-                Option.get config.oali_profiles_repo_name;
-                Option.get config.oali_profile;
-                "saltstack";
-              ]
-          in
-          let folders =
-            Sys.readdir salt_files_path
-            |> Array.to_list
-            |> List.map (fun s -> concat_file_names [ salt_files_path; s ])
-          in
-          FileUtil.cp ~recurse:true folders
-            (Filename.concat Config.root_mount_point "srv") );
+      (if use_saltstack then
+         let salt_files_path =
+           concat_file_names
+             [
+               Option.get config.oali_profiles_repo_name;
+               Option.get config.oali_profile;
+               "saltstack";
+             ]
+         in
+         let folders =
+           Sys.readdir salt_files_path
+           |> Array.to_list
+           |> List.map (fun s -> concat_file_names [ salt_files_path; s ])
+         in
+         FileUtil.cp ~recurse:true folders
+           (Filename.concat Config.root_mount_point "srv"));
       config);
   reg ~name:"Customise SaltStack files" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
-      ( if use_saltstack then
-          let user_name = Option.get config.user_name in
-          let dst_path =
-            concat_file_names
-              [ Config.root_mount_point; "srv"; "pillar"; "user.sls" ]
-          in
-          let script = User_sls_template.gen ~user_name in
-          let oc = open_out dst_path in
-          Fun.protect
-            ~finally:(fun () -> close_out oc)
-            (fun () -> output_string oc script) );
+      (if use_saltstack then
+         let user_name = Option.get config.user_name in
+         let dst_path =
+           concat_file_names
+             [ Config.root_mount_point; "srv"; "pillar"; "user.sls" ]
+         in
+         let script = User_sls_template.gen ~user_name in
+         let oc = open_out dst_path in
+         Fun.protect
+           ~finally:(fun () -> close_out oc)
+           (fun () -> output_string oc script));
       config);
   reg ~name:"Generate setup note" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
@@ -1536,9 +1534,9 @@ of the public key.
       let do_unmount = ask_yn "Do you want to unmount partitions?" = `Yes in
       { config with do_unmount = Some do_unmount });
   reg ~name:"Unmount partitions" ~doc:"" (fun _answer_store config ->
-      ( if Option.get config.do_unmount then
-          let disk_layout = Option.get config.disk_layout in
-          Disk_layout.unmount disk_layout );
+      (if Option.get config.do_unmount then
+         let disk_layout = Option.get config.disk_layout in
+         Disk_layout.unmount disk_layout);
       config);
   reg ~name:"Ask if shutdown" ~doc:"" (fun _answer_store config ->
       if Option.get config.do_unmount then
@@ -1546,7 +1544,7 @@ of the public key.
         { config with do_shutdown = Some do_shutdown }
       else (
         print_endline "Shutdown skipped";
-        config ));
+        config));
   reg ~name:"Shut down" ~doc:"" (fun _answer_store config ->
       if
         Option.get config.do_unmount

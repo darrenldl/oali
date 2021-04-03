@@ -128,7 +128,7 @@ let rec run_single_task task_book task_index task_record : unit =
     | Skip -> task_record.stats.result <- Skipped
     | End_install ->
       task_record.stats.result <- Failed;
-      raise End_install )
+      raise End_install)
   else task_book.config <- new_config
 
 let pick_installer_action () =
@@ -197,7 +197,7 @@ let run task_book =
         with End_install ->
           print_endline
             "Installation ended as requested, returning to main menu";
-          aux task_book )
+          aux task_book)
   in
   finalize task_book;
   Proc_utils.clear ();
