@@ -266,7 +266,9 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params
          Misc_utils.ask_string_confirm
            ~is_valid:(fun x -> x <> "")
            ~no_echo:true
-           "Please enter passphrase for ROOT (/) partition encryption"
+           (if use_lvm then
+              "Please enter passphrase for system physical volume encryption"
+            else "Please enter passphrase for ROOT (/) partition encryption")
        in
        Storage_unit.L1.make_luks ~primary_key ~path
          ~mapper_name:Config.sys_mapper_name enc_params
