@@ -219,10 +219,27 @@ User is allowed to continue said setup if they wishes to however
                   selected to not encrypt root";
              confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
        in
-       { config with encrypt_sys = Some encrypt });
+       if encrypt then (
+         if encrypt_boot then
+           { config with encrypt_sys = Some `Keyfile }
+         else (
+           print_endline "Since boot partition is not encrypted, please specify whether system partition should use passphrase or keyfile";
+           let choices =
+             [
+               ("passphrase", `Passphrase);
+               ("keyfile", `Keyfile);
+             ]
+           in
+           let choice = pick_choice_kv choices in
+           { config with encrypt_sys = Some choice }
+         )
+       )
+       else
+         { config with encrypt_sys = Some `None }
+    );
   reg ~name:"Adjust cryptsetup parameters for root partition" ~doc:luks_doc
     (fun answer_store config ->
-       if Option.get config.encrypt_sys then
+       if Option.get config.encrypt_sys <> `None then
          let iter_time_ms, key_size_bits =
            retry ~answer_store (fun () ->
                let iter_time_ms =
@@ -646,27 +663,31 @@ if using the USB key disk layout|}
        config);
   reg ~name:"Install keyfile for /"
     ~doc:{|Sets up keyfile to be embedded into the initramfs|}
-    (fun _answer_store config ->
-       if Option.get config.encrypt_sys then (
-         let disk_layout = Option.get config.disk_layout in
-         let root = Disk_layout.get_root disk_layout in
-         match root.l1 with
-         | Clear _ -> failwith "Expected LUKS"
-         | Luks { info; _ } ->
-           let keyfile_path =
-             concat_file_names
-               [
-                 Config.root_mount_point;
-                 Config.root_dir;
-                 Config.sys_part_keyfile_name;
-               ]
-           in
-           let oc = open_out_bin keyfile_path in
-           Fun.protect
-             ~finally:(fun () -> close_out oc)
-             (fun () -> output_string oc info.primary_key);
-           Unix.chmod keyfile_path 0o000)
-       else print_endline "Skipped";
+    (fun _answer_store config -> (
+         match Option.get config.encrypt_sys with
+         | `None | `Passphrase ->
+           print_endline "Skipped"
+         | `Keyfile -> (
+             let disk_layout = Option.get config.disk_layout in
+             let root = Disk_layout.get_root disk_layout in
+             match root.l1 with
+             | Clear _ -> failwith "Expected LUKS"
+             | Luks { info; _ } ->
+               let keyfile_path =
+                 concat_file_names
+                   [
+                     Config.root_mount_point;
+                     Config.root_dir;
+                     Config.sys_part_keyfile_name;
+                   ]
+               in
+               let oc = open_out_bin keyfile_path in
+               Fun.protect
+                 ~finally:(fun () -> close_out oc)
+                 (fun () -> output_string oc info.primary_key);
+               Unix.chmod keyfile_path 0o000)
+       )
+;
        config);
   reg ~name:"Install keyfile for unlocking /boot"
     ~doc:
@@ -754,13 +775,14 @@ The line is then commented if disk layout uses USB key|}
            match Re.matches re s with
            | [] -> [ s ]
            | _ ->
-             if encrypt_sys then
+             match encrypt_sys with
+             | `Keyfile ->
                [
                  Printf.sprintf "FILES=(%s)"
                    (concat_file_names
                       [ "/root"; Config.sys_part_keyfile_name ]);
                ]
-             else [ s ]
+             | `None | `Passphrase -> [ s ]
        in
        let fill_in_HOOKS =
          let re = "^HOOKS" |> Re.Posix.re |> Re.compile in
@@ -771,7 +793,7 @@ The line is then commented if disk layout uses USB key|}
              [
                Printf.sprintf "HOOKS=(%s)"
                  (String.concat " "
-                    (Config.gen_mkinitcpio_hooks ~encrypt_sys ~use_lvm));
+                    (Mkinitcpio_utils.gen_mkinitcpio_hooks ~encrypt_sys ~use_lvm));
              ]
        in
        File.filter_map_lines ~file fill_in_FILES;
@@ -1060,10 +1082,10 @@ Recovery kit creation decision is as follows
            concat_file_names [ Config.root_mount_point; Config.root_dir ]
          in
          match (encrypt_boot, encrypt_sys) with
-         | true, true -> [ dst_boot; dst_root ]
-         | true, false -> [ dst_boot ]
-         | false, true -> [ dst_root ]
-         | false, false -> [ dst_boot; dst_root ]
+         | true, `Passphrase | true, `Keyfile -> [ dst_boot; dst_root ]
+         | true, `None -> [ dst_boot ]
+         | false, `Passphrase | false, `Keyfile -> [ dst_root ]
+         | false, `None -> [ dst_boot; dst_root ]
        in
        dst_s
        |> List.iter (fun dst_dir_path ->

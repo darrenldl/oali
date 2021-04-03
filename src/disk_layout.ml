@@ -20,6 +20,12 @@ type layout_choice =
   | Sys_part_plus_boot_plus_maybe_EFI
   | Sys_part_plus_usb_drive
 
+type sys_part_enc_choice = [
+  | `None
+  | `Passphrase
+  | `Keyfile
+]
+
 (* | Lvm_single_disk
  * | Lvm_boot_plus_maybe_EFI_plus_pv_s
  * | Lvm_usb_drive_plus_pv_s *)
@@ -236,7 +242,7 @@ let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
        let primary_key =
          Misc_utils.ask_string_confirm
            ~is_valid:(fun x -> x <> "")
-           ~no_echo:true "Please enter passphrase for encryption"
+           ~no_echo:true "Please enter passphrase for BOOT (/boot) partition encryption"
        in
        Storage_unit.L1.make_luks ~primary_key ~add_secondary_key:true
          ~version:`LuksV1 ~path ~mapper_name:Config.boot_mapper_name enc_params
@@ -247,14 +253,28 @@ let make_boot (pool : Storage_unit.pool) ~enc_params ~encrypt ~path =
     (Storage_unit.L4.make ~mount_point:Config.boot_mount_point `Ext4);
   Storage_unit.make ~l1_id ~l2_id ~l3_id ~l4_id
 
-let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
+let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~(encrypt : sys_part_enc_choice) ~use_lvm
     path : Storage_unit.t * Storage_unit.t option * Storage_unit.t option =
   (* common components - L1, L2 stuff *)
   Hashtbl.add pool.l1_pool Params.Sys.l1_id
-    (if encrypt then
+    (match encrypt with
+     | `None -> Storage_unit.L1.make_clear ~path
+     | `Passphrase ->
+       let primary_key =
+       Misc_utils.ask_string_confirm
+         ~is_valid:(fun x -> x <> "")
+         ~no_echo:true "Please enter passphrase for ROOT (/) partition encryption"
+       in
+       Storage_unit.L1.make_luks ~primary_key ~path ~mapper_name:Config.sys_mapper_name
+         enc_params
+     | `Keyfile ->
        Storage_unit.L1.make_luks ~path ~mapper_name:Config.sys_mapper_name
          enc_params
-     else Storage_unit.L1.make_clear ~path);
+    );
+    (* (if encrypt then
+     *    Storage_unit.L1.make_luks ~path ~mapper_name:Config.sys_mapper_name
+     *      enc_params
+     *  else Storage_unit.L1.make_clear ~path); *)
   Hashtbl.add pool.l2_pool Params.Sys.l2_id
     (if use_lvm then Storage_unit.L2.make_lvm ~vg_name:Config.lvm_vg_name
      else Storage_unit.L2.make_none ());
@@ -319,7 +339,7 @@ let make_root_var_home (pool : Storage_unit.pool) ~enc_params ~encrypt ~use_lvm
   (root, var, home)
 
 let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
-    ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~sys_encrypt ~use_lvm =
+    ~boot_encrypt ~sys_part_path ~sys_part_enc_params ~(sys_encrypt : sys_part_enc_choice) ~use_lvm =
   let pool = Storage_unit.make_pool () in
   let esp = Option.map (fun path -> make_esp pool ~path) esp_part_path in
   let boot =
@@ -332,7 +352,7 @@ let make_layout ~esp_part_path ~boot_part_path ~boot_part_enc_params
   in
   let lvm_info =
     if use_lvm then
-      if sys_encrypt then
+      if sys_encrypt <> `None then
         Some
           {
             vg_name = Config.lvm_vg_name;
