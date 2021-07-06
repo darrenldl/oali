@@ -1,0 +1,7 @@
+#!/usr/bin/ash
+
+run_hook() {
+    if [ -b /dev/mapper/MAPPER_NAME_BOOT_DUMMY ]; then
+        cryptsetup close /dev/mapper/MAPPER_NAME_BOOT_DUMMY >/dev/null
+    fi
+}
