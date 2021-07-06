@@ -2,7 +2,7 @@ open Proc_utils
 open Misc_utils
 
 let () =
-  let config = Task_config.create () in
+  let config = Task_config.make () in
   let task_book = Task_book.make config in
   let reg ~name ~doc task = Task_book.register task_book ~name ~doc task in
   reg ~name:"Initialise entropy of Oali" ~doc:"" (fun _answer_store config ->

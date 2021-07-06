@@ -23,7 +23,7 @@ type t = {
   do_shutdown : bool option;
 }
 
-let create () =
+let make () =
   {
     disk_layout = None;
     disk_layout_choice = None;
