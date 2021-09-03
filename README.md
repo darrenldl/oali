@@ -1,5 +1,4 @@
 # OCaml Arch Linux Installer
-[![Build Status](https://travis-ci.org/darrenldl/oali.svg?branch=master)](https://travis-ci.org/darrenldl/oali)
 
 ## Warning
 - Oali is primarily developed for my personal use, so it is not designed to be general.
