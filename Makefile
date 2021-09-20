@@ -1,13 +1,6 @@
 SRCFILES = src/*.ml*
 
-# CINAPSFILES = src/*.cinaps
-
 OCAMLFORMAT = ocamlformat \
-	--inplace \
-	$(SRCFILES) \
-	$(CINAPSFILES)
-
-OCPINDENT = ocp-indent \
 	--inplace \
 	$(SRCFILES) \
 	$(CINAPSFILES)
@@ -23,13 +16,11 @@ release-static:
 .PHONY: format
 format :
 	$(OCAMLFORMAT)
-	$(OCPINDENT)
 
 .PHONY: cinaps
 cinaps :
 	cinaps -i $(SRCFILES)
 	$(OCAMLFORMAT)
-	$(OCPINDENT)
 
 .PHONY : clean
 clean:
