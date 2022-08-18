@@ -5,3 +5,6 @@ RUN opam install dune containers fmt
 RUN opam install menhir
 RUN opam install utop ocp-indent
 RUN opam install ansiterminal
+RUN opam install yojson
+RUN opam install fileutils
+RUN opam install re

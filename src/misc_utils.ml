@@ -223,22 +223,21 @@ let print_boxed_msg s =
   Printf.printf "| %s |\n" s;
   print_endline line
 
-let concat_file_names names =
-  let splits =
-    names
-    |> List.map (fun s ->
-        Core_kernel.String.Escaping.split s ~on:'/' ~escape_char:'\\')
-    |> List.concat
-    |> List.filter not_empty
-  in
-  let res = String.concat Filename.dir_sep splits in
-  match names with
-  | [] -> res
-  | x :: _ -> if String.sub x 0 1 = "/" then "/" ^ res else res
-
 let calc_frac ~max_frac ~value ~total =
   assert (max_frac >= 0.0);
   assert (max_frac <= 1.0);
   min (value /. total) max_frac
 
 let frac_to_perc frac : int = int_of_float (Float.round (frac *. 100.0))
+
+let is_digit c =
+  match c with
+  | '0'..'9' -> true
+  | _ -> false
+
+let is_alphanum c =
+  match c with
+  | 'A'..'Z'
+  | 'a'..'z'
+  | '0'..'9' -> true
+  | _ -> false

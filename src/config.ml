@@ -8,7 +8,7 @@ let esp_part_max_frac = 0.25
 
 let efi_dir = "/efi"
 
-let esp_mount_point = Misc_utils.concat_file_names [ root_mount_point; efi_dir ]
+let esp_mount_point = String_utils.concat_file_names [ root_mount_point; efi_dir ]
 
 let boot_part_size_MiB = 500.0
 
@@ -17,7 +17,7 @@ let boot_part_max_frac = 0.75
 let boot_dir = "/boot"
 
 let boot_mount_point =
-  Misc_utils.concat_file_names [ root_mount_point; boot_dir ]
+  String_utils.concat_file_names [ root_mount_point; boot_dir ]
 
 let keyfile_size = 4096
 
@@ -30,15 +30,15 @@ let boot_mapper_name = "crypt_boot"
 let sys_mapper_name = "crypt_sys"
 
 let livecd_mirrorlist_path =
-  Misc_utils.concat_file_names [ "/etc"; "pacman.d"; "mirrorlist" ]
+  String_utils.concat_file_names [ "/etc"; "pacman.d"; "mirrorlist" ]
 
 let etc_ssh_dir_path =
-  Misc_utils.concat_file_names [ root_mount_point; "etc"; "ssh" ]
+  String_utils.concat_file_names [ root_mount_point; "etc"; "ssh" ]
 
 let etc_sshd_config_path =
-  Misc_utils.concat_file_names [ etc_ssh_dir_path; "sshd_config" ]
+  String_utils.concat_file_names [ etc_ssh_dir_path; "sshd_config" ]
 
-let oali_files_dir_path = Misc_utils.concat_file_names [ "/root"; "oali_pack" ]
+let oali_files_dir_path = String_utils.concat_file_names [ "/root"; "oali_pack" ]
 
 let useradd_helper_as_powerful_name = "useradd_helper_as_powerful.sh"
 
@@ -49,8 +49,6 @@ let oali_profiles_repo_url = "https://github.com/darrenldl/oali-profiles"
 let repo_name = "oali"
 
 let repo_url = "https://github.com/darrenldl/oali"
-
-let salt_exec_script_name = "salt_exec.sh"
 
 let usb_key_mount_script_name = "usb_key_mount.sh"
 
@@ -80,9 +78,9 @@ let lvm_lv_home_name = "lv_home"
 
 let lvm_lv_home_frac_of_leftover = 0.8
 
-let var_mount_point = Misc_utils.concat_file_names [ root_mount_point; "var" ]
+let var_mount_point = String_utils.concat_file_names [ root_mount_point; "var" ]
 
-let home_mount_point = Misc_utils.concat_file_names [ root_mount_point; "home" ]
+let home_mount_point = String_utils.concat_file_names [ root_mount_point; "home" ]
 
 let doc_md_name = "OALI_DOC.md"
 

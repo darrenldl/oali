@@ -16,9 +16,9 @@ let gen_rand_alphanum_string ~len =
     if len_left = 0 then acc
     else
       let c = input_char ic in
-      if Core_kernel.Char.is_alphanum c then aux ic (c :: acc) (pred len_left)
+      if Misc_utils.is_alphanum c then aux ic (c :: acc) (pred len_left)
       else aux ic acc len_left
   in
   let acc = aux ic [] len in
   close_in ic;
-  Core_kernel.String.of_char_list acc
+  CCString.of_list acc

@@ -14,9 +14,9 @@ let list_disk_block_devs () =
   in
   List.combine paths dsts
   |> List.filter (fun (_path, dst) ->
-      Core_kernel.String.substr_index dst ~pattern:"dm" <> Some 0)
+      not (CCString.prefix ~pre:"dm" dst))
   |> List.filter (fun (_path, dst) ->
-      Core_kernel.String.substr_index dst ~pattern:"sr" <> Some 0)
+      not (CCString.prefix ~pre:"sr" dst))
   |> List.map (fun (path, dst) -> (path, "/dev/" ^ dst))
   |> List.sort_uniq compare
 
@@ -24,9 +24,8 @@ let list_parts () =
   list_disk_block_devs ()
   |> List.filter (fun (path, _dst) ->
       let last_part = List.hd (List.rev (String.split_on_char '-' path)) in
-      match Core_kernel.String.substr_index last_part ~pattern:"part" with
-      | Some _ -> true
-      | None -> false)
+      CCString.mem ~sub:"part" last_part
+      )
   |> List.map (fun (_, dst) -> dst)
   |> List.sort_uniq compare
 
@@ -45,17 +44,15 @@ let disk_of_part part =
   disk_name
 
 let parts_of_disk disk =
-  let len = String.length disk in
   list_parts ()
-  |> List.filter (fun part -> Core_kernel.String.prefix part len = disk)
+  |> List.filter (fun part -> CCString.prefix ~pre:disk part)
 
 let list_disks () =
   list_disk_block_devs ()
   |> List.filter (fun (path, _dst) ->
       let last_part = List.hd (List.rev (String.split_on_char '-' path)) in
-      match Core_kernel.String.substr_index last_part ~pattern:"part" with
-      | Some _ -> false
-      | None -> true)
+      not (CCString.mem ~sub:"part" last_part)
+      )
   |> List.map (fun (_, dst) -> dst)
   |> List.sort_uniq compare
 
@@ -86,14 +83,14 @@ let uuid_of_dev dev =
 
 let gpt_sgdisk_back_up ~disk ~backup_location ~backup_file_prefix =
   Printf.sprintf "sgdisk --backup=%s %s"
-    (Misc_utils.concat_file_names
+    (String_utils.concat_file_names
        [ backup_location; backup_file_prefix ^ Config.gpt_sgdisk_backup_suffix ])
     disk
   |> Proc_utils.exec_no_capture
 
 let mbr_sfdisk_back_up ~disk ~backup_location ~backup_file_prefix =
   Printf.sprintf "sfdisk -d %s > %s" disk
-    (Misc_utils.concat_file_names
+    (String_utils.concat_file_names
        [ backup_location; backup_file_prefix ^ Config.mbr_sfdisk_backup_suffix ])
   |> Proc_utils.exec_no_capture
 

@@ -1,28 +1,4 @@
-let gen ~use_saltstack ~use_usb_key =
-  let saltstack_text =
-    if use_saltstack && use_usb_key then
-      Printf.sprintf
-        {|    %s
-        Apply installed local salt states
-            NOTE :
-              Please mount the USB key first (using %s)
-              before using
-            Setup should have installed the appropriate salt states
-            in your system already
-
-|}
-        Config.salt_exec_script_name Config.usb_key_mount_script_name
-    else if use_saltstack && not use_usb_key then
-      Printf.sprintf
-        {|    %s
-        Apply installed local salt states
-            Setup should have installed the appropriate salt states
-            in your system already
-
-|}
-        Config.salt_exec_script_name
-    else ""
-  in
+let gen ~use_usb_key =
   let usb_key_text =
     if use_usb_key then
       Printf.sprintf
@@ -45,7 +21,7 @@ let gen ~use_saltstack ~use_usb_key =
 # See %s for details .
 
 The following scripts should be present in /root directory
-%s%s    %s
+%s    %s
         Helper script for using useradd
             Add user in same manner as used by setup.sh
             Add user to groups : users,wheel,rfkill
@@ -55,5 +31,5 @@ The following scripts should be present in /root directory
             Add user in same manner as used by setup.sh
             Add user to groups : users,rfkill
 |}
-    Config.repo_name Config.repo_url saltstack_text usb_key_text
+    Config.repo_name Config.repo_url usb_key_text
     Config.useradd_helper_as_powerful_name Config.useradd_helper_restricted_name

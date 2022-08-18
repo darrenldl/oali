@@ -1,8 +1,8 @@
 (executable
  (name oali)
- (libraries core_kernel
+ (libraries containers
             re
             fileutils
             yojson)
- (flags (-w "+a-4-9-29-37-40-42-44-48-50-32"))
+ (flags (-w "+a-4-9-29-37-40-42-44-48-50-32-70"))
  )

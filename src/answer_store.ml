@@ -4,12 +4,12 @@ let normalize_name s =
   s
   |> String.lowercase_ascii
   |> String.split_on_char ' '
-  |> List.map (Core_kernel.String.filter ~f:Core_kernel.Char.is_alphanum)
+  |> List.map (CCString.filter Misc_utils.is_alphanum)
   |> List.filter (fun s -> s <> "")
   |> String.concat "_"
 
 let task_name_to_file_name ~task_name =
-  Misc_utils.concat_file_names
+  String_utils.concat_file_names
     [ Config.oali_answer_store_dir; normalize_name task_name ]
 
 let create () = Hashtbl.create 100
