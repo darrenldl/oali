@@ -25,7 +25,7 @@ let list_parts () =
   |> List.filter (fun (path, _dst) ->
       let last_part = List.hd (List.rev (String.split_on_char '-' path)) in
       CCString.mem ~sub:"part" last_part
-      )
+    )
   |> List.map (fun (_, dst) -> dst)
   |> List.sort_uniq compare
 
@@ -52,7 +52,7 @@ let list_disks () =
   |> List.filter (fun (path, _dst) ->
       let last_part = List.hd (List.rev (String.split_on_char '-' path)) in
       not (CCString.mem ~sub:"part" last_part)
-      )
+    )
   |> List.map (fun (_, dst) -> dst)
   |> List.sort_uniq compare
 

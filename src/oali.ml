@@ -648,13 +648,13 @@ if using the USB key disk layout|}
          = Disk_layout.Sys_part_plus_usb_drive
        then
          File.filter_map_lines ~file:fstab_path (fun s ->
-           if CCString.mem ~sub:Config.boot_dir s
-           && CCString.mem ~sub:Config.efi_dir s
-           then
-             [ s ]
-           else
-              [ "# " ^ s ]
-             );
+             if CCString.mem ~sub:Config.boot_dir s
+             && CCString.mem ~sub:Config.efi_dir s
+             then
+               [ s ]
+             else
+               [ "# " ^ s ]
+           );
        config);
   reg ~name:"Install keyfile for /"
     ~doc:{|Sets up keyfile to be embedded into the initramfs|}
@@ -744,7 +744,7 @@ The line is then commented if disk layout uses USB key|}
           let crypttab_oc =
             open_out_gen [ Open_append; Open_text ] 0o600
               (String_utils.concat_file_names
-              [ Config.root_mount_point; "etc"; "crypttab" ])
+                 [ Config.root_mount_point; "etc"; "crypttab" ])
           in
           Fun.protect
             ~finally:(fun () -> close_out crypttab_oc)
@@ -761,7 +761,7 @@ The line is then commented if disk layout uses USB key|}
        let use_lvm = Option.get config.use_lvm in
        let file =
          String_utils.concat_file_names
-         [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
+           [ Config.root_mount_point; "etc"; "mkinitcpio.conf" ]
        in
        let fill_in_FILES =
          let re = "^FILES" |> Re.Posix.re |> Re.compile in
@@ -816,7 +816,7 @@ The line is then commented if disk layout uses USB key|}
       let oc =
         open_out
           (String_utils.concat_file_names
-          [ Config.root_mount_point; "etc"; "hostname" ])
+             [ Config.root_mount_point; "etc"; "hostname" ])
       in
       Fun.protect
         ~finally:(fun () -> close_out oc)
@@ -843,14 +843,14 @@ The line is then commented if disk layout uses USB key|}
        File.filter_map_lines
          ~file:
            (String_utils.concat_file_names
-           [ Config.root_mount_point; "etc"; "locale.gen" ])
+              [ Config.root_mount_point; "etc"; "locale.gen" ])
          uncommet_locales);
       (let en_us_locale_conf = "en_US.UTF-8" in
        let en_dk_locale_conf = "en_DK.UTF-8" in
        let oc =
          open_out
            (String_utils.concat_file_names
-           [ Config.root_mount_point; "etc"; "locale.conf" ])
+              [ Config.root_mount_point; "etc"; "locale.conf" ])
        in
        Fun.protect
          ~finally:(fun () -> close_out oc)
@@ -894,7 +894,7 @@ The line is then commented if disk layout uses USB key|}
        (if encrypt then
           let default_grub_path =
             String_utils.concat_file_names
-            [ Config.root_mount_point; "etc"; "default"; "grub" ]
+              [ Config.root_mount_point; "etc"; "default"; "grub" ]
           in
           let grub_enable_cryptodisk = "GRUB_ENABLE_CRYPTODISK" in
           let enable_grub_enable_cryptodisk =
@@ -938,7 +938,7 @@ the system partition, the associated keyfile, and root volume|}
        in
        let default_grub_path =
          String_utils.concat_file_names
-         [ Config.root_mount_point; "etc"; "default"; "grub" ]
+           [ Config.root_mount_point; "etc"; "default"; "grub" ]
        in
        let root = Disk_layout.get_root disk_layout in
        let cmdline_string_new =
@@ -984,7 +984,7 @@ the system partition, the associated keyfile, and root volume|}
     (fun _answer_store config ->
        let file =
          String_utils.concat_file_names
-         [ Config.root_mount_point; "etc"; "default"; "grub" ]
+           [ Config.root_mount_point; "etc"; "default"; "grub" ]
        in
        (if Option.get config.hardened_as_default then
           let update_grub_default =
@@ -1082,11 +1082,11 @@ Recovery kit creation decision is as follows
        let dst_s =
          let dst_boot =
            String_utils.concat_file_names
-           [ Config.root_mount_point; Config.boot_dir ]
+             [ Config.root_mount_point; Config.boot_dir ]
          in
          let dst_root =
            String_utils.concat_file_names
-           [ Config.root_mount_point; Config.root_dir ]
+             [ Config.root_mount_point; Config.root_dir ]
          in
          match (encrypt_boot, encrypt_sys) with
          | true, `Passphrase | true, `Keyfile -> [ dst_boot; dst_root ]
@@ -1098,7 +1098,7 @@ Recovery kit creation decision is as follows
        |> List.iter (fun dst_dir_path ->
            let dst_dir_path =
              String_utils.concat_file_names
-             [ dst_dir_path; Config.recovery_kit_dir ]
+               [ dst_dir_path; Config.recovery_kit_dir ]
            in
            FileUtil.mkdir dst_dir_path;
            print_boxed_msg
@@ -1420,7 +1420,7 @@ of the public key.
                   | `No -> Stop ())));
        config);
   (* reg ~name:"Git clone oali-profiles repo into current directory" ~doc:""
-    (fun answer_store config ->
+     (fun answer_store config ->
        let use_saltstack = Option.get config.use_saltstack in
        if use_saltstack then (
          Printf.printf "The default oali-profiles repo URL is :\n";
@@ -1447,7 +1447,7 @@ of the public key.
            oali_profiles_repo_name = Some oali_profiles_repo_name;
          })
        else config);
-  reg ~name:"Select profile to use" ~doc:"" (fun _answer_store config ->
+     reg ~name:"Select profile to use" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
       if use_saltstack then
         let dir = Option.get config.oali_profiles_repo_name in
@@ -1466,7 +1466,7 @@ of the public key.
           let profile = pick_choice_value profiles in
           { config with oali_profile = Some profile }
       else config);
-  reg ~name:"Copy SaltStack files" ~doc:"" (fun _answer_store config ->
+     reg ~name:"Copy SaltStack files" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
       (if use_saltstack then
          let salt_files_path =
@@ -1486,7 +1486,7 @@ of the public key.
          FileUtil.cp ~recurse:true folders
            (Filename.concat Config.root_mount_point "srv"));
       config);
-  reg ~name:"Customise SaltStack files" ~doc:"" (fun _answer_store config ->
+     reg ~name:"Customise SaltStack files" ~doc:"" (fun _answer_store config ->
       let use_saltstack = Option.get config.use_saltstack in
       (if use_saltstack then
          let user_name = Option.get config.user_name in
