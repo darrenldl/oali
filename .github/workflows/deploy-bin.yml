@@ -28,9 +28,8 @@ jobs:
       - name: Build
         run: |
           sudo apt-get install musl-tools
-          opam install dune core_kernel fmt fileutils re yojson
+          opam install dune containers fmt fileutils re yojson
           eval $(opam env); make release-static
-          cp _build/default/src/oali.exe oali
       - name: Upload to GitHub release
         uses: svenstaro/upload-release-action@v2
         with:
