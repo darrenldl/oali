@@ -25,9 +25,9 @@ let sys_part_keyfile_name = "sys-part.key"
 
 let boot_part_keyfile_name = "boot-part.key"
 
-let boot_mapper_name = "crypt-boot"
+let boot_mapper_name = "crypt_boot"
 
-let sys_mapper_name = "crypt-sys"
+let sys_mapper_name = "crypt_sys"
 
 let livecd_mirrorlist_path =
   String_utils.concat_file_names [ "/etc"; "pacman.d"; "mirrorlist" ]
@@ -58,21 +58,21 @@ let oali_answer_store_dir = "oali-answers"
 
 let sshd_port = 40010
 
-let lvm_vg_name = "vg-sys"
+let lvm_vg_name = "vg_sys"
 
-let lvm_lv_root_name = "lv-root"
+let lvm_lv_root_name = "lv_root"
 
 let lvm_lv_root_frac = 0.25
 
 let lvm_lv_root_max_size_MiB = 25. *. 1024.
 
-let lvm_lv_var_name = "lv-var"
+let lvm_lv_var_name = "lv_var"
 
 let lvm_lv_var_frac = 0.25
 
 let lvm_lv_var_max_size_MiB = 250. *. 1024.
 
-let lvm_lv_home_name = "lv-home"
+let lvm_lv_home_name = "lv_home"
 
 let lvm_lv_home_frac_of_leftover = 0.8
 
