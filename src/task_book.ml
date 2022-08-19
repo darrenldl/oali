@@ -105,17 +105,17 @@ let rec run_single_task task_book task_index task_record : unit =
       print_endline (Proc_utils.report_failure r);
       (false, task_book.config)
     | Failure msg ->
-      Printf.printf "Failure : %s\n" msg;
+      Printf.printf "Failure: %s\n" msg;
       (false, task_book.config)
     | Sys_error msg ->
-      Printf.printf "Sys_error : %s\n" msg;
+      Printf.printf "Sys_error: %s\n" msg;
       (false, task_book.config)
     | Unix.Unix_error (err, s1, s2) ->
-      Printf.printf "Unix.Unix_error : %s, %s, %s\n" (Unix.error_message err)
+      Printf.printf "Unix.Unix_error: %s, %s, %s\n" (Unix.error_message err)
         s1 s2;
       (false, task_book.config)
     | FileUtil.CpError msg ->
-      Printf.printf "FileUtilCP.CpError : %s\n" msg;
+      Printf.printf "FileUtilCP.CpError: %s\n" msg;
       (false, task_book.config)
   in
   if not succeeded then (
