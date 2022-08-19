@@ -1269,7 +1269,7 @@ embedded for mounting and unmounting the USB key partitions|}
             [
               Config.root_mount_point;
               Config.oali_files_dir_path;
-              Config.useradd_helper_restricted_name;
+              Config.useradd_helper_restricted_script_name;
             ]
         in
         let script = Useradd_helper_restricted_script_template.gen () in
@@ -1283,7 +1283,7 @@ embedded for mounting and unmounting the USB key partitions|}
             [
               Config.root_mount_point;
               Config.oali_files_dir_path;
-              Config.useradd_helper_as_powerful_name;
+              Config.useradd_helper_as_powerful_script_name;
             ]
         in
         let script = Useradd_helper_as_powerful_script_template.gen () in

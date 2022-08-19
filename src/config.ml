@@ -40,17 +40,17 @@ let etc_sshd_config_path =
 
 let oali_files_dir_path = String_utils.concat_file_names [ "/root"; "oali-pack" ]
 
-let useradd_helper_as_powerful_name = "useradd_helper_as_powerful.sh"
+let useradd_helper_as_powerful_script_name = "useradd-helper-as-powerful.sh"
 
-let useradd_helper_restricted_name = "useradd_helper_restricted.sh"
+let useradd_helper_restricted_script_name = "useradd-helper-restricted.sh"
 
 let repo_name = "oali"
 
 let repo_url = "https://github.com/darrenldl/oali"
 
-let usb_key_mount_script_name = "usb_key_mount.sh"
+let usb_key_mount_script_name = "usb-key-mount.sh"
 
-let usb_key_unmount_script_name = "usb_key_umount.sh"
+let usb_key_unmount_script_name = "usb-key-umount.sh"
 
 let oali_setup_note_name = "oali-setup-note"
 

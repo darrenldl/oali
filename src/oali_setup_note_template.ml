@@ -32,4 +32,5 @@ The following scripts should be present in /root directory
             Add user to groups : users,rfkill
 |}
     Config.repo_name Config.repo_url usb_key_text
-    Config.useradd_helper_as_powerful_name Config.useradd_helper_restricted_name
+    Config.useradd_helper_as_powerful_script_name
+    Config.useradd_helper_restricted_script_name
