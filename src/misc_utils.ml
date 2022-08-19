@@ -85,7 +85,7 @@ module Internal = struct
       ^
       match upper_bound_exc with
       | None -> Printf.sprintf " (min : %d)" lower_bound
-      | Some ub -> Printf.sprintf " (min : %d, max exc : %d)" lower_bound ub
+      | Some ub -> Printf.sprintf " (min : %d, max inc : %d)" lower_bound (ub - 1)
     in
     ask_string
       ~is_valid:(fun s ->
