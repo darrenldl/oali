@@ -649,11 +649,11 @@ if using the USB key disk layout|}
        then
          File.filter_map_lines ~file:fstab_path (fun s ->
              if CCString.mem ~sub:Config.boot_dir s
-             && CCString.mem ~sub:Config.efi_dir s
+             || CCString.mem ~sub:Config.efi_dir s
              then
-               [ s ]
-             else
                [ "# " ^ s ]
+             else
+               [ s ]
            );
        config);
   reg ~name:"Install keyfile for /"
