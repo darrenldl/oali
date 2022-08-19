@@ -46,15 +46,17 @@ let escaping_split ?(escape_char = '\\') ~on s =
         aux seg_start (succ i)
       else (
         if s.[i] = on then (
-          acc := (String.sub s seg_start i) :: !acc;
+          acc := (String.sub s seg_start (i - seg_start)) :: !acc;
           aux (succ i) (succ i)
         ) else
           aux seg_start (succ i)
       )
+    ) else (
+      acc := (String.sub s seg_start (i - seg_start)) :: !acc
     )
   in
   aux 0 0;
-  !acc
+  List.rev !acc
 
 let concat_file_names names =
   let splits =
