@@ -2,3 +2,4 @@
 *.rkt~
 _build/
 .merlin
+oali

@@ -11,6 +11,7 @@ all :
 .PHONY: release-static
 release-static:
 	OCAMLPARAM='_,ccopt=-static' dune build --release src/oali.exe
+	cp _build/default/src/oali.exe oali
 
 .PHONY: format
 format :
