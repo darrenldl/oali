@@ -17,7 +17,7 @@ let process_status_to_string s =
   | WSTOPPED i -> Printf.sprintf "stopped %d" i
 
 let report_failure res =
-  Printf.sprintf "Exec failed : %s, status : %s\nstdout :\n%s\nstderr :\n%s"
+  Printf.sprintf "Exec failed: %s, status: %s\nstdout :\n%s\nstderr :\n%s"
     res.cmd
     (process_status_to_string res.status)
     (String.concat "\n" res.stdout)

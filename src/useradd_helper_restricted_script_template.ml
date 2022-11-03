@@ -14,7 +14,7 @@ ask_ans() {
     message=$2
   fi
 
-  echo -ne "$message"" : "
+  echo -ne "$message"": "
   read ans
 
   eval "$ret_var=$ans"
@@ -30,7 +30,7 @@ ask_yn() {
   fi
 
   while true; do
-    echo -ne "$message"" y/n : "
+    echo -ne "$message"" y/n: "
     read ans
     if   [[ $ans == "y" ]]; then
       eval "$ret_var=true"
@@ -86,7 +86,7 @@ while true; do
   ask_end=false
   while ! $ask_end; do
     ask_ans user_name "Please enter the user name"
-    echo "You entered : " $user_name
+    echo "You entered: " $user_name
     ask_if_correct ask_end
   done
 
@@ -103,7 +103,7 @@ while true; do
 done
 
 while true; do
-  echo "Setting password for user : " $user_name
+  echo "Setting password for user: " $user_name
 
   passwd "$user_name"
   if [[ $? == 0 ]]; then
@@ -116,5 +116,5 @@ while true; do
   fi
 done
 
-echo "User : " $user_name " added"
+echo "User: " $user_name " added"
 |}

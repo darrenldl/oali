@@ -65,7 +65,7 @@ let () =
            @ List.map (fun s -> "--country " ^ s) countries
            |> String.concat " "
          in
-         Printf.printf "Computed reflector command : %s\n" reflector_cmd;
+         Printf.printf "Computed reflector command: %s\n" reflector_cmd;
          print_newline ();
          exec_no_capture reflector_cmd;
          print_newline ();
@@ -215,7 +215,7 @@ User is allowed to continue said setup if they wishes to however
              in
              if encrypt_boot && not encrypt_sys then
                print_boxed_msg
-                 "WARNING : boot was configured to be encrypted, but you \
+                 "WARNING: boot was configured to be encrypted, but you \
                   selected to not encrypt root";
              confirm_answer_is_correct_end_retry ~ret:encrypt_sys)
        in
@@ -1377,7 +1377,7 @@ of the public key.
                   in
                   res.stdout |> List.hd |> String.split_on_char ' ' |> List.hd
                 in
-                Printf.printf "SHA256 hash of the decrypted file : %s\n"
+                Printf.printf "SHA256 hash of the decrypted file: %s\n"
                   decrypted_file_hash;
                 match
                   ask_yn "Does the hash match the hash of the original file?"
@@ -1388,7 +1388,7 @@ of the public key.
                       Option.get config.user_ssh_authorized_keys_path
                     in
                     exec (Printf.sprintf "touch %s" user_ssh_authorized_keys_path);
-                    Printf.printf "Installing SSH key for user : %s\n" user_name;
+                    Printf.printf "Installing SSH key for user: %s\n" user_name;
                     let key_line =
                       let ic = open_in decrypted_dst_path in
                       Fun.protect
